@@ -1,0 +1,22 @@
+/* 1) importer toutes les polices AVANT tailwind (une seule URL) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Open+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* 2) activer tailwind v4 */
+@import 'tailwindcss';
+
+/* 3) déclarer les polices (un token = une classe .font-xxx) */
+@theme {
+  /* polices “nommées” */
+  --font-poppins:
+    'Poppins', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-open-sans:
+    'Open Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-jetbrains-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+}
+
+/* 4) (optionnel) plugins si installés */
+@plugin "@tailwindcss/forms";

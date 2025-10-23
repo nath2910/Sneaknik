@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: pg
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: Pipounet29
+    ports:
+      - "5433:5432" # si 5432 est occupé en local, mets "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "8081:8080" # http://localhost:8081
+volumes:
+  pg17-data:
+    external: true # ← réutilise le volume existant
+
