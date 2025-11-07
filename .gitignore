@@ -1,0 +1,15 @@
+﻿# dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# build outputs
+dist/
+build/
+frontend/dist/
+backend/target/
+
+# secrets / env
+.env
+frontend/.env
+backend/.env
