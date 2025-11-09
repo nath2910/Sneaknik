@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const SNK_VENTE_API_BASE_URL = 'http://localhost:8080/api/snkVente'
+const SNK_VENTE_API_BASE_URL = 'http://localhost:8080/snkVente'
 
 class SnkVenteServices {
   getSnkVente() {
