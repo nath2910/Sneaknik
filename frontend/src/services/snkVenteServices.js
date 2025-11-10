@@ -1,38 +1,38 @@
 import axios from 'axios'
 
-const SNK_VENTE_API_BASE_URL = 'http://localhost:8080/snkVente'
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL, // lit la var d'env (dev ou prod)
+  headers: { 'Content-Type': 'application/json' },
+})
 
 class SnkVenteServices {
   getSnkVente() {
-    return axios.get(SNK_VENTE_API_BASE_URL)
+    return api.get('/snkVente')
   }
 
-  ajouter() {
-    return axios.post(`${SNK_VENTE_API_BASE_URL}/add`, vente)
+  ajouter(vente) {
+    return api.post('/snkVente/add', vente)
   }
 
   rechercher10() {
-    return axios.get(`${SNK_VENTE_API_BASE_URL}/recent`)
+    return api.get('/snkVente/recent')
   }
 
   totalBenef() {
-    return axios.get(`${SNK_VENTE_API_BASE_URL}/total`)
+    return api.get('/snkVente/total')
   }
+
   totalBenefAnnee(year) {
-    return axios.get(`${SNK_VENTE_API_BASE_URL}/total`, { params: { year } })
+    return api.get('/snkVente/total', { params: { year } })
   }
+
   chiffreAffaire() {
-    return axios.get(`${SNK_VENTE_API_BASE_URL}/ca`)
+    return api.get('/snkVente/ca')
   }
 
   marque() {
-    return axios.get(`${SNK_VENTE_API_BASE_URL}/marque`)
+    return api.get('/snkVente/marque')
   }
 }
 
 export default new SnkVenteServices()
-
-//relation front back via requete
-//Couche “API” côté front (Axios).
-//Expose getSnkVente() qui fait GET http://localhost:8080/api/snkVente
-//Centralise la baseURL, les headers, etc.
