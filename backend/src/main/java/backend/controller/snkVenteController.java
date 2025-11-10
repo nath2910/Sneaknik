@@ -24,9 +24,13 @@ import backend.repository.SnkVenteRepository;
 import backend.repository.SnkVenteRepository.BrandCount;
 import backend.service.snkVenteService;
 
+@CrossOrigin(origins = {
+  "http://localhost:5173",
+  "https://TON-FRONT.onrender.com" // ← remplace par l’URL réelle du front
+})
+
 @RestController //on fait du CRUD ( Creat, Read, Update, Delete), rest façon unique de representer des donne http
-@RequestMapping(path = "snkVente"  ) //permet de construire le path
-@CrossOrigin("http://localhost:5173/")
+@RequestMapping(path = "snkVente")
 
 public class snkVenteController {
     
