@@ -26,10 +26,9 @@ import backend.service.snkVenteService;
 
 @CrossOrigin(origins = {
   "http://localhost:5173",
-  "https://TON-FRONT.onrender.com" // ← remplace par l’URL réelle du front
+  "https://sneaknik-2.onrender.com"
 })
-
-@RestController //on fait du CRUD ( Creat, Read, Update, Delete), rest façon unique de representer des donne http
+@RestController
 @RequestMapping(path = "snkVente")
 
 public class snkVenteController {
