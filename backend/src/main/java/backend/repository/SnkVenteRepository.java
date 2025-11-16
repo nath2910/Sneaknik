@@ -102,4 +102,8 @@ BigDecimal totalBenefBetween(@Param("start") java.time.LocalDate start,
   ORDER BY nb DESC
 """)
 List<BrandCount> graphMarque();
+
+// //supprimerPaire
+void deleteById(Long id);
+
 }

@@ -8,7 +8,7 @@
   </section>
 </template>
 <script setup lang="ts">
-import boutonOn from '@/components/boutonOn.vue'
+import boutonOn from '@/components/boutonOnAdd.vue'
 import afficherTout from '../components/afficherTout.vue'
 </script>
 <style scoped></style>

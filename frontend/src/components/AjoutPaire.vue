@@ -95,7 +95,6 @@
               placeholder="180"
               min="0"
               step="0.01"
-              required
             />
           </div>
 
@@ -118,7 +117,7 @@
           <!-- Date -->
           <div class="col-span-6 sm:col-span-3">
             <label for="date" class="text-sm font-medium text-gray-900 block mb-2">
-              Date de la vente
+              Date d'achat
             </label>
             <input
               type="date"
@@ -175,7 +174,8 @@ const emit = defineEmits(['close'])
 const API_BASE_URL = import.meta.env.VITE_API_URL //|| 'http://localhost:8080'
 const getToday = () => new Date().toISOString().split('T')[0] //date du jour
 
-const form = ref({ // creer le from
+const form = ref({
+  // creer le form
   nomItem: '',
   prixRetail: null,
   prixResell: null,

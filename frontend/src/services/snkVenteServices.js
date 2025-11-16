@@ -34,5 +34,4 @@ class SnkVenteServices {
     return api.get('/snkVente/marque')
   }
 }
-
 export default new SnkVenteServices()

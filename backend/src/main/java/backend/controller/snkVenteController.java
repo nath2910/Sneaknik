@@ -83,6 +83,12 @@ public class snkVenteController {
      return snkVenteService.graphMarque();
 
   }
+  @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteVente(@PathVariable Long id) {
+        snkVenteService.deleteVente(id);
+    }
+
 }
     
       

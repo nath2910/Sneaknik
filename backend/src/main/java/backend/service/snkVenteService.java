@@ -7,11 +7,13 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import backend.entity.SnkVente;
 import backend.repository.SnkVenteRepository;
 import backend.repository.SnkVenteRepository.BrandCount;
+import jakarta.transaction.Transactional;
 
 @Service
 
@@ -59,7 +61,10 @@ public class snkVenteService {
   public List<BrandCount> graphMarque() {
     return snkVenteRepository.graphMarque(); // réutilise la default method
   }
-
+  @Transactional
+  public void deleteVente(Long id) {
+        snkVenteRepository.deleteById(id);
+    }
  }
 
 
