@@ -20,8 +20,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public class SnkVente {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy") //avoir le bon format de date
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
+
 
     @Column(name = "nom_item")     private String nomItem;
     @Column(name = "prix_retail")  private BigDecimal prixRetail;

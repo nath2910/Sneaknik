@@ -1,100 +1,167 @@
 <template>
-  <div class="bg-white border border-4 rounded-lg shadow relative m-10">
-    <div class="flex items-start justify-between p-5 border-b rounded-t">
-      <h3 class="text-xl font-semibold">Edit product</h3>
-      <button
-        type="button"
-        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
-        data-modal-toggle="product-modal"
-      >
-        <svg
-          class="w-5 h-5"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-      </button>
-    </div>
+  <!-- Overlay pleine page -->
+  <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
+    <!-- Boîte centrale -->
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="flex items-start justify-between p-5 border-b rounded-t bg-gray-50">
+        <div>
+          <h3 class="text-xl font-semibold text-gray-900">Ajouter une vente</h3>
+          <p class="text-sm text-gray-500 mt-1">
+            Renseigne les infos de la paire pour l'ajouter dans ton suivi.
+          </p>
+        </div>
 
-    <div class="p-6 space-y-6">
-      <form action="#">
+        <!-- Croix de fermeture -->
+        <button
+          type="button"
+          @click="close"
+          class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 inline-flex items-center"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Messages -->
+      <div
+        v-if="success"
+        class="mx-6 mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"
+      >
+        ✅ Vente ajoutée avec succès !
+      </div>
+      <div
+        v-if="error"
+        class="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+      >
+        ⚠️ {{ error }}
+      </div>
+
+      <!-- Formulaire -->
+      <form class="p-6 space-y-6" @submit.prevent="creerVente">
         <div class="grid grid-cols-6 gap-6">
+          <!-- Nom item -->
           <div class="col-span-6 sm:col-span-3">
-            <label for="product-name" class="text-sm font-medium text-gray-900 block mb-2"
-              >Nom Item</label
-            >
+            <label for="nomItem" class="text-sm font-medium text-gray-900 block mb-2">
+              Nom de la paire
+            </label>
             <input
               type="text"
-              name="product-name"
-              id="product-name"
+              id="nomItem"
+              v-model="form.nomItem"
               class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
-              placeholder="Apple Imac 27”"
-              required=""
+              placeholder="Nike Dunk Low Panda"
+              required
             />
           </div>
+
+          <!-- Prix retail -->
           <div class="col-span-6 sm:col-span-3">
-            <label for="category" class="text-sm font-medium text-gray-900 block mb-2"
-              >Prix Retail</label
-            >
-            <input
-              type="text"
-              name="Prix Retail"
-              id="Prix_Retail"
-              class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
-              placeholder="Electronics"
-              required=""
-            />
-          </div>
-          <div class="col-span-6 sm:col-span-3">
-            <label for="brand" class="text-sm font-medium text-gray-900 block mb-2">Brand</label>
-            <input
-              type="text"
-              name="brand"
-              id="brand"
-              class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
-              placeholder="Apple"
-              required=""
-            />
-          </div>
-          <div class="col-span-6 sm:col-span-3">
-            <label for="price" class="text-sm font-medium text-gray-900 block mb-2">Price</label>
+            <label for="prixRetail" class="text-sm font-medium text-gray-900 block mb-2">
+              Prix Retail (€)
+            </label>
             <input
               type="number"
-              name="price"
-              id="price"
+              id="prixRetail"
+              v-model.number="form.prixRetail"
               class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
-              placeholder="$2300"
-              required=""
+              placeholder="110"
+              min="0"
+              step="0.01"
+              required
             />
           </div>
-          <div class="col-span-full">
-            <label for="product-details" class="text-sm font-medium text-gray-900 block mb-2"
-              >Product Details</label
-            >
-            <textarea
-              id="product-details"
-              rows="6"
-              class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-4"
-              placeholder="Details"
-            ></textarea>
+
+          <!-- Prix resell -->
+          <div class="col-span-6 sm:col-span-3">
+            <label for="prixResell" class="text-sm font-medium text-gray-900 block mb-2">
+              Prix Revente (€)
+            </label>
+            <input
+              type="number"
+              id="prixResell"
+              v-model.number="form.prixResell"
+              class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
+              placeholder="180"
+              min="0"
+              step="0.01"
+              required
+            />
+          </div>
+
+          <!-- Argent prélevé -->
+          <div class="col-span-6 sm:col-span-3">
+            <label for="argentPreleve" class="text-sm font-medium text-gray-900 block mb-2">
+              Argent prélevé (€)
+            </label>
+            <input
+              type="number"
+              id="argentPreleve"
+              v-model.number="form.argentPreleve"
+              class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
+              placeholder="110"
+              min="0"
+              step="0.01"
+            />
+          </div>
+
+          <!-- Date -->
+          <div class="col-span-6 sm:col-span-3">
+            <label for="date" class="text-sm font-medium text-gray-900 block mb-2">
+              Date de la vente
+            </label>
+            <input
+              type="date"
+              id="date"
+              v-model="form.date"
+              class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
+              required
+            />
           </div>
         </div>
-      </form>
-    </div>
 
-    <div class="p-6 border-t border-gray-200 rounded-b">
-      <button
-        class="text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:ring-cyan-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-        type="submit"
-      >
-        Save all
-      </button>
+        <!-- Footer -->
+        <div class="pt-4 border-t border-gray-200 flex justify-end space-x-3">
+          <button
+            class="inline-flex items-center justify-center text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:ring-cyan-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-60 disabled:cursor-not-allowed"
+            type="submit"
+            :disabled="loading"
+          >
+            <svg
+              v-if="loading"
+              class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 100 16v-4l-3.5 3.5L12 24v-4a8 8 0 01-8-8z"
+              ></path>
+            </svg>
+            <span>{{ loading ? 'Enregistrement...' : 'Enregistrer la vente' }}</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
@@ -103,17 +170,26 @@
 import { ref } from 'vue'
 import axios from 'axios'
 
-const form = ref({
+const emit = defineEmits(['close'])
+
+const API_BASE_URL = import.meta.env.VITE_API_URL //|| 'http://localhost:8080'
+const getToday = () => new Date().toISOString().split('T')[0] //date du jour
+
+const form = ref({ // creer le from
   nomItem: '',
   prixRetail: null,
   prixResell: null,
   argentPreleve: null,
-  date: new Date().toISOString().split('T')[0],
+  date: getToday(),
 })
 
 const loading = ref(false)
 const success = ref(false)
 const error = ref(null)
+
+const close = () => {
+  emit('close')
+}
 
 const creerVente = async () => {
   loading.value = true
@@ -121,7 +197,7 @@ const creerVente = async () => {
   error.value = null
 
   try {
-    const response = await axios.post('http://localhost:8080/snkVente', {
+    const response = await axios.post(`${API_BASE_URL}/snkVente`, {
       nomItem: form.value.nomItem,
       prixRetail: form.value.prixRetail,
       prixResell: form.value.prixResell,
@@ -131,21 +207,13 @@ const creerVente = async () => {
 
     console.log('Vente créée:', response.data)
     success.value = true
-
-    // Réinitialiser
-    form.value = {
-      nomItem: '',
-      prixRetail: null,
-      prixResell: null,
-      argentPreleve: null,
-      date: new Date().toISOString().split('T')[0],
-    }
+    resetForm()
 
     setTimeout(() => {
       success.value = false
     }, 3000)
   } catch (err) {
-    error.value = err.response?.data?.message || 'Erreur lors de la création'
+    error.value = err.response?.data?.message || 'Erreur lors de la création de la vente'
     console.error('Erreur:', err)
   } finally {
     loading.value = false
