@@ -37,5 +37,8 @@ class SnkVenteServices {
   supprimer(id) {
     return api.delete(`/snkVente/${id}`)
   }
+  eh() {
+    return pas
+  }
 }
 export default new SnkVenteServices()
