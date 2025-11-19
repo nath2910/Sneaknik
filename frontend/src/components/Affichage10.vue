@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import snkVenteServices from '../services/snkVenteServices'
+import snkVenteServices from '../services/SnkVenteServices'
 
 export default {
   name: 'SnkVentes',

@@ -15,7 +15,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import snkVenteServices from '@/services/snkVenteServices'
+import snkVenteServices from '@/services/SnkVenteServices'
 
 const loading = ref(true)
 const error = ref(null)

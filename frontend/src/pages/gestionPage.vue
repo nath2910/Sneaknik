@@ -11,7 +11,8 @@
     <!-- Barre de recherche -->
     <div class="mb-6 flex justify-start">
       <!-- 🔥 maintenant reliée à searchTerm -->
-      <SearchBarre v-model="searchTerm" /> <!-- recupere via le props-->
+      <SearchBarre v-model="searchTerm" />
+      <!-- recupere via le props-->
     </div>
 
     <div class="flex gap-6 items-start">
