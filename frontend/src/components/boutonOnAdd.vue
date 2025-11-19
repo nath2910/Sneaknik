@@ -1,6 +1,6 @@
+<!-- src/components/SnkVentesToolbar.vue -->
 <template>
-  <div class="flex gap-4">
-    <!-- Bouton ajout -->
+  <div class="flex flex-col gap-4">
     <button
       v-if="!showAdd"
       @click="showAdd = true"
@@ -9,7 +9,6 @@
       Ajouter une paire
     </button>
 
-    <!-- Bouton suppression -->
     <button
       v-if="!showDelete"
       @click="showDelete = true"
@@ -18,17 +17,30 @@
       Supprimer une paire
     </button>
 
-    <!-- Modals -->
-    <AjoutPaire v-if="showAdd" @close="showAdd = false" />
-    <SupprimerPaire v-if="showDelete" @close="showDelete = false" />
+    <!-- Modale ajout -->
+    <AjoutPaire v-if="showAdd" @close="showAdd = false" @added="handleAdded" />
+
+    <!-- Modale suppression -->
+    <SupprimerPaire v-if="showDelete" @close="showDelete = false" @deleted="handleDeleted" />
   </div>
 </template>
-
 <script setup>
 import { ref } from 'vue'
-import AjoutPaire from './AjoutPaire.vue'
-import SupprimerPaire from './supprimerPaire.vue'
+import AjoutPaire from '@/components/AjoutPaire.vue'
+import SupprimerPaire from '@/components/SupprimerPaire.vue'
+
+const emit = defineEmits(['vente-ajoutee', 'vente-supprimee'])
 
 const showAdd = ref(false)
 const showDelete = ref(false)
+
+const handleAdded = () => {
+  showAdd.value = false
+  emit('vente-ajoutee')
+}
+
+const handleDeleted = (id) => {
+  showDelete.value = false
+  emit('vente-supprimee', id)
+}
 </script>

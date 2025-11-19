@@ -1,7 +1,6 @@
+<!-- src/components/AjoutPaire.vue -->
 <template>
-  <!-- Overlay pleine page -->
   <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
-    <!-- Boîte centrale -->
     <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
       <!-- Header -->
       <div class="flex items-start justify-between p-5 border-b rounded-t bg-gray-50">
@@ -12,18 +11,12 @@
           </p>
         </div>
 
-        <!-- Croix de fermeture -->
         <button
           type="button"
           @click="close"
           class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 inline-flex items-center"
         >
-          <svg
-            class="w-5 h-5"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path
               fill-rule="evenodd"
               d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -33,18 +26,20 @@
         </button>
       </div>
 
-      <!-- Messages -->
-      <div
-        v-if="success"
-        class="mx-6 mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"
-      >
-        ✅ Vente ajoutée avec succès !
-      </div>
+      <!-- Erreur -->
       <div
         v-if="error"
         class="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
       >
         ⚠️ {{ error }}
+      </div>
+
+      <!-- Succès -->
+      <div
+        v-if="success"
+        class="mx-6 mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800"
+      >
+        ✅ Vente ajoutée avec succès.
       </div>
 
       <!-- Formulaire -->
@@ -167,15 +162,13 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import SnkVenteServices from '@/services/SnkVenteServices'
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'added'])
 
-const API_BASE_URL = import.meta.env.VITE_API_URL //|| 'http://localhost:8080'
-const getToday = () => new Date().toISOString().split('T')[0] //date du jour
+const getToday = () => new Date().toISOString().split('T')[0]
 
-const form = ref({
-  // creer le form
+const emptyForm = () => ({
   nomItem: '',
   prixRetail: null,
   prixResell: null,
@@ -183,6 +176,7 @@ const form = ref({
   date: getToday(),
 })
 
+const form = ref(emptyForm())
 const loading = ref(false)
 const success = ref(false)
 const error = ref(null)
@@ -197,7 +191,7 @@ const creerVente = async () => {
   error.value = null
 
   try {
-    const response = await axios.post(`${API_BASE_URL}/snkVente`, {
+    const {  } = await SnkVenteServices.ajouter({
       nomItem: form.value.nomItem,
       prixRetail: form.value.prixRetail,
       prixResell: form.value.prixResell,
@@ -205,13 +199,17 @@ const creerVente = async () => {
       date: form.value.date,
     })
 
-    console.log('Vente créée:', response.data)
     success.value = true
-    resetForm()
 
+    // 👉 on envoie la vente créée au parent
+    emit('added')
+
+    // 👉 on laisse le message puis on ferme la modale (form disparaît)
     setTimeout(() => {
       success.value = false
-    }, 3000)
+      form.value = emptyForm()
+      close()
+    }, 1000)
   } catch (err) {
     error.value = err.response?.data?.message || 'Erreur lors de la création de la vente'
     console.error('Erreur:', err)

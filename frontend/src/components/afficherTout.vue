@@ -17,7 +17,7 @@
         </thead>
 
         <tbody>
-          <tr v-for="item in snkVentes" :key="item.id" class="hover:bg-gray-800 text-white">
+          <tr v-for="item in snkVentesDesc" :key="item.id" class="hover:bg-gray-800 text-white">
             <td class="border-b px-4 py-2">{{ item.id }}</td>
             <td class="border-b px-4 py-2">{{ item.nomItem }}</td>
             <td class="border-b px-4 py-2">{{ item.prixRetail }}</td>
@@ -30,22 +30,16 @@
   </div>
 </template>
 
-<script>
-import snkVenteServices from '../services/snkVenteServices'
+<script setup>
+import { computed } from 'vue'
 
-export default {
-  name: 'SnkVentes',
-  data() {
-    return { snkVentes: [] }
+const props = defineProps({
+  snkVentes: {
+    type: Array,
+    required: true,
   },
-  methods: {
-    async getSnkVente() {
-      const { data } = await snkVenteServices.getSnkVente()
-      this.snkVentes = data
-    },
-  },
-  created() {
-    this.getSnkVente()
-  },
-}
+})
+
+// on trie pour avoir les plus récentes en haut (id le plus grand d'abord)
+const snkVentesDesc = computed(() => [...props.snkVentes].sort((a, b) => b.id - a.id))
 </script>

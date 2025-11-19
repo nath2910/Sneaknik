@@ -10,10 +10,6 @@ class SnkVenteServices {
     return api.get('/snkVente')
   }
 
-  ajouter(vente) {
-    return api.post('/snkVente/add', vente)
-  }
-
   rechercher10() {
     return api.get('/snkVente/recent')
   }
@@ -32,6 +28,14 @@ class SnkVenteServices {
 
   marque() {
     return api.get('/snkVente/marque')
+  }
+  ajouter(vente) {
+    // adapte ici si ton endpoint est différent
+    return api.post('/snkVente/add', vente)
+  }
+
+  supprimer(id) {
+    return api.delete(`/snkVente/${id}`)
   }
 }
 export default new SnkVenteServices()
