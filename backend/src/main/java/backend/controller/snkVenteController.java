@@ -1,95 +1,111 @@
 package backend.controller;
 
-import org.springframework.data.domain.Sort;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
+import backend.dto.TopVenteProjection;
 import backend.entity.SnkVente;
-import backend.repository.SnkVenteRepository;
 import backend.repository.SnkVenteRepository.BrandCount;
 import backend.service.snkVenteService;
 
+@RestController
+@RequestMapping(path = "snkVente")
 @CrossOrigin(origins = {
   "http://localhost:5173",
   "https://sneaknik-2.onrender.com"
 })
-@RestController
-@RequestMapping(path = "snkVente")
-
 public class snkVenteController {
-    
-      private snkVenteService snkVenteService;
 
-      //faire des routes bien disctinct en focntion de ce que je veux soit avec un chemin (/recent ...)
-      //soit avec variable, soit rien etc
+  private final snkVenteService snkVenteService;
 
-
-      public snkVenteController(backend.service.snkVenteService snkVenteService) {
-            this.snkVenteService = snkVenteService;
-      }
-
-      @ResponseStatus(value = HttpStatus.CREATED) // genere le code 200, 404 etc
-      @PostMapping( consumes = APPLICATION_JSON_VALUE) //pas en haut car que dans le post qu'on consome 
-      public void creer(@RequestBody SnkVente snkVente){
-            this.snkVenteService.creer(snkVente);
-      }
-
-      @GetMapping(produces = APPLICATION_JSON_VALUE) // produit pour creation (ici liste) ou consume et le type de donne ici JSON 
-      public List<SnkVente> rechercher(){
-            return this.snkVenteService.rechercher();
-      }
-
-      @GetMapping(path="{id}", produces = APPLICATION_JSON_VALUE) // avec { } spring sait que c'est une varibale
-      public SnkVente lire(@PathVariable int id){
-            return this.snkVenteService.lire(id);
-      }
-
-      @GetMapping("/recent")
-      public List<SnkVente> getDernieresVentes() {
-        return snkVenteService.get10DernieresVentes();
-    }
-     
-    @PostMapping("/add")
-      public void ajouterPaire(@RequestBody SnkVente s){
-            snkVenteService.ajouterPaire(s);
-      }
-       @GetMapping("/total")
-  public BigDecimal total(@RequestParam(required = false) Integer year) {
-    if (year != null) return snkVenteService.totalBenefYear(year);
-    return snkVenteService.totalBenef();
+  public snkVenteController(snkVenteService snkVenteService) {
+        this.snkVenteService = snkVenteService;
   }
+
+  // === CRÉATION GLOBALE ===
+  @ResponseStatus(HttpStatus.CREATED)
+  @PostMapping(consumes = APPLICATION_JSON_VALUE)
+  public void creer(
+      @RequestHeader("X-USER-ID") Integer userId,
+      @RequestBody SnkVente snkVente
+  ){
+        this.snkVenteService.creer(userId, snkVente);
+  }
+
+  
+
+  // === LECTURE D'UNE VENTE PAR ID (sécurisée par user) ===
+  @GetMapping(path="{id}", produces = APPLICATION_JSON_VALUE)
+  public SnkVente lire(
+      @RequestHeader("X-USER-ID") Integer userId,
+      @PathVariable Integer id
+  ){
+        return this.snkVenteService.lire(userId, id);
+  }
+
+  // 🔹 liste complète pour le user connecté
+  @GetMapping(produces = APPLICATION_JSON_VALUE)
+  public List<SnkVente> rechercher(@RequestHeader("X-USER-ID") Integer userId){
+      return this.snkVenteService.rechercherParUser(userId);
+  }
+
+  // 🔹 10 dernières pour le user connecté
+  @GetMapping("/recent")
+  public List<SnkVente> getDernieresVentes(@RequestHeader("X-USER-ID") Integer userId) {
+      return snkVenteService.get10DernieresVentesParUser(userId);
+  }
+  // === AJOUT PAIRE (via ton bouton/forme AjoutPaire) ===
+  @PostMapping("/add")
+  public void ajouterPaire(
+      @RequestHeader("X-USER-ID") Integer userId,
+      @RequestBody SnkVente s
+  ){
+        snkVenteService.ajouterPaire(userId, s);
+  }
+
+  // === TOTAL BÉNÉFICE ===
+  @GetMapping("/total")
+  public BigDecimal total(
+      @RequestHeader("X-USER-ID") Integer userId,
+      @RequestParam(required = false) Integer year
+  ) {
+    if (year != null) return snkVenteService.totalBenefYear(userId, year);
+    return snkVenteService.totalBenef(userId);
+  }
+
+  // === CA ===
   @GetMapping("/ca")
-  public BigDecimal sumPrixResell() {
-     return snkVenteService.sumPrixResell();
-
+  public BigDecimal sumPrixResell(@RequestHeader("X-USER-ID") Integer userId) {
+     return snkVenteService.sumPrixResell(userId);
   }
-   @GetMapping("/marque")
-  public List<BrandCount> marque() {
-     return snkVenteService.graphMarque();
 
+  // === GRAPHE PAR MARQUE ===
+  @GetMapping("/marque")
+  public List<BrandCount> marque(@RequestHeader("X-USER-ID") Integer userId) {
+     return snkVenteService.graphMarque(userId);
   }
+
+  // === DELETE SÉCURISÉE ===
   @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteVente(@PathVariable Long id) {
-        snkVenteService.deleteVente(id);
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteVente(
+      @RequestHeader("X-USER-ID") Integer userId,
+      @PathVariable Integer id
+  ) {
+      snkVenteService.deleteVente(userId, id);
+  }
+
+ @GetMapping("/topVentes")
+public List<TopVenteProjection> topVentes(
+            @RequestHeader("X-USER-ID") Integer userId
+    ) {
+        return snkVenteService.getTop3VentesAnneeCourante(userId);
     }
+
 
 }
-    
-      
-

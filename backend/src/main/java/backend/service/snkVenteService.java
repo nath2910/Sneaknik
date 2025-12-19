@@ -1,71 +1,93 @@
 package backend.service;
 
 import java.math.BigDecimal;
+import java.time.Year;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
+import backend.dto.TopVenteProjection;
 import backend.entity.SnkVente;
+import backend.entity.User;
 import backend.repository.SnkVenteRepository;
 import backend.repository.SnkVenteRepository.BrandCount;
+import backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 
 @Service
-
 public class snkVenteService {
 
-    
-    private SnkVenteRepository snkVenteRepository;
+    private final SnkVenteRepository snkVenteRepository;
+    private final UserRepository userRepository;
 
-  // logique metier
-
-    public snkVenteService(SnkVenteRepository snkVenteRepository) {
-      this.snkVenteRepository = snkVenteRepository;
+    public snkVenteService(SnkVenteRepository snkVenteRepository,
+                           UserRepository userRepository) {
+        this.snkVenteRepository = snkVenteRepository;
+        this.userRepository = userRepository;
     }
 
-    public void creer(SnkVente snkVente){
-        this.snkVenteRepository.save(snkVente);
+    private User getUserOrThrow(Integer userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
     }
 
-    public List<SnkVente> rechercher(){
-      return this.snkVenteRepository.findAll();
+    public void creer(Integer userId, SnkVente snkVente){
+        User user = getUserOrThrow(userId);
+        snkVente.setUser(user);
+        snkVenteRepository.save(snkVente);
     }
 
-    public SnkVente lire(int id) {
-      Optional<SnkVente> optionalSnkVente =  this.snkVenteRepository.findById(id); // snk peut exister ou pas du tout
-      return optionalSnkVente.orElse(null);
+
+
+  public List<SnkVente> rechercherParUser(Integer userId) {
+        return snkVenteRepository.findByUser_IdOrderByDateAchatDesc(userId);
     }
-      public List<SnkVente> get10DernieresVentes() {
-        return snkVenteRepository.findTop10ByOrderByIdDesc();
-      }
-
-      public void ajouterPaire(SnkVente s){
-         snkVenteRepository.save(s);
-      }
-       public BigDecimal totalBenef() {
-    return snkVenteRepository.totalBenef();
-  }
-
-  public BigDecimal totalBenefYear(int year) {
-    return snkVenteRepository.totalBenefYear(year); // réutilise la default method
-  }
-
-   public BigDecimal sumPrixResell() {
-    return snkVenteRepository.sumPrixResell(); // réutilise la default method
-  }
-  public List<BrandCount> graphMarque() {
-    return snkVenteRepository.graphMarque(); // réutilise la default method
-  }
-  @Transactional
-  public void deleteVente(Long id) {
-        snkVenteRepository.deleteById(id);
+    public SnkVente lire(Integer userId, Integer id) {
+        return snkVenteRepository.findById(id)
+                .filter(v -> v.getUser() != null && v.getUser().getId().equals(userId))
+                .orElse(null);
     }
- }
 
+    public List<SnkVente> get10DernieresVentesParUser(Integer userId) {
+        return snkVenteRepository.findTop10ByUser_IdOrderByDateAchatDesc(userId);
+    }
+    public void ajouterPaire(Integer userId, SnkVente s){
+        User user = getUserOrThrow(userId);
+        s.setUser(user);
+        snkVenteRepository.save(s);
+    }
+
+    public BigDecimal totalBenef(Integer userId) {
+        return snkVenteRepository.totalBenef(userId);
+    }
+
+    public BigDecimal totalBenefYear(Integer userId, int year) {
+        return snkVenteRepository.totalBenefYear(userId, year);
+    }
+
+    public BigDecimal sumPrixResell(Integer userId) {
+        return snkVenteRepository.sumPrixResell(userId);
+    }
+
+    public List<BrandCount> graphMarque(Integer userId) {
+        return snkVenteRepository.graphMarque(userId);
+    }
+
+    @Transactional
+    public void deleteVente(Integer userId, Integer id) {
+        snkVenteRepository.deleteByIdAndUserId(id, userId);
+    }
+     public List<TopVenteProjection> getTop3VentesAnneeCourante(Integer userId) {
+        int currentYear = java.time.Year.now().getValue();
+        
+        return snkVenteRepository.topVentesYear(userId, currentYear)
+                .stream()
+                .limit(3)   // 👉 top 3 ici
+                .toList();
+    }
+
+}
 
 

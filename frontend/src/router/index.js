@@ -4,6 +4,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 const HomePage = () => import('@/pages/homePage.vue')
 const StatsPage = () => import('@/pages/statsPage.vue')
 const GestionPage = () => import('@/pages/gestionPage.vue')
+const loginPage = () => import('@/pages/AuthPage.vue')
+const gererCompte = () => import('@/pages/accountPage.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -11,7 +13,10 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomePage },
     { path: '/stats', name: 'stats', component: StatsPage },
     { path: '/gestion', name: 'gestion', component: GestionPage },
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: HomePage }, // simple: renvoie à l'accueil
+
+    { path: '/auth', name: 'auth', component: loginPage },
+    { path: '/compte', name: 'account', component: gererCompte },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: HomePage },
   ],
   scrollBehavior() {
     return { top: 0 }

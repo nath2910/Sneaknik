@@ -1,15 +1,13 @@
-import axios from 'axios'
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // lit la var d'env (dev ou prod)
-  headers: { 'Content-Type': 'application/json' },
-})
+// src/services/SnkVenteServices.js
+import api from './api'
 
 class SnkVenteServices {
+  // liste complète de l’utilisateur courant
   getSnkVente() {
-    return api.get('/snkVente')
+    return api.get('/snkVente') // header X-USER-ID ajouté par api.js
   }
 
+  // 10 dernières ventes de l’utilisateur courant
   rechercher10() {
     return api.get('/snkVente/recent')
   }
@@ -29,16 +27,19 @@ class SnkVenteServices {
   marque() {
     return api.get('/snkVente/marque')
   }
+
   ajouter(vente) {
-    // adapte ici si ton endpoint est différent
+    // X-USER-ID sera ajouté automatiquement
     return api.post('/snkVente/add', vente)
   }
 
   supprimer(id) {
     return api.delete(`/snkVente/${id}`)
   }
-  eh() {
-    return pas
+
+  topVentes() {
+    return api.get('/snkVente/topVentes')
   }
 }
+
 export default new SnkVenteServices()

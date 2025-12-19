@@ -48,7 +48,7 @@
           <!-- Nom item -->
           <div class="col-span-6 sm:col-span-3">
             <label for="nomItem" class="text-sm font-medium text-gray-900 block mb-2">
-              Nom de la paire
+              Nom de l'item
             </label>
             <input
               type="text"
@@ -93,34 +93,58 @@
             />
           </div>
 
-          <!-- Argent prélevé -->
+          <!-- Date d'achat -->
           <div class="col-span-6 sm:col-span-3">
-            <label for="argentPreleve" class="text-sm font-medium text-gray-900 block mb-2">
-              Argent prélevé (€)
-            </label>
-            <input
-              type="number"
-              id="argentPreleve"
-              v-model.number="form.argentPreleve"
-              class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
-              placeholder="110"
-              min="0"
-              step="0.01"
-            />
-          </div>
-
-          <!-- Date -->
-          <div class="col-span-6 sm:col-span-3">
-            <label for="date" class="text-sm font-medium text-gray-900 block mb-2">
+            <label for="dateAchat" class="text-sm font-medium text-gray-900 block mb-2">
               Date d'achat
             </label>
             <input
               type="date"
-              id="date"
-              v-model="form.date"
+              id="dateAchat"
+              v-model="form.dateAchat"
               class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
               required
             />
+          </div>
+          <!-- Date d'achat -->
+          <div class="col-span-6 sm:col-span-3">
+            <label for="dateAchat" class="text-sm font-medium text-gray-900 block mb-2">
+              Date de vente
+            </label>
+            <input
+              type="date"
+              id="dateAchat"
+              v-model="form.dateVente"
+              class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
+            />
+          </div>
+
+          <!-- Catégorie -->
+          <div class="col-span-6 sm:col-span-3">
+            <label for="categorie" class="text-sm font-medium text-gray-900 block mb-2">
+              Catégorie
+            </label>
+            <input
+              type="text"
+              id="categorie"
+              v-model="form.categorie"
+              class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
+              placeholder="Jordan, Nike, Yeezy..."
+            />
+          </div>
+
+          <!-- Description -->
+          <div class="col-span-6">
+            <label for="description" class="text-sm font-medium text-gray-900 block mb-2">
+              Description
+            </label>
+            <textarea
+              id="description"
+              v-model="form.description"
+              rows="3"
+              class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-cyan-600 focus:border-cyan-600 block w-full p-2.5"
+              placeholder="Etat, taille, notes perso..."
+            ></textarea>
           </div>
         </div>
 
@@ -163,6 +187,9 @@
 <script setup>
 import { ref } from 'vue'
 import SnkVenteServices from '@/services/SnkVenteServices'
+import { useAuthStore } from '@/store/authStore'
+const authStore = useAuthStore()
+const currentUser = authStore.user
 
 const emit = defineEmits(['close', 'added'])
 
@@ -172,8 +199,10 @@ const emptyForm = () => ({
   nomItem: '',
   prixRetail: null,
   prixResell: null,
-  argentPreleve: null,
-  date: getToday(),
+  dateAchat: getToday(),
+  dateVente: null,
+  description: '',
+  categorie: '',
 })
 
 const form = ref(emptyForm())
@@ -191,20 +220,21 @@ const creerVente = async () => {
   error.value = null
 
   try {
-    const {  } = await SnkVenteServices.ajouter({
+    await SnkVenteServices.ajouter({
       nomItem: form.value.nomItem,
       prixRetail: form.value.prixRetail,
       prixResell: form.value.prixResell,
-      argentPreleve: form.value.argentPreleve,
-      date: form.value.date,
+      dateAchat: form.value.dateAchat,
+      dateVente: form.value.dateVente,
+      description: form.value.description,
+      categorie: form.value.categorie,
+      user: currentUser.value ? { id: currentUser.value.id } : null,
+      // tu pourras plus tard ajouter userId ici si tu gères l’auth
     })
 
     success.value = true
-
-    // 👉 on envoie la vente créée au parent
     emit('added')
 
-    // 👉 on laisse le message puis on ferme la modale (form disparaît)
     setTimeout(() => {
       success.value = false
       form.value = emptyForm()

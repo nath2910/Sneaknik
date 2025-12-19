@@ -27,7 +27,7 @@ const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' 
 
 const stats = computed(() => [
   { id: 1, name: 'Total Bénéfice', value: fmt.format(total.value) },
-  { id: 2, name: 'Total Chiffre d’affaires', value: fmt.format(totalCA.value) }, // à brancher plus tard
+  { id: 2, name: 'Total Chiffre d’affaires', value: fmt.format(totalCA.value) }, 
   { id: 3, name: 'Total Bénéfice 2025', value: fmt.format(total2025.value) },
 ])
 

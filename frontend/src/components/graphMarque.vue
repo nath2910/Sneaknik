@@ -1,24 +1,21 @@
 <template>
   <section class="font-black">
     <div class="py-6 mt-4 grid px-2 text-white">
-      <h1 class="text-xl font-bold text-white mb-4 ml-35">Graphique par marque</h1>
       <div id="pie-chart" class="w-full"></div>
     </div>
   </section>
 </template>
 <script setup>
 import { onMounted } from 'vue'
-import axios from 'axios'
 import ApexCharts from 'apexcharts'
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+import api from '@/services/api' // 👈 au lieu de axios + API
 
 onMounted(async () => {
   const el = document.querySelector('#pie-chart')
   if (!el) return
 
   try {
-    const res = await axios.get(`${API}/snkVente/marque`)
+    const res = await api.get('/snkVente/marque') // 👈 X-USER-ID auto
     const data = res.data
 
     const labels = data.map((d) => d.marque)
@@ -30,25 +27,30 @@ onMounted(async () => {
       series,
       legend: {
         position: 'left',
+        horizontalAlign: 'left',
+        // on pousse la légende encore plus à gauche
+        offsetX: -125,
+        itemMargin: {
+          vertical: 6,
+        },
         labels: {
           colors: 'white',
         },
       },
-      horizontalAlign: 'center',
       plotOptions: {
         pie: {
-          offsetX: -290,
+          offsetX: -110,
         },
       },
       colors: [
-        '#FF4560', // rouge rosé
-        '#008FFB', // bleu
-        '#00E396', // vert
-        '#FEB019', // orange
-        '#775DD0', // violet
-        '#546E7A', // gris bleu
-        '#26a69a', // turquoise
-        '#D10CE8', // magenta
+        '#FF4560',
+        '#008FFB',
+        '#00E396',
+        '#FEB019',
+        '#775DD0',
+        '#546E7A',
+        '#26a69a',
+        '#D10CE8',
       ],
     }).render()
   } catch (err) {

@@ -1,0 +1,7 @@
+Features a ajouter sneaknik
+
+Creation de compte -> espace personnel avec sa base de donner
+changer la bdd avec ajout date de vente, categorie et description 
+plus de stat -> choix de des stats voulu
+relier a shopify ou autre
+système d'abonnement ?

@@ -1,17 +1,52 @@
 <template>
-  <section>
-    <div>
-      <statBase />
+  <div>
+    <div
+      v-if="!currentUser"
+      class="rounded-2xl border border-yellow-500/60 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100 flex items-start gap-3"
+    >
+      <span class="mt-0.5 text-base">⚠️</span>
+      <p>
+        Tu dois être connecté pour voir et gérer tes paires. Va dans
+        <span class="font-semibold">Connexion</span> pour accéder à la gestion.
+      </p>
     </div>
-    <div class="bg-gray-800 rounded-2xl shadow-md p-6 w-full max-w-5xl mx-auto">
-      <graphMarque></graphMarque>
+    <div v-else class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <DashboardHeader
+        subtitle="Analytics • Sneaknik"
+        title="Statistiques"
+        description="Analyse ton bénéfice, ton chiffre d’affaires et tes marques les plus fortes."
+      />
+
+      <!-- Résumé chiffré -->
+      <section>
+        <statBase />
+      </section>
+
+      <!-- Graphiques & panneaux -->
+      <section class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-6">
+        <!-- Graphique par marque -->
+        <div class="bg-gray-800 border border-gray-700 rounded-3xl shadow-lg p-6">
+          <h2 class="text-sm font-semibold text-gray-100 mb-3">Répartition par marque</h2>
+
+          <div class="mt-4 pl-24 md:pl-32">
+            <graphMarque />
+          </div>
+        </div>
+
+        <!-- Top modèles + alertes -->
+        <StatsSidePanels />
+      </section>
     </div>
-  </section>
+  </div>
 </template>
 
 <script setup lang="ts">
+import DashboardHeader from '@/components/dashbordHeader.vue'
 import statBase from '@/components/statBase.vue'
 import graphMarque from '@/components/graphMarque.vue'
-</script>
+import StatsSidePanels from '@/components/panneauStat.vue'
+import { useAuthStore } from '@/store/authStore'
 
-<style></style>
+const { user } = useAuthStore()
+const currentUser = user
+</script>

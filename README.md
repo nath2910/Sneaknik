@@ -12,6 +12,9 @@ Fonctionnalités
 - Statistique concernant les resultats ( bénéfice, CA..)
 - Ajout / suppression / modification du stock
 - Recherche / filtres (marque, taille, prix).
+Bonus de la 5.2 :
+  Ajout du système de création/connexion de compte 
+  Espace personnel pour gerer son stock 
 
 ---
 

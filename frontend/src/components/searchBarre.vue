@@ -1,41 +1,40 @@
 <template>
-  <div class="relative text-gray-600">
-    <input
-      type="search"
-      name="search"
-      placeholder="Search"
-      class="bg-white h-10 px-10 pr-20 rounded-full text-sm focus:outline-none"
-      :value="modelValue"
-      @input="onInput"
-    />
-    <button type="button" class="absolute right-0 top-0 mt-3 mr-4">
+  <div class="w-full">
+    <div
+      class="group flex items-center gap-3 bg-gray-800/80 border border-gray-700 rounded-full px-5 py-3 shadow-md transition focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-500/40"
+    >
       <svg
-        class="h-4 w-4 fill-current"
-        xmlns="http://www.w3.org/2000/svg"
-        version="1.1"
-        viewBox="0 0 56.966 56.966"
-        width="512px"
-        height="512px"
+        class="w-5 h-5 text-gray-400 group-focus-within:text-purple-300 transition"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
       >
         <path
-          d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23  s10.318,23,23,23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92  c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17  s-17-7.626-17-17S14.61,6,23.984,6z"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M21 21l-4.35-4.35M5 11a6 6 0 1112 0 6 6 0 01-12 0z"
         />
       </svg>
-    </button>
+
+      <input
+        :value="modelValue"
+        @input="$emit('update:modelValue', $event.target.value)"
+        type="text"
+        placeholder="Rechercher par modèle, catégorie, description..."
+        class="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-sm text-gray-100 placeholder:text-gray-500"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-const props = defineProps({
+defineProps({
   modelValue: {
     type: String,
-    default: ''
-  }
+    default: '',
+  },
 })
 
-const emit = defineEmits(['update:modelValue']) //definit le type de emit quon vas faire
-
-const onInput = (event) => {
-  emit('update:modelValue', event.target.value) //recupere ce que user ecrit et envois avec emit au parent
-}
+defineEmits(['update:modelValue'])
 </script>
