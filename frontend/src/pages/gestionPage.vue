@@ -1,23 +1,11 @@
 <template>
-  <div
-    v-if="!currentUser"
-    class="rounded-2xl border border-yellow-500/60 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100 flex items-start gap-3"
-  >
-    <span class="mt-0.5 text-base">⚠️</span>
-    <p>
-      Tu dois être connecté pour voir et gérer tes paires. Va dans
-      <span class="font-semibold">Connexion</span> pour accéder à la gestion.
-    </p>
-  </div>
-  <div v-else class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     <!-- Bandeau -->
     <DashboardHeader
       subtitle="Backoffice • Stock Sneaknik"
       title="Gestion des ventes"
       description="Ajoute ou supprime des paires et surveille ton stock en temps réel."
     />
-
-    <!-- Alerte pas connecté -->
 
     <!-- Contenu connecté -->
     <section class="space-y-6">

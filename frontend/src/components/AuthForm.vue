@@ -167,7 +167,7 @@ const route = useRoute()
 const router = useRouter()
 
 // store d'auth
-const { setUser } = useAuthStore()
+const { setAuth } = useAuthStore()
 
 // mode: login / signup (on lit la query ?mode=)
 const mode = ref(route.query.mode === 'signup' ? 'signup' : 'login')
@@ -224,7 +224,7 @@ const submitLogin = async () => {
       password: loginForm.value.password,
     })
 
-    setUser(data)
+    setAuth(data) // car data = { user, token }
 
     success.value = 'Connexion réussie ✅'
     setTimeout(() => {

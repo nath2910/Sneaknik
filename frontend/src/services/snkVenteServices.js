@@ -40,6 +40,10 @@ class SnkVenteServices {
   topVentes() {
     return api.get('/snkVente/topVentes')
   }
+
+  update(id, vente) {
+    return api.put(`/snkVente/${id}`, vente)
+  }
 }
 
 export default new SnkVenteServices()

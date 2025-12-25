@@ -3,11 +3,7 @@
     <div class="w-full max-w-2xl bg-gray-800 rounded-xl shadow-lg p-6 text-gray-100">
       <h1 class="text-2xl font-bold mb-6">Mon compte</h1>
 
-      <div v-if="!currentUser" class="text-sm text-gray-300">
-        Tu dois être connecté pour accéder à cette page.
-      </div>
-
-      <div v-else class="space-y-8">
+      <div class="space-y-8">
         <!-- Infos utilisateur -->
         <section>
           <h2 class="text-lg font-semibold mb-3">Informations du profil</h2>
@@ -114,6 +110,10 @@ const submitChangePassword = async () => {
 
   if (form.value.newPassword !== form.value.confirmPassword) {
     error.value = 'Les nouveaux mots de passe ne correspondent pas.'
+    return
+  }
+  if (form.value.newPassword.length < 6) {
+    error.value = 'Le nouveau mot de passe doit faire au moins 6 caractères.'
     return
   }
 

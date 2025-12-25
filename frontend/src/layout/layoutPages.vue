@@ -18,13 +18,7 @@
             @click.stop="toggleMenu"
             class="ml-4 h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center border border-slate-600 hover:border-purple-400 focus:outline-none"
           >
-            <img
-              v-if="avatarUrl"
-              :src="avatarUrl"
-              alt="User"
-              class="h-8 w-8 rounded-full object-cover"
-            />
-            <span v-else class="text-sm font-semibold">
+            <span class="text-sm font-semibold">
               {{ initials }}
             </span>
           </button>
@@ -32,19 +26,19 @@
           <!-- Pop-up -->
           <div
             v-if="menuOpen"
-            class="absolute right-0 mt-2 w-56 rounded-lg bg-white text-slate-900 shadow-lg border border-slate-200 z-50"
+            class="absolute right-0 mt-2 w-56 rounded-lg bg-white text-slate-900 shadow-lg border border-purple-900 z-50"
           >
             <div class="px-4 py-3 border-b border-slate-100">
-              <p class="text-sm text-slate-500">
-                {{ currentUser ? 'Connecté en tant que' : 'Non connecté' }}
+              <p class="text-sm text-purple-900">
+                {{ currentUser ? 'Connecté' : 'Non connecté' }}
               </p>
               <p v-if="currentUser" class="text-sm font-medium text-slate-900 truncate">
-                {{ currentUser.email }}
+                Bienvenue {{ currentUser.firstName }}
               </p>
             </div>
 
             <div class="py-2">
-              <!-- 👉 seulement si PAS connecté -->
+              <!-- si pas connecté -->
               <button
                 v-if="!currentUser"
                 @click="goToAuth('login')"
@@ -61,7 +55,7 @@
                 Créer un compte
               </button>
 
-              <!-- 👉 seulement si CONNECTÉ -->
+              <!-- si connecte -->
               <button
                 v-if="currentUser"
                 @click="goToAccount"
@@ -81,53 +75,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Mobile drawer -->
-      <transition name="fade">
-        <div v-show="open" class="md:hidden border-t bg-white">
-          <nav class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-1">
-            <RouterLink
-              @click="open = false"
-              :to="'/'"
-              class="block px-3 py-2 rounded hover:bg-gray-50"
-              :class="isActive('/')"
-            >
-              Accueil
-            </RouterLink>
-            <RouterLink
-              @click="open = false"
-              :to="'/stats'"
-              class="block px-3 py-2 rounded hover:bg-gray-50"
-              :class="isActive('/stats')"
-            >
-              Stats
-            </RouterLink>
-            <RouterLink
-              @click="open = false"
-              :to="'/gestion'"
-              class="block px-3 py-2 rounded hover:bg-gray-50"
-              :class="isActive('/gestion')"
-            >
-              Gestion
-            </RouterLink>
-            <div class="h-px bg-gray-200 my-2"></div>
-            <RouterLink
-              @click="open = false"
-              :to="{ name: 'auth', query: { mode: 'login' } }"
-              class="block px-3 py-2 rounded hover:bg-gray-50"
-            >
-              Login
-            </RouterLink>
-            <RouterLink
-              @click="open = false"
-              :to="{ name: 'auth', query: { mode: 'signup' } }"
-              class="block px-3 py-2 rounded hover:bg-gray-50"
-            >
-              Créer un compte
-            </RouterLink>
-          </nav>
-        </div>
-      </transition>
     </header>
 
     <!-- body -->
@@ -159,25 +106,16 @@ import { useAuthStore } from '@/store/authStore'
 
 const route = useRoute()
 const router = useRouter()
-
-// store global d'auth
-const { user, setUser } = useAuthStore()
-const currentUser = user // alias réactif
-
-// ...
-
 const menuOpen = ref(false)
-const open = ref(false) // mobile drawer
-
-// avatar custom (laisse vide pour l’instant)
-const avatarUrl = ref('')
+const auth = useAuthStore()
+const currentUser = auth.user
 
 // Fermeture globale du menu
 const closeMenu = () => {
   menuOpen.value = false
 }
 
-// Fermer quand on clique n'importe où dans la fenêtre (sauf à l'intérieur du menu grâce à @click.stop)
+// Fermer quand on clique n'importe où dans la fenêtre
 onMounted(() => {
   window.addEventListener('click', closeMenu)
 })
@@ -186,7 +124,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('click', closeMenu)
 })
 
-// Fermer le menu quand la route change (tu vas sur /auth, /stats, etc.)
+// Fermer le menu quand la route change
 watch(
   () => route.fullPath,
   () => {
@@ -222,8 +160,9 @@ const goToAccount = () => {
 }
 
 const logout = () => {
-  setUser(null)
+  auth.logout() // ✅ existe
   menuOpen.value = false
+  router.push({ name: 'auth', query: { mode: 'login' } }) // optionnel
 }
 </script>
 

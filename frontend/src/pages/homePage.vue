@@ -1,17 +1,6 @@
 <template>
   <div>
-    <!-- Alerte pas connecté -->
-    <div
-      v-if="!currentUser"
-      class="rounded-2xl border border-yellow-500/60 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100 flex items-start gap-3"
-    >
-      <span class="mt-0.5 text-base">⚠️</span>
-      <p>
-        Tu dois être connecté pour voir et gérer tes paires. Va dans
-        <span class="font-semibold">Connexion</span> pour accéder à la gestion.
-      </p>
-    </div>
-    <section v-else class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       <!-- Header -->
       <header class="flex flex-col gap-4">
         <DashboardHeader
@@ -61,6 +50,13 @@ const snkVentes = ref<any[]>([])
 const loading = ref(false)
 
 const chargerVentes = async () => {
+  // ✅ ne lance pas l’API si pas connecté
+  if (!currentUser.value) {
+    snkVentes.value = []
+    loading.value = false
+    return
+  }
+
   loading.value = true
   try {
     const { data } = await SnkVenteServices.getSnkVente()

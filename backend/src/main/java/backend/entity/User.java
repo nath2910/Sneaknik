@@ -1,6 +1,9 @@
 package backend.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+
 
 @Entity
 @Table(name = "users", schema = "public")  // adapte le nom de la table si besoin
@@ -19,8 +22,9 @@ public class User {
     @Column(length = 200, nullable = true)
     private String email;
 
+    @JsonIgnore
     @Column(length = 200, nullable = true)
-    private String password;
+    private String password;    
 
     // ====== CONSTRUCTEURS ======
     public User() {}

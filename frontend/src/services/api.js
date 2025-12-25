@@ -9,18 +9,29 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  try {
-    const raw = localStorage.getItem('snk_user')
-    if (raw) {
-      const user = JSON.parse(raw)
-      if (user?.id) {
-        config.headers['X-USER-ID'] = user.id
-      }
-    }
-  } catch (e) {
-    console.error('Erreur lecture user localStorage', e)
-  }
+  config.headers = config.headers || {}
+
+  const token = localStorage.getItem('snk_token') || sessionStorage.getItem('snk_token')
+
+  if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      const hadToken = !!localStorage.getItem('snk_token') || !!sessionStorage.getItem('snk_token')
+
+      if (hadToken) {
+        localStorage.removeItem('snk_token')
+        localStorage.removeItem('snk_user')
+        sessionStorage.removeItem('snk_token')
+        sessionStorage.removeItem('snk_user')
+        window.location.href = '/auth?mode=login'
+      }
+    }
+    return Promise.reject(err)
+  },
+)
 
 export default api

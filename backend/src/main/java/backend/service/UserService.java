@@ -1,10 +1,14 @@
 package backend.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import backend.dto.LoginRequest;
 import backend.dto.RegisterRequest;
+import backend.dto.ChangePasswordRequest;
+
 import backend.entity.User;
 import backend.repository.UserRepository;
 
@@ -49,4 +53,27 @@ public class UserService {
         // Pour l’instant, on renvoie juste le user (sans le hash dans la version front)
         return user;
     }
+
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+    if (request.getCurrentPassword() == null || request.getNewPassword() == null) {
+        throw new RuntimeException("Champs manquants");
+    }
+
+   if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
+  throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+      "Le nouveau mot de passe doit faire au moins 6 caractères");
+}
+
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+    boolean ok = passwordEncoder.matches(request.getCurrentPassword(), user.getPassword());
+    if (!ok) {
+        throw new RuntimeException("Mot de passe actuel incorrect");
+    }
+
+    user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+    userRepository.save(user);
+}
+
 }
