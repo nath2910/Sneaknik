@@ -14,10 +14,9 @@ spring:
       on-profile: dev
 
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5433/snkProjet_docker
-    username: myuser
-    password: Pipounet29
-    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5433/snkProjet_docker}
+    username: ${SPRING_DATASOURCE_USERNAME:myuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:Pipounet29}
 
   jpa:
     hibernate:

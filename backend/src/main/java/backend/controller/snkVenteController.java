@@ -17,10 +17,6 @@ import backend.service.snkVenteService;
 
 @RestController
 @RequestMapping(path = "snkVente")
-@CrossOrigin(origins = {
-  "http://localhost:5173",
-  "https://sneaknik-2.onrender.com"
-})
 public class snkVenteController {
 
   private final snkVenteService snkVenteService;

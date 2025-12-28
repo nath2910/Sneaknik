@@ -37,12 +37,11 @@ public class JwtSecurityConfig {
             cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
 
             // ⭐ important : en dev, on autorise tous les headers (sinon ça casse vite)
-           cfg.setAllowedHeaders(List.of("*"));
+        //    cfg.setAllowedHeaders(List.of("*"));
 
 
             // optionnel mais pratique si un jour tu renvoies un token dans un header
            cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-            cfg.setExposedHeaders(List.of("Authorization"));
             cfg.setAllowCredentials(false);
             return cfg;
         };
