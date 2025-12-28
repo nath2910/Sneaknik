@@ -42,6 +42,7 @@ public class JwtSecurityConfig {
 
             // optionnel mais pratique si un jour tu renvoies un token dans un header
            cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+           cfg.setExposedHeaders(List.of("Authorization"));
             cfg.setAllowCredentials(false);
             return cfg;
         };
