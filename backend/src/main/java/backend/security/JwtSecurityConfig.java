@@ -31,9 +31,11 @@ public class JwtSecurityConfig {
         return (HttpServletRequest req) -> {
             CorsConfiguration cfg = new CorsConfiguration();
             cfg.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "https://sneaknik-2.onrender.com"
-            ));
+    "http://localhost:5173",
+    "https://sneaknik.pages.dev",
+    "https://sneaknik-1.onrender.com"
+));
+
             cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
 
             // ⭐ important : en dev, on autorise tous les headers (sinon ça casse vite)
