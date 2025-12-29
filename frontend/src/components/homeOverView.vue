@@ -11,15 +11,14 @@
         <StatBadge label="Bénéfice du mois" :tone="beneficeTone" :value="formattedBenefice" />
         <StatBadge label="C.A. du mois" tone="default" :value="formattedCA" />
         <StatBadge
-          label="Paires vendues (mois)"
+          label="Items vendues (mois)"
           tone="accent"
           :value="loading ? '...' : nbVendues"
         />
-        <StatBadge label="Paires en stock" tone="default" :value="loading ? '...' : nbEnStock" />
+        <StatBadge label="Items en stock" tone="default" :value="loading ? '...' : nbEnStock" />
       </div>
 
-      <p class="mt-2 text-[0.7rem] text-gray-500">
-      </p>
+      <p class="mt-2 text-[0.7rem] text-gray-500"></p>
     </div>
 
     <!-- Actions rapides -->
