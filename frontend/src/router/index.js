@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/store/AuthStore'
+import { useAuthStore } from '@/store/authStore'
 
 // Lazy-load des pages
 const HomePage = () => import('@/pages/homePage.vue')
