@@ -36,7 +36,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Affichage10 from '@/components/Affichage10.vue'
-import HomeOverview from '@/components/HomeOverview.vue'
+import HomeOverview from '@/components/homeOverView.vue'
 import DashboardHeader from '@/components/dashbordHeader.vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 import { useAuthStore } from '@/store/authStore'
