@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import StatBadge from '@/components/statBadge.vue'
-import SnkVenteServices from '@/services/SnkVenteServices' // 🟣 c’était manquant
+import SnkVenteServices from '@/services/SnkVenteServices.js'
 
 interface Props {
   totalBenefice: number
@@ -43,7 +43,7 @@ interface Props {
   loading?: boolean
 }
 
-  defineEmits<{
+defineEmits<{
   (e: 'go-gestion'): void
   (e: 'go-stats'): void
 }>()

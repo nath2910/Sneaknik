@@ -94,7 +94,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import SnkVenteServices from '@/services/SnkVenteServices'
+import SnkVenteServices from '@/services/SnkVenteServices.js'
 
 const ventes = ref<any[]>([])
 const loading = ref(false)

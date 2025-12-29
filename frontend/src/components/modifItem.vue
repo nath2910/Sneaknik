@@ -129,7 +129,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import SnkVenteServices from '@/services/SnkVenteServices'
+import SnkVenteServices from '@/services/SnkVenteServices.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false }, // v-model

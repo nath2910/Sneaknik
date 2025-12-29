@@ -59,10 +59,10 @@ import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/store/authStore'
 import afficherTout from '@/components/afficherTout.vue'
 import SearchBarre from '@/components/searchBarre.vue'
-import SnkVenteServices from '@/services/SnkVenteServices'
+import SnkVenteServices from '@/services/SnkVenteServices.js'
 import DashboardHeader from '@/components/dashbordHeader.vue'
 import StockSummaryRow from '@/components/résumeStock.vue'
-import GestionActionsPanel from '@/components/blocBoutonAddDelete.vue'
+import GestionActionsPanel from '@/components/blocBoutonAddDelete.vue'  
 import EditVenteModal from '@/components/modifItem.vue'
 
 const snkVentes = ref([])

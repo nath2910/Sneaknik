@@ -63,7 +63,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import SnkVenteServices from '@/services/SnkVenteServices'
+import SnkVenteServices from '@/services/SnkVenteServices.js'
 
 const emit = defineEmits(['close', 'deleted'])
 

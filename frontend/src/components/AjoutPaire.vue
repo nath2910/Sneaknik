@@ -186,7 +186,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import SnkVenteServices from '@/services/SnkVenteServices'
+import SnkVenteServices from '@/services/SnkVenteServices.js'
 import { useAuthStore } from '@/store/authStore'
 const authStore = useAuthStore()
 const currentUser = authStore.user
