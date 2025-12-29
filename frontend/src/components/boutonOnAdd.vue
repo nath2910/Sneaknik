@@ -30,7 +30,7 @@
 <script setup>
 import { ref } from 'vue'
 import AjoutPaire from '@/components/AjoutPaire.vue'
-import SupprimerPaire from '@/components/SupprimerPaire.vue'
+import SupprimerPaire from '@/components/supprimerPaire.vue'
 
 const emit = defineEmits(['vente-ajoutee', 'vente-supprimee'])
 
