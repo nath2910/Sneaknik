@@ -1,10 +1,37 @@
 <template>
   <div class="min-h-screen flex flex-col text-gray-900 font-poppins">
     <!-- Header -->
-    <header class="sticky top-0 z-40 bg-gray-800 backdrop-blur border-b">
-      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex gap-4">
-        <!-- Desktop nav -->
-        <nav class="flex flex-1 items-center justify-center gap-6">
+    <header class="sticky top-0 z-40 bg-gray-800 backdrop-blur border-b border-gray-700">
+      <div
+        class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4"
+      >
+        <!-- Mobile Menu Button (Visible uniquement sur mobile) -->
+        <div class="flex md:hidden">
+          <button
+            @click="toggleMobileMenu"
+            class="text-gray-300 hover:text-white focus:outline-none p-2"
+          >
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                v-if="!mobileMenuOpen"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+              <path
+                v-else
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Desktop nav (Caché sur mobile, visible sur md+) -->
+        <nav class="hidden md:flex flex-1 items-center justify-center gap-6">
           <RouterLink :to="'/'" class="nav" :class="isActive('/')">Accueil</RouterLink>
           <RouterLink :to="'/stats'" class="nav" :class="isActive('/stats')">Stats</RouterLink>
           <RouterLink :to="'/gestion'" class="nav" :class="isActive('/gestion')">
@@ -75,6 +102,30 @@
           </div>
         </div>
       </div>
+
+      <!-- Mobile Menu Dropdown (S'affiche quand on clique sur le burger) -->
+      <div v-if="mobileMenuOpen" class="md:hidden bg-gray-800 border-b border-gray-700">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+          <RouterLink
+            :to="'/'"
+            class="block px-3 py-2 rounded-md text-base font-medium"
+            :class="isActiveMobile('/')"
+            >Accueil</RouterLink
+          >
+          <RouterLink
+            :to="'/stats'"
+            class="block px-3 py-2 rounded-md text-base font-medium"
+            :class="isActiveMobile('/stats')"
+            >Stats</RouterLink
+          >
+          <RouterLink
+            :to="'/gestion'"
+            class="block px-3 py-2 rounded-md text-base font-medium"
+            :class="isActiveMobile('/gestion')"
+            >Gestion</RouterLink
+          >
+        </div>
+      </div>
     </header>
 
     <!-- body -->
@@ -107,6 +158,7 @@ import { useAuthStore } from '@/store/authStore'
 const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
+const mobileMenuOpen = ref(false)
 const auth = useAuthStore()
 const currentUser = auth.user
 
@@ -129,6 +181,7 @@ watch(
   () => route.fullPath,
   () => {
     menuOpen.value = false
+    mobileMenuOpen.value = false
   },
 )
 
@@ -144,9 +197,20 @@ const isActive = (path) => {
   return route.path === path ? 'text-purple-400 font-semibold' : ''
 }
 
+const isActiveMobile = (path) => {
+  return route.path === path
+    ? 'bg-gray-900 text-purple-400'
+    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+}
+
 const toggleMenu = () => {
   menuOpen.value = !menuOpen.value
 }
+
+const toggleMobileMenu = () => {
+  mobileMenuOpen.value = !mobileMenuOpen.value
+}
+
 // aller vers la page de connexion/création de compte
 const goToAuth = (mode) => {
   menuOpen.value = false
