@@ -90,7 +90,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useAuthStore } from '@/store/authStore'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
-import DashboardHeader from '@/components/dashbordHeader.vue'
+import DashboardHeader from '@/components/HeaderDePage.vue'
 import StockSummaryRow from '@/components/GestionRésumeStock.vue'
 import SearchBarre from '@/components/GestionSearchBarre.vue'
 import GestionActionsPanel from '@/components/GestionBlocBoutonAddDelete.vue'

@@ -62,6 +62,15 @@
                 class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
               />
             </div>
+            <!-- Catégorie -->
+            <div>
+              <label class="block text-sm font-medium text-gray-200 mb-2">Catégorie</label>
+              <input
+                type="text"
+                v-model="form.categorie"
+                class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+              />
+            </div>
 
             <!-- Prix retail -->
             <div>
@@ -108,16 +117,6 @@
                 class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
               />
               <p class="mt-1 text-xs text-gray-500">Laisse vide si pas vendue.</p>
-            </div>
-
-            <!-- Catégorie -->
-            <div>
-              <label class="block text-sm font-medium text-gray-200 mb-2">Catégorie</label>
-              <input
-                type="text"
-                v-model="form.categorie"
-                class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
-              />
             </div>
 
             <!-- Description -->
