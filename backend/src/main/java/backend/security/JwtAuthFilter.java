@@ -3,6 +3,7 @@ package backend.security;
 import java.io.IOException;
 import java.util.Collections;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -24,17 +25,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     public JwtAuthFilter(JwtService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
-    } 
+    }
 
     @Override
-    protected void doFilterInternal(
-      
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
-      System.out.println("[JWT FILTER] path=" + request.getRequestURI()
-  + " auth=" + (request.getHeader("Authorization") != null));
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+  filterChain.doFilter(request, response);
+  return;
+}
 
 
         String auth = request.getHeader("Authorization");
@@ -44,9 +45,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = auth.substring(7);
-        if (!jwtService.isValid(token)) {
-          System.out.println("[JWT FILTER] INVALID token path=" + request.getRequestURI());
 
+        if (!jwtService.isValid(token)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -58,18 +58,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        // principal = user (comme ça tu peux récupérer user.getId() facilement)
         var authentication = new UsernamePasswordAuthenticationToken(
                 user,
                 null,
                 Collections.emptyList()
         );
-        System.out.println("JWT OK userId=" + userId + " -----------------------------------------------------------------path=" + request.getRequestURI());
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        System.out.println("[JWT FILTER] AUTH OK userId=" + userId + " path=" + request.getRequestURI());
-
-
         filterChain.doFilter(request, response);
     }
 }
