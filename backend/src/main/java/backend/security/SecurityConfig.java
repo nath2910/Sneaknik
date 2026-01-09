@@ -20,9 +20,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final JwtAuthFilter jwtAuthFilter;
+  private final OAuth2SuccessHandler oauth2SuccessHandler;
 
-  public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+  public SecurityConfig(JwtAuthFilter jwtAuthFilter, OAuth2SuccessHandler oauth2SuccessHandler) {
     this.jwtAuthFilter = jwtAuthFilter;
+    this.oauth2SuccessHandler = oauth2SuccessHandler;
   }
 
   @Bean
@@ -30,12 +32,21 @@ public class SecurityConfig {
     http
       .csrf(csrf -> csrf.disable())
       .cors(Customizer.withDefaults())
-      .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+      // IMPORTANT: OAuth2 login a besoin d'un minimum d'état
+      .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
       .authorizeHttpRequests(auth -> auth
         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
         .requestMatchers("/auth/**").permitAll()
+        .requestMatchers("/oauth2/**").permitAll()
+        .requestMatchers("/login/oauth2/**").permitAll()
         .anyRequest().authenticated()
       )
+
+      .oauth2Login(oauth -> oauth.successHandler(oauth2SuccessHandler))
+
+      // JWT pour tes endpoints API
       .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
@@ -44,20 +55,14 @@ public class SecurityConfig {
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
-
-    // ✅ local + prod
     config.setAllowedOriginPatterns(List.of(
       "http://localhost:5173",
       "http://127.0.0.1:5173",
       "https://sneaknik.pages.dev"
     ));
-
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     config.setAllowedHeaders(List.of("*"));
     config.setExposedHeaders(List.of("Authorization"));
-
-    // Si tu n'utilises PAS de cookies, tu peux mettre false.
-    // Mais true marche aussi tant que tu n'as pas "*" en allowedOrigins.
     config.setAllowCredentials(true);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

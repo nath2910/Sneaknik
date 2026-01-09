@@ -1,71 +1,66 @@
 package backend.entity;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-
+import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users", schema = "public")  // adapte le nom de la table si besoin
+@Table(name = "users", schema = "public")
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(length = 100, nullable = false)
-    private String first_name;
+  @Column(name = "first_name", length = 100, nullable = false)
+  private String firstName;
 
-    @Column(length = 100, nullable = false)
-    private String last_name;
+  @Column(name = "last_name", length = 100, nullable = false)
+  private String lastName;
 
-    @Column(length = 200, nullable = true)
-    private String email;
+  @Column(length = 200, nullable = false)
+  private String email;
 
-    @JsonIgnore
-    @Column(length = 200, nullable = true)
-    private String password;    
+  @JsonIgnore
+  @Column(length = 200)
+  private String password; // nullable pour Google
 
-    // ====== CONSTRUCTEURS ======
-    public User() {}
+  @Column(length = 20, nullable = false)
+  private String provider = "LOCAL"; // LOCAL | GOOGLE
 
-     // ===== GETTERS / SETTERS =====
+  @Column(name = "provider_id", length = 255)
+  private String providerId; // sub google
 
-    public Long getId(){
-        return id;
-    }
+  @Column(name = "email_verified", nullable = false)
+  private boolean emailVerified = false;
 
-    public String getEmail() {
-        return email;
-    }
+  @Column(name = "picture_url")
+  private String pictureUrl;
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+  public User() {}
 
-    public String getFirstName() {
-        return first_name;
-    }
+  public Long getId() { return id; }
 
-    public void setFirstName(String first_name) {
-        this.first_name = first_name;
-    }
+  public String getFirstName() { return firstName; }
+  public void setFirstName(String firstName) { this.firstName = firstName; }
 
-    public String getLastName() {
-        return last_name;
-    }
+  public String getLastName() { return lastName; }
+  public void setLastName(String lastName) { this.lastName = lastName; }
 
-    public void setLastName(String last_name) {
-        this.last_name = last_name;
-    }
+  public String getEmail() { return email; }
+  public void setEmail(String email) { this.email = email; }
 
-    public String getPassword() {
-        return password;
-    }
+  public String getPassword() { return password; }
+  public void setPassword(String password) { this.password = password; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+  public String getProvider() { return provider; }
+  public void setProvider(String provider) { this.provider = provider; }
 
-   
+  public String getProviderId() { return providerId; }
+  public void setProviderId(String providerId) { this.providerId = providerId; }
+
+  public boolean isEmailVerified() { return emailVerified; }
+  public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+
+  public String getPictureUrl() { return pictureUrl; }
+  public void setPictureUrl(String pictureUrl) { this.pictureUrl = pictureUrl; }
 }

@@ -87,6 +87,14 @@
               </span>
             </button>
           </div>
+          <br />
+          <button
+            type="button"
+            @click="loginWithGoogle"
+            class="w-full inline-flex justify-center items-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium text-gray-100 bg-gray-900 border border-gray-700 hover:bg-gray-700/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+          >
+            <span>Continuer avec Google</span>
+          </button>
         </div>
 
         <button
@@ -143,7 +151,7 @@
             <input
               :type="showLoginPassword ? 'text' : 'password'"
               id="loginPassword"
-              v-model="loginForm.password"
+              v-model="signupFormForm.password"
               required
               class="block w-full pr-10 px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             />
@@ -318,5 +326,11 @@ const submitSignup = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+
+const loginWithGoogle = () => {
+  window.location.href = `${API_BASE_URL}/oauth2/authorization/google`
 }
 </script>
