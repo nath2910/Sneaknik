@@ -14,7 +14,7 @@
           <div>
             <h3 class="text-xl font-semibold text-gray-100">Ajouter une vente</h3>
             <p class="text-sm text-gray-400 mt-1">
-              Renseigne les infos de la paire pour l'ajouter dans ton suivi.
+              Renseigne les infos de l'item pour l'ajouter dans ton suivi.
             </p>
           </div>
 
