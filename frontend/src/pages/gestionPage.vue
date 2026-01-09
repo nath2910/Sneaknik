@@ -74,6 +74,15 @@
       @close="showDeleteModal = false"
       @deleted="handleDeleted"
     />
+    <div class="[&_button:hover]:bg-gray-800">
+      <button
+        type="button"
+        class="px-4 py-2 text-xs rounded-lg bg-gray-700 text-white transition whitespace-nowrap"
+        @click="exportCsv"
+      >
+        Export CSV
+      </button>
+    </div>
   </div>
 </template>
 
@@ -188,5 +197,65 @@ const handleDeleted = (ids) => {
   const set = new Set(ids)
   snkVentes.value = snkVentes.value.filter((v) => !set.has(v.id))
   selectedIds.value = selectedIds.value.filter((id) => !set.has(id))
+}
+
+const exportCsv = () => {
+  // ✅ tu peux choisir snkVentes.value (toute la liste) ou filteredVentes.value (liste filtrée)
+  const rows = filteredVentes.value
+
+  if (!rows.length) return
+
+  const safe = (v) => {
+    // CSV safe : guillemets + escape des guillemets
+    const s = String(v ?? '')
+    return `"${s.replaceAll('"', '""')}"`
+  }
+
+  const toIsoDate = (d) => {
+    if (!d) return ''
+    const date = new Date(d)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toISOString().slice(0, 10)
+  }
+
+  const headers = [
+    'nomItem',
+    'categorie',
+    'prixRetail',
+    'prixResell',
+    'dateAchat',
+    'dateVente',
+    'description',
+  ]
+
+  const lines = [
+    headers.join(';'),
+    ...rows.map((v) => {
+      const row = {
+        nomItem: v.nomItem ?? v.nom_item ?? '',
+        categorie: v.categorie ?? '',
+        prixRetail: v.prixRetail ?? v.prix_retail ?? '',
+        prixResell: v.prixResell ?? v.prix_resell ?? '',
+        dateAchat: toIsoDate(v.dateAchat ?? v.date_achat),
+        dateVente: toIsoDate(v.dateVente ?? v.date_vente),
+        description: v.description ?? '',
+      }
+
+      return headers.map((h) => safe(row[h])).join(';')
+    }),
+  ]
+
+  const csvContent = '\uFEFF' + lines.join('\n') // ✅ BOM pour Excel FR
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `sneaknik_export_${new Date().toISOString().slice(0, 10)}.csv`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+
+  URL.revokeObjectURL(url)
 }
 </script>
