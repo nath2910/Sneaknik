@@ -5,6 +5,6 @@
 </template>
 
 <script setup>
-import boutonOnAdd from '@/components/boutonOnAdd.vue'
+import boutonOnAdd from '@/components/GestionBoutonOnAdd.vue'
 defineEmits(['vente-ajoutee'])
 </script>

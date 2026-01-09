@@ -8,14 +8,14 @@
 <script setup>
 import { onMounted } from 'vue'
 import ApexCharts from 'apexcharts'
-import api from '@/services/api' // 👈 au lieu de axios + API
+import api from '@/services/api'
 
 onMounted(async () => {
   const el = document.querySelector('#pie-chart')
   if (!el) return
 
   try {
-    const res = await api.get('/snkVente/marque') // 👈 X-USER-ID auto
+    const res = await api.get('/snkVente/marque')
     const data = res.data
 
     const labels = data.map((d) => d.marque)

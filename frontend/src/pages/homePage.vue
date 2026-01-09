@@ -45,8 +45,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Affichage10 from '@/components/AffichageDix.vue'
-import HomeOverview from '@/components/homeOverView.vue'
+import Affichage10 from '@/components/AcceuilAffichageDix.vue'
+import HomeOverview from '@/components/AcceuilWidgetLateral.vue'
 import DashboardHeader from '@/components/dashbordHeader.vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 import { useAuthStore } from '@/store/authStore'

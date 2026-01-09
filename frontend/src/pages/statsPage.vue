@@ -32,9 +32,9 @@
 
 <script setup lang="ts">
 import DashboardHeader from '@/components/dashbordHeader.vue'
-import statBase from '@/components/statBase.vue'
-import graphMarque from '@/components/graphMarque.vue'
-import StatsSidePanels from '@/components/panneauStat.vue'
+import statBase from '@/components/StatBase.vue'
+import graphMarque from '@/components/StatGraphMarque.vue'
+import StatsSidePanels from '@/components/StatPanneauStat.vue'
 import { useAuthStore } from '@/store/authStore'
 
 const { user } = useAuthStore()

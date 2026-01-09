@@ -80,15 +80,14 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useAuthStore } from '@/store/authStore'
-
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 import DashboardHeader from '@/components/dashbordHeader.vue'
-import StockSummaryRow from '@/components/résumeStock.vue'
-import SearchBarre from '@/components/searchBarre.vue'
-import GestionActionsPanel from '@/components/blocBoutonAddDelete.vue'
-import afficherTout from '@/components/afficherTout.vue'
-import EditVenteModal from '@/components/modifItem.vue'
-import SupprimerModal from '@/components/SupprimerModal.vue'
+import StockSummaryRow from '@/components/GestionRésumeStock.vue'
+import SearchBarre from '@/components/GestionSearchBarre.vue'
+import GestionActionsPanel from '@/components/GestionBlocBoutonAddDelete.vue'
+import afficherTout from '@/components/GestionAfficherTout.vue'
+import EditVenteModal from '@/components/GestionModifierItem.vue'
+import SupprimerModal from '@/components/GestionSupprimerModal.vue'
 
 const snkVentes = ref([])
 const searchTerm = ref('')

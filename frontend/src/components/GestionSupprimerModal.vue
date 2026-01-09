@@ -11,10 +11,15 @@
             {{ modeLabel }}
           </p>
         </div>
-
-        <button class="rounded px-2 py-1 text-sm text-gray-600" @click="close" :disabled="loading">
-          ✕
-        </button>
+        <div class="[&_button:hover]:bg-gray-300">
+          <button
+            class="rounded px-2 py-1 text-sm text-gray-600"
+            @click="close"
+            :disabled="loading"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <!-- Switch mode -->
@@ -98,23 +103,26 @@
         </div>
 
         <div class="flex justify-end gap-2 pt-1">
-          <button
-            type="button"
-            class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-700"
-            @click="close"
-            :disabled="loading"
-          >
-            Annuler
-          </button>
-
-          <button
-            type="button"
-            class="px-4 py-1.5 text-sm rounded bg-red-600 text-white disabled:opacity-60"
-            :disabled="loading || !selected"
-            @click="deleteOne"
-          >
-            {{ loading ? 'Suppression...' : 'Supprimer' }}
-          </button>
+          <div class="[&_button:hover]:bg-gray-300">
+            <button
+              type="button"
+              class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-700"
+              @click="close"
+              :disabled="loading"
+            >
+              Annuler
+            </button>
+          </div>
+          <div class="[&_button:hover]:bg-red-800">
+            <button
+              type="button"
+              class="px-4 py-1.5 text-sm rounded bg-red-600 text-white disabled:opacity-60"
+              :disabled="loading || !selected"
+              @click="deleteOne"
+            >
+              {{ loading ? 'Suppression...' : 'Supprimer' }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -125,23 +133,26 @@
         </p>
 
         <div class="flex justify-end gap-2 pt-1">
-          <button
-            type="button"
-            class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
-            @click="close"
-            :disabled="loading"
-          >
-            Annuler
-          </button>
-
-          <button
-            type="button"
-            class="px-4 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
-            :disabled="loading || !selectedIds.length"
-            @click="deleteBulk"
-          >
-            {{ loading ? 'Suppression...' : 'Supprimer la sélection' }}
-          </button>
+          <div class="[&_button:hover]:bg-gray-300">
+            <button
+              type="button"
+              class="px-4 py-1.5 text-sm rounded border border-gray-300 text-gray-700"
+              @click="close"
+              :disabled="loading"
+            >
+              Annuler
+            </button>
+          </div>
+          <div class="[&_button:hover]:bg-red-800">
+            <button
+              type="button"
+              class="px-4 py-1.5 text-sm rounded bg-red-600 text-white"
+              :disabled="loading || !selectedIds.length"
+              @click="deleteBulk"
+            >
+              {{ loading ? 'Suppression...' : 'Supprimer la sélection' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

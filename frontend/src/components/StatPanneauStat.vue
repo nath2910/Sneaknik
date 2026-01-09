@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import StatBadge from '@/components/statBadge.vue'
+import StatBadge from '@/components/StatBadge.vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 
 interface Props {

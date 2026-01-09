@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import StatBadge from '@/components/statBadge.vue'
+import StatBadge from '@/components/StatBadge.vue'
 
 interface Props {
   totalBenefice: number
