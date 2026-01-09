@@ -2,12 +2,13 @@
 <template>
   <div class="fixed inset-0 z-40">
     <!-- overlay -->
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click.self="close"></div>
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click.self="handleClose"></div>
 
     <!-- modal -->
     <div class="relative z-10 flex items-center justify-center min-h-full p-4">
       <div
         class="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-gray-800 border border-gray-700 shadow-2xl"
+        @click.stop
       >
         <!-- Header -->
         <div class="flex items-start justify-between p-5 border-b border-gray-700">
@@ -18,10 +19,10 @@
             </p>
           </div>
 
-          <!-- croix (hover gris cohérent) -->
+          <!-- Close -->
           <button
             type="button"
-            @click="close"
+            @click="handleClose"
             class="rounded-lg p-2 text-gray-300 transition hover:bg-gray-700/60 hover:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30"
             aria-label="Fermer"
           >
@@ -36,7 +37,7 @@
           </button>
         </div>
 
-        <!-- Erreur -->
+        <!-- Alerts -->
         <div
           v-if="error"
           class="mx-6 mt-4 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200"
@@ -44,16 +45,15 @@
           ⚠️ {{ error }}
         </div>
 
-        <!-- Succès -->
         <div
           v-if="success"
           class="mx-6 mt-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200"
         >
-          ✅ Vente ajoutée avec succès.
+          ✅ Vente{{ copies > 1 ? 's' : '' }} ajoutée{{ copies > 1 ? 's' : '' }} avec succès.
         </div>
 
-        <!-- Formulaire -->
-        <form class="p-6 space-y-6" @submit.prevent="creerVente">
+        <!-- Form -->
+        <form class="p-6 space-y-6" @submit.prevent="createSales">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <!-- Nom -->
             <div>
@@ -61,9 +61,9 @@
                 Nom de l'item
               </label>
               <input
-                type="text"
                 id="nomItem"
-                v-model="form.nomItem"
+                type="text"
+                v-model.trim="form.nomItem"
                 placeholder="Dunk low, Bundle 151, Ruinart ..."
                 required
                 class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
@@ -76,12 +76,32 @@
                 Catégorie
               </label>
               <input
-                type="text"
                 id="categorie"
-                v-model="form.categorie"
+                type="text"
+                v-model.trim="form.categorie"
                 placeholder="Jordan, Hennessy, One Piece ..."
                 class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
               />
+            </div>
+
+            <!-- Nombre d'exemplaires -->
+            <div>
+              <label for="copies" class="block text-sm font-medium text-gray-200 mb-2">
+                Nombre d'exemplaires
+              </label>
+              <input
+                id="copies"
+                type="number"
+                v-model.number="copies"
+                min="1"
+                max="50"
+                step="1"
+                required
+                class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+              />
+              <p class="mt-1 text-xs text-gray-500">
+                Determine la quantité voulue !
+              </p>
             </div>
 
             <!-- Prix retail -->
@@ -90,8 +110,8 @@
                 Prix Retail (€)
               </label>
               <input
-                type="number"
                 id="prixRetail"
+                type="number"
                 v-model.number="form.prixRetail"
                 placeholder="110 €"
                 min="0"
@@ -107,8 +127,8 @@
                 Prix Revente (€)
               </label>
               <input
-                type="number"
                 id="prixResell"
+                type="number"
                 v-model.number="form.prixResell"
                 placeholder="180 €"
                 min="0"
@@ -123,8 +143,8 @@
                 Date d'achat
               </label>
               <input
-                type="date"
                 id="dateAchat"
+                type="date"
                 v-model="form.dateAchat"
                 required
                 class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
@@ -137,12 +157,12 @@
                 Date de vente
               </label>
               <input
-                type="date"
                 id="dateVente"
+                type="date"
                 v-model="form.dateVente"
                 class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
               />
-              <p class="mt-1 text-xs text-gray-500">Laisse vide si pas vendue.</p>
+              <p class="mt-1 text-xs text-gray-500">Laisse vide si pas encore vendue.</p>
             </div>
 
             <!-- Description -->
@@ -152,7 +172,7 @@
               </label>
               <textarea
                 id="description"
-                v-model="form.description"
+                v-model.trim="form.description"
                 rows="3"
                 placeholder="Etat, taille, notes perso..."
                 class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
@@ -164,7 +184,7 @@
           <div class="pt-4 border-t border-gray-700 flex items-center justify-end gap-2">
             <button
               type="button"
-              @click="close"
+              @click="handleClose"
               class="px-4 py-2 text-sm rounded-lg border border-gray-600 text-gray-200 hover:bg-gray-700/50 transition disabled:opacity-60 disabled:cursor-not-allowed"
               :disabled="loading"
             >
@@ -176,7 +196,15 @@
               :disabled="loading"
               class="px-5 py-2 text-sm rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-60 disabled:cursor-not-allowed transition whitespace-nowrap inline-flex items-center gap-2"
             >
-              <span>{{ loading ? 'Enregistrement...' : 'Enregistrer la vente' }}</span>
+              <span>
+                {{
+                  loading
+                    ? 'Enregistrement...'
+                    : copies > 1
+                      ? `Enregistrer ${copies} ventes`
+                      : 'Enregistrer la vente'
+                }}
+              </span>
             </button>
           </div>
         </form>
@@ -186,17 +214,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 import { useAuthStore } from '@/store/authStore'
-const authStore = useAuthStore()
-const currentUser = authStore.user
 
 const emit = defineEmits(['close', 'added'])
 
+const authStore = useAuthStore()
+const currentUserId = computed(() => authStore.user?.value?.id ?? authStore.user?.id ?? null)
+
+const loading = ref(false)
+const success = ref(false)
+const error = ref(null)
+
+const copies = ref(1)
+const keepCommonFields = ref(true)
+
 const getToday = () => new Date().toISOString().split('T')[0]
 
-const emptyForm = () => ({
+const emptyForm = (prefill = {}) => ({
   nomItem: '',
   prixRetail: null,
   prixResell: null,
@@ -204,51 +240,77 @@ const emptyForm = () => ({
   dateVente: null,
   description: '',
   categorie: '',
+  ...prefill,
 })
 
 const form = ref(emptyForm())
-const loading = ref(false)
-const success = ref(false)
-const error = ref(null)
 
-const close = () => {
-  form.value = emptyForm()
+const resetState = () => {
   success.value = false
   error.value = null
+  loading.value = false
+}
+
+const handleClose = () => {
+  form.value = emptyForm()
+  copies.value = 1
+  keepCommonFields.value = true
+  resetState()
   emit('close')
 }
 
-const creerVente = async () => {
+const buildPayload = () => ({
+  nomItem: form.value.nomItem,
+  prixRetail: form.value.prixRetail,
+  prixResell: form.value.prixResell,
+  dateAchat: form.value.dateAchat,
+  dateVente: form.value.dateVente,
+  description: form.value.description,
+  categorie: form.value.categorie,
+  user: currentUserId.value ? { id: currentUserId.value } : null,
+})
+
+const createSales = async () => {
   loading.value = true
   success.value = false
   error.value = null
 
   try {
-    await SnkVenteServices.ajouter({
-      nomItem: form.value.nomItem,
-      prixRetail: form.value.prixRetail,
-      prixResell: form.value.prixResell,
-      dateAchat: form.value.dateAchat,
-      dateVente: form.value.dateVente,
-      description: form.value.description,
-      categorie: form.value.categorie,
-      user: currentUser.value ? { id: currentUser.value.id } : null,
-      // tu pourras plus tard ajouter userId ici si tu gères l’auth
-    })
+    const n = Math.min(50, Math.max(1, Number(copies.value || 1)))
+    const payload = buildPayload()
+
+    // Série = plus stable (évite de spam le backend)
+    for (let i = 0; i < n; i++) {
+      await SnkVenteServices.ajouter({ ...payload })
+    }
 
     success.value = true
     emit('added')
 
+    const prefill = keepCommonFields.value
+      ? {
+          nomItem: form.value.nomItem,
+          categorie: form.value.categorie,
+          description: form.value.description,
+        }
+      : {}
+
+    // Reset form (garde éventuellement certains champs)
     setTimeout(() => {
+      form.value = emptyForm(prefill)
+      copies.value = 1
       success.value = false
-      form.value = emptyForm()
-      close()
-    }, 1000)
+      // Si tu préfères garder le modal ouvert, commente la ligne suivante :
+      handleClose()
+    }, 700)
   } catch (err) {
-    error.value = err.response?.data?.message || 'Erreur lors de la création de la vente'
+    error.value = err?.response?.data?.message || 'Erreur lors de la création de la vente'
+
     console.error('Erreur:', err)
   } finally {
     loading.value = false
   }
 }
 </script>
+
+<style></style>
