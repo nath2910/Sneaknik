@@ -64,13 +64,29 @@
           <label for="loginPassword" class="block text-sm font-medium text-gray-200"
             >Mot de passe</label
           >
-          <input
-            type="password"
-            id="loginPassword"
-            v-model="loginForm.password"
-            required
-            class="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-          />
+
+          <div class="relative mt-1">
+            <input
+              :type="showLoginPassword ? 'text' : 'password'"
+              id="loginPassword"
+              v-model="loginForm.password"
+              required
+              class="block w-full pr-10 px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            />
+
+            <button
+              type="button"
+              class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-200"
+              @click="showLoginPassword = !showLoginPassword"
+              :aria-label="
+                showLoginPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'
+              "
+            >
+              <span class="text-xs font-medium">
+                {{ showLoginPassword ? 'Masquer' : 'Afficher' }}
+              </span>
+            </button>
+          </div>
         </div>
 
         <button
@@ -106,7 +122,7 @@
             />
           </div>
         </div>
-
+        <!-- email -->
         <div>
           <label for="signupEmail" class="block text-sm font-medium text-gray-200">Email</label>
           <input
@@ -117,31 +133,63 @@
             class="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
           />
         </div>
-
+        <!-- mdp premier -->
         <div>
-          <label for="signupPassword" class="block text-sm font-medium text-gray-200"
+          <label for="loginPassword" class="block text-sm font-medium text-gray-200"
             >Mot de passe</label
           >
-          <input
-            type="password"
-            id="signupPassword"
-            v-model="signupForm.password"
-            required
-            class="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-          />
-        </div>
 
+          <div class="relative mt-1">
+            <input
+              :type="showLoginPassword ? 'text' : 'password'"
+              id="loginPassword"
+              v-model="loginForm.password"
+              required
+              class="block w-full pr-10 px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            />
+
+            <button
+              type="button"
+              class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-200"
+              @click="showLoginPassword = !showLoginPassword"
+              :aria-label="
+                showLoginPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'
+              "
+            >
+              <span class="text-xs font-medium">
+                {{ showLoginPassword ? 'Masquer' : 'Afficher' }}
+              </span>
+            </button>
+          </div>
+        </div>
+        <!-- mdp deuxieme -->
         <div>
           <label for="confirmPassword" class="block text-sm font-medium text-gray-200">
             Confirmer le mot de passe
           </label>
-          <input
-            type="password"
-            id="confirmPassword"
-            v-model="signupForm.confirmPassword"
-            required
-            class="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-          />
+
+          <div class="relative mt-1">
+            <input
+              :type="showConfirmPassword ? 'text' : 'password'"
+              id="confirmPassword"
+              v-model="signupForm.confirmPassword"
+              required
+              class="block w-full pr-10 px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            />
+
+            <button
+              type="button"
+              class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-200"
+              @click="showConfirmPassword = !showConfirmPassword"
+              :aria-label="
+                showConfirmPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'
+              "
+            >
+              <span class="text-xs font-medium">
+                {{ showConfirmPassword ? 'Masquer' : 'Afficher' }}
+              </span>
+            </button>
+          </div>
         </div>
 
         <button
@@ -161,6 +209,11 @@ import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AuthService from '@/services/AuthService'
 import { useAuthStore } from '@/store/authStore'
+
+//mdp cache
+const showLoginPassword = ref(false)
+const showSignupPassword = ref(false)
+const showConfirmPassword = ref(false)
 
 // routing
 const route = useRoute()

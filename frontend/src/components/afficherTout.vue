@@ -1,13 +1,34 @@
 <template>
   <div class="overflow-x-auto">
+    <!-- mini barre sélection -->
+    <div v-if="selectable" class="mb-3 flex items-center justify-between">
+      <p class="text-xs text-gray-400">{{ modelValue.length }} sélectionnée(s)</p>
+
+      <button
+        type="button"
+        class="text-xs text-gray-300 underline hover:text-white"
+        @click="toggleAll"
+      >
+        {{ allSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+      </button>
+    </div>
+
     <table class="min-w-full text-sm text-gray-100">
       <thead class="bg-gray-900 border-b border-gray-700">
         <tr>
+          <!-- ✅ nouvelle colonne sélection -->
           <th
+            v-if="selectable"
             class="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wide text-gray-400"
           >
-            id
+            <input
+              type="checkbox"
+              :checked="allSelected"
+              @change="toggleAll"
+              class="accent-purple-500"
+            />
           </th>
+
           <th
             class="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wide text-gray-400"
           >
@@ -51,14 +72,16 @@
         </tr>
       </thead>
 
-      <tbody>
-        <tr
-          v-for="vente in snkVentes"
-          :key="vente.id"
-          class="border-b border-gray-800 hover:bg-gray-900/70 transition"
-        >
-          <td class="px-4 py-3 text-xs text-gray-300">
-            {{ vente.id }}
+      <tbody class="[&>tr:hover>td]:bg-gray-900/70 [&>tr:hover>td]:transition-colors">
+        <tr v-for="vente in snkVentes" :key="vente.id" class="border-b border-gray-800">
+          <!-- checkbox -->
+          <td v-if="selectable" class="px-4 py-3">
+            <input
+              type="checkbox"
+              class="accent-purple-500"
+              :checked="isSelected(vente.id)"
+              @change="toggleOne(vente.id)"
+            />
           </td>
 
           <td class="px-4 py-3">
@@ -110,14 +133,12 @@
             </span>
           </td>
 
-          <!-- Actions -->
           <td class="px-4 py-3 text-center">
             <button
               type="button"
-              class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-800 border border-purple-500/60 text-purple-200 hover:bg-purple-600/20 hover:border-purple-400 transition"
+              class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-800 border border-purple-500/60 text-purple-200 hover:bg-purple-600/30 hover:border-purple-300 hover:text-white transition"
               @click="$emit('edit', vente)"
             >
-              <!-- icône crayon -->
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
@@ -131,7 +152,7 @@
         </tr>
 
         <tr v-if="!snkVentes.length">
-          <td colspan="9" class="px-4 py-8 text-center text-sm text-gray-400">
+          <td :colspan="selectable ? 9 : 8" class="px-4 py-8 text-center text-sm text-gray-400">
             Aucune paire à afficher pour le moment.
           </td>
         </tr>
@@ -141,14 +162,48 @@
 </template>
 
 <script setup>
-defineProps({
-  snkVentes: {
-    type: Array,
-    required: true,
-  },
+import { computed } from 'vue'
+
+const props = defineProps({
+  snkVentes: { type: Array, required: true },
+
+  // ✅ mode sélection
+  selectable: { type: Boolean, default: false },
+
+  // ✅ v-model = liste d’IDs sélectionnés
+  modelValue: { type: Array, default: () => [] },
 })
 
-defineEmits(['edit'])
+const emit = defineEmits(['edit', 'update:modelValue'])
+
+const isSelected = (id) => props.modelValue.includes(id)
+
+const allSelected = computed(() => {
+  if (!props.snkVentes.length) return false
+  return props.snkVentes.every((v) => props.modelValue.includes(v.id))
+})
+
+const toggleOne = (id) => {
+  const next = new Set(props.modelValue)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  emit('update:modelValue', Array.from(next))
+}
+
+const toggleAll = () => {
+  const visibleIds = props.snkVentes.map((v) => v.id)
+
+  if (allSelected.value) {
+    // enlève ceux visibles
+    const next = props.modelValue.filter((id) => !visibleIds.includes(id))
+    emit('update:modelValue', next)
+  } else {
+    // ajoute ceux visibles
+    const next = new Set(props.modelValue)
+    visibleIds.forEach((id) => next.add(id))
+    emit('update:modelValue', Array.from(next))
+  }
+}
 
 const formatCurrency = (val) => {
   const num = Number(val)

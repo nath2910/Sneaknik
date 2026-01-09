@@ -1,49 +1,28 @@
 <!-- src/components/boutonOnAdd.vue -->
 <template>
-  <div class="flex flex-wrap gap-3">
-    <!-- BTN AJOUTER -->
+  <div class="[&_button:hover]:bg-emerald-800">
     <button
       v-if="!showAdd"
+      type="button"
       @click="showAdd = true"
-      class="px-6 py-2 min-w-[150px] text-center rounded border border-green-600 bg-transparent text-green-600 cursor-pointer transition-colors transition-transform duration-150 hover:bg-green-600 hover:text-white hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md focus:outline-none focus:ring focus:ring-violet-500/50"
+      class="px-3 py-2 text-xs rounded bg-emerald-600 text-white border border-emerald-300/30 transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
     >
-      Ajouter une paire
+      Ajouter un item
     </button>
 
-    <!-- BTN SUPPRIMER -->
-    <button
-      v-if="!showDelete"
-      @click="showDelete = true"
-      class="px-6 py-2 min-w-[150px] text-center rounded border border-red-500 bg-transparent text-red-500 cursor-pointer transition-colors transition-transform duration-150 hover:bg-red-500 hover:text-white hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-md focus:outline-none focus:ring focus:ring-red-500/50"
-    >
-      Supprimer une paire
-    </button>
-
-    <!-- Modale ajout -->
     <AjoutPaire v-if="showAdd" @close="showAdd = false" @added="handleAdded" />
-
-    <!-- Modale suppression -->
-    <SupprimerPaire v-if="showDelete" @close="showDelete = false" @deleted="handleDeleted" />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import AjoutPaire from '@/components/AjoutPaire.vue'
-import SupprimerPaire from '@/components/supprimerPaire.vue'
 
-const emit = defineEmits(['vente-ajoutee', 'vente-supprimee'])
-
+const emit = defineEmits(['vente-ajoutee'])
 const showAdd = ref(false)
-const showDelete = ref(false)
 
 const handleAdded = () => {
   showAdd.value = false
   emit('vente-ajoutee')
-}
-
-const handleDeleted = (id) => {
-  showDelete.value = false
-  emit('vente-supprimee', id)
 }
 </script>

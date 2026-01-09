@@ -5,11 +5,13 @@
       <div
         class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4"
       >
-        <!-- Mobile Menu Button (Visible uniquement sur mobile) -->
+        <!-- Mobile burger -->
         <div class="flex md:hidden">
           <button
+            type="button"
             @click="toggleMobileMenu"
             class="text-gray-300 hover:text-white focus:outline-none p-2"
+            aria-label="Ouvrir le menu"
           >
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -30,24 +32,24 @@
           </button>
         </div>
 
-        <!-- Desktop nav (Caché sur mobile, visible sur md+) -->
+        <!-- Desktop nav (inchangé) -->
         <nav class="hidden md:flex flex-1 items-center justify-center gap-6">
           <RouterLink :to="'/'" class="nav" :class="isActive('/')">Accueil</RouterLink>
           <RouterLink :to="'/stats'" class="nav" :class="isActive('/stats')">Stats</RouterLink>
-          <RouterLink :to="'/gestion'" class="nav" :class="isActive('/gestion')">
-            Gestion
-          </RouterLink>
+          <RouterLink :to="'/gestion'" class="nav" :class="isActive('/gestion')"
+            >Gestion</RouterLink
+          >
         </nav>
 
-        <!-- Icône user -->
+        <!-- User menu -->
         <div class="relative" @click.stop>
           <button
+            type="button"
             @click.stop="toggleMenu"
             class="ml-4 h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center border border-slate-600 hover:border-purple-400 focus:outline-none"
+            aria-label="Menu utilisateur"
           >
-            <span class="text-sm font-semibold">
-              {{ initials }}
-            </span>
+            <span class="text-sm font-semibold">{{ initials }}</span>
           </button>
 
           <!-- Pop-up -->
@@ -64,37 +66,28 @@
               </p>
             </div>
 
-            <div class="py-2">
+            <div
+              class="py-2 [&_button]:w-full [&_button]:text-left [&_button]:px-4 [&_button]:py-2 [&_button]:text-sm [&_button]:transition-colors [&_button:hover]:bg-slate-200 [&_button:active]:bg-slate-200"
+            >
               <!-- si pas connecté -->
-              <button
-                v-if="!currentUser"
-                @click="goToAuth('login')"
-                class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100"
-              >
+              <button v-if="!currentUser" type="button" @click="goToAuth('login')">
                 Se connecter
               </button>
 
-              <button
-                v-if="!currentUser"
-                @click="goToAuth('signup')"
-                class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100"
-              >
+              <button v-if="!currentUser" type="button" @click="goToAuth('signup')">
                 Créer un compte
               </button>
 
-              <!-- si connecte -->
-              <button
-                v-if="currentUser"
-                @click="goToAccount"
-                class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100"
-              >
+              <!-- si connecté -->
+              <button v-if="currentUser" type="button" @click="goToAccount">
                 Gérer mon compte
               </button>
 
               <button
                 v-if="currentUser"
+                type="button"
                 @click="logout"
-                class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                class="text-red-600 [&:hover]:bg-red-50 [&:active]:bg-red-100"
               >
                 Se déconnecter
               </button>
@@ -103,7 +96,7 @@
         </div>
       </div>
 
-      <!-- Mobile Menu Dropdown (S'affiche quand on clique sur le burger) -->
+      <!-- Mobile menu -->
       <div v-if="mobileMenuOpen" class="md:hidden bg-gray-800 border-b border-gray-700">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <RouterLink
@@ -157,33 +150,12 @@ import { useAuthStore } from '@/store/authStore'
 
 const route = useRoute()
 const router = useRouter()
+
 const menuOpen = ref(false)
 const mobileMenuOpen = ref(false)
+
 const auth = useAuthStore()
 const currentUser = auth.user
-
-// Fermeture globale du menu
-const closeMenu = () => {
-  menuOpen.value = false
-}
-
-// Fermer quand on clique n'importe où dans la fenêtre
-onMounted(() => {
-  window.addEventListener('click', closeMenu)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('click', closeMenu)
-})
-
-// Fermer le menu quand la route change
-watch(
-  () => route.fullPath,
-  () => {
-    menuOpen.value = false
-    mobileMenuOpen.value = false
-  },
-)
 
 const initials = computed(() => {
   if (!currentUser.value) return '👤'
@@ -193,40 +165,64 @@ const initials = computed(() => {
   return (f + l || '👤').toUpperCase()
 })
 
-const isActive = (path) => {
-  return route.path === path ? 'text-purple-400 font-semibold' : ''
-}
+const isActive = (path) => (route.path === path ? 'text-purple-400 font-semibold' : '')
 
-const isActiveMobile = (path) => {
-  return route.path === path
+const isActiveMobile = (path) =>
+  route.path === path
     ? 'bg-gray-900 text-purple-400'
     : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+
+const closeMenus = () => {
+  menuOpen.value = false
+  mobileMenuOpen.value = false
 }
 
 const toggleMenu = () => {
   menuOpen.value = !menuOpen.value
+  // si on ouvre user menu, on ferme mobile
+  if (menuOpen.value) mobileMenuOpen.value = false
 }
 
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
+  // si on ouvre mobile, on ferme user menu
+  if (mobileMenuOpen.value) menuOpen.value = false
 }
 
-// aller vers la page de connexion/création de compte
+const onWindowClick = () => closeMenus()
+const onKeyDown = (e) => {
+  if (e.key === 'Escape') closeMenus()
+}
+
+onMounted(() => {
+  window.addEventListener('click', onWindowClick)
+  window.addEventListener('keydown', onKeyDown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('click', onWindowClick)
+  window.removeEventListener('keydown', onKeyDown)
+})
+
+watch(
+  () => route.fullPath,
+  () => closeMenus(),
+)
+
 const goToAuth = (mode) => {
   menuOpen.value = false
   router.push({ name: 'auth', query: { mode } })
 }
 
-// aller vers la page compte
 const goToAccount = () => {
   menuOpen.value = false
   router.push({ name: 'account' })
 }
 
 const logout = () => {
-  auth.logout() // ✅ existe
+  auth.logout()
   menuOpen.value = false
-  router.push({ name: 'auth', query: { mode: 'login' } }) // optionnel
+  router.push({ name: 'auth', query: { mode: 'login' } })
 }
 </script>
 

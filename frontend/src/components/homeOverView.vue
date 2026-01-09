@@ -22,19 +22,21 @@
     </div>
 
     <!-- Actions rapides -->
-    <div class="bg-gray-800 border border-gray-700 rounded-3xl shadow-lg p-5 space-y-3">
+    <div
+      class="bg-gray-800 border border-gray-700 rounded-3xl shadow-lg p-5 space-y-3 [&_button:hover]:bg-purple-800"
+    >
       <h3 class="text-sm font-semibold text-gray-100">Actions rapides</h3>
       <p class="text-xs text-gray-400">Accède directement aux principales sections de gestion.</p>
 
       <div class="flex flex-col gap-2 pt-1">
         <button
-          class="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition"
+          class="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-900 text-white transition"
           @click="$emit('go-gestion')"
         >
           ➕ Gérer les ventes
         </button>
         <button
-          class="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-900 text-gray-100 border border-gray-700 hover:bg-gray-800 transition"
+          class="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-900 text-gray-100 border border-gray-700 transition"
           @click="$emit('go-stats')"
         >
           📊 Voir les stats détaillées

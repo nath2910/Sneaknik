@@ -1,15 +1,12 @@
 <template>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-    <!-- Bandeau -->
     <DashboardHeader
       subtitle="Backoffice • Stock Sneaknik"
       title="Gestion des ventes"
-      description="Ajoute ou supprime des paires et surveille ton stock en temps réel."
+      description="Ajoute, modifie, recherche, sélectionne et supprime."
     />
 
-    <!-- Contenu connecté -->
     <section class="space-y-6">
-      <!-- Résumé stock -->
       <StockSummaryRow
         :total-paires="totalPaires"
         :nb-en-stock="nbEnStock"
@@ -17,71 +14,105 @@
         :valeur-stock="valeurStock"
       />
 
-      <!-- Barre de recherche -->
       <div class="flex justify-center">
         <div class="w-full md:w-3/4 lg:w-2/3">
           <SearchBarre v-model="searchTerm" />
         </div>
       </div>
 
-      <!-- Boutons Ajouter / Supprimer centrés -->
-      <div class="flex justify-center">
-        <GestionActionsPanel
-          @vente-ajoutee="handleVenteAjoutee"
-          @vente-supprimee="handleVenteSupprimee"
-        />
-      </div>
-
-      <!-- Tableau plein largeur -->
+      <!-- Tableau -->
       <div class="bg-gray-800 border border-gray-700 rounded-3xl shadow-lg overflow-hidden">
+        <!-- Header tableau -->
         <div class="px-6 py-4 flex items-center justify-between border-b border-gray-700/80">
+          <!-- Gauche : titre -->
           <div>
-            <h2 class="text-lg font-semibold text-gray-100">Liste des items</h2>
-            <p class="text-xs text-gray-400">{{ filteredVentes.length }} paire(s) trouvée(s)</p>
+            <h2 class="text-lg font-semibold text-gray-100 leading-tight">Liste des items</h2>
+            <p class="text-xs text-gray-400">
+              {{ filteredVentes.length }} paire(s) trouvée(s)
+              <span v-if="selectedIds.length"> • {{ selectedIds.length }} sélectionnée(s) </span>
+            </p>
+          </div>
+
+          <!-- Droite : actions -->
+          <div class="flex items-center gap-2">
+            <GestionActionsPanel @vente-ajoutee="handleVenteAjoutee" />
+            <div class="[&_button:hover]:bg-red-900">
+              <button
+                type="button"
+                class="px-4 py-2 text-xs rounded bg-red-600 text-white disabled:opacity-60 transition whitespace-nowrap"
+                @click="openDeleteBulk"
+              >
+                Supprimer un item
+              </button>
+            </div>
           </div>
         </div>
 
+        <!-- Liste -->
         <div class="p-4">
           <div class="max-h-[480px] overflow-y-auto pr-2">
-            <afficherTout :snkVentes="filteredVentes" @edit="openEditModal" />
+            <afficherTout
+              :snkVentes="filteredVentes"
+              selectable
+              v-model="selectedIds"
+              @edit="openEditModal"
+            />
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Modal d’édition -->
+    <!-- Edition -->
     <EditVenteModal v-model="showEditModal" :vente="venteToEdit" @saved="handleVenteUpdated" />
+
+    <!-- Delete modal (unique) -->
+    <SupprimerModal
+      v-if="showDeleteModal"
+      :snkVentes="snkVentes"
+      :selectedIds="selectedIds"
+      :defaultMode="deleteMode"
+      @close="showDeleteModal = false"
+      @deleted="handleDeleted"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useAuthStore } from '@/store/authStore'
-import afficherTout from '@/components/afficherTout.vue'
-import SearchBarre from '@/components/searchBarre.vue'
+
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 import DashboardHeader from '@/components/dashbordHeader.vue'
 import StockSummaryRow from '@/components/résumeStock.vue'
-import GestionActionsPanel from '@/components/blocBoutonAddDelete.vue'  
+import SearchBarre from '@/components/searchBarre.vue'
+import GestionActionsPanel from '@/components/blocBoutonAddDelete.vue'
+import afficherTout from '@/components/afficherTout.vue'
 import EditVenteModal from '@/components/modifItem.vue'
+import SupprimerModal from '@/components/SupprimerModal.vue'
 
 const snkVentes = ref([])
 const searchTerm = ref('')
-
-const { user } = useAuthStore()
-const currentUser = user
+const selectedIds = ref([])
 
 const showEditModal = ref(false)
 const venteToEdit = ref(null)
 
+const showDeleteModal = ref(false)
+const deleteMode = ref('name') // 'name' | 'bulk'
+
+const { user } = useAuthStore()
+const currentUser = user
+
 const chargerVentes = async () => {
   if (!currentUser.value) {
     snkVentes.value = []
+    selectedIds.value = []
     return
   }
+
   try {
     const { data } = await SnkVenteServices.getSnkVente()
-    snkVentes.value = data
+    snkVentes.value = Array.isArray(data) ? data : []
   } catch (e) {
     console.error('Erreur chargement ventes', e)
     snkVentes.value = []
@@ -90,7 +121,7 @@ const chargerVentes = async () => {
 
 onMounted(chargerVentes)
 
-// Stats stock
+// Stats
 const isVendue = (v) => Boolean(v.dateVente ?? v.date_vente)
 const prixRetailOf = (v) => Number(v.prixRetail ?? v.prix_retail ?? 0)
 
@@ -107,32 +138,32 @@ const valeurStock = computed(() =>
     }, 0),
 )
 
-// Callbacks ajout/suppression
+// Recherche
+const filteredVentes = computed(() => {
+  const term = (searchTerm.value || '').trim().toLowerCase()
+  if (!term) return snkVentes.value
+
+  return snkVentes.value.filter((v) => {
+    const idStr = String(v.id ?? '')
+    const name = String(v.nomItem ?? v.nom_item ?? '').toLowerCase()
+    const cat = String(v.categorie ?? '').toLowerCase()
+    const desc = String(v.description ?? '').toLowerCase()
+    return idStr.includes(term) || name.includes(term) || cat.includes(term) || desc.includes(term)
+  })
+})
+
+// Sélection logique : si tu filtres, on garde seulement ce qui est visible
+watch(filteredVentes, (list) => {
+  const visible = new Set(list.map((v) => v.id))
+  selectedIds.value = selectedIds.value.filter((id) => visible.has(id))
+})
+
+// Ajout
 const handleVenteAjoutee = async () => {
   await chargerVentes()
 }
 
-const handleVenteSupprimee = (id) => {
-  snkVentes.value = snkVentes.value.filter((v) => v.id !== id)
-}
-
-// Filtre recherche
-const filteredVentes = computed(() => {
-  if (!searchTerm.value) return snkVentes.value
-
-  const term = searchTerm.value.toLowerCase()
-
-  return snkVentes.value.filter((v) => {
-    return (
-      String(v.id).includes(term) ||
-      v.nomItem?.toLowerCase().includes(term) ||
-      v.categorie?.toLowerCase().includes(term) ||
-      v.description?.toLowerCase().includes(term)
-    )
-  })
-})
-
-// édition
+// Edition
 const openEditModal = (vente) => {
   venteToEdit.value = { ...vente }
   showEditModal.value = true
@@ -140,8 +171,23 @@ const openEditModal = (vente) => {
 
 const handleVenteUpdated = (updated) => {
   const index = snkVentes.value.findIndex((v) => v.id === updated.id)
-  if (index !== -1) {
-    snkVentes.value[index] = updated
-  }
+  if (index !== -1) snkVentes.value[index] = updated
+}
+
+// Delete modal
+const openDeleteByName = () => {
+  deleteMode.value = 'name'
+  showDeleteModal.value = true
+}
+
+const openDeleteBulk = () => {
+  deleteMode.value = 'bulk'
+  showDeleteModal.value = true
+}
+
+const handleDeleted = (ids) => {
+  const set = new Set(ids)
+  snkVentes.value = snkVentes.value.filter((v) => !set.has(v.id))
+  selectedIds.value = selectedIds.value.filter((id) => !set.has(id))
 }
 </script>
