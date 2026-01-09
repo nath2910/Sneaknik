@@ -9,9 +9,10 @@
         <div class="flex md:hidden">
           <button
             type="button"
-            @click="toggleMobileMenu"
-            class="text-gray-300 hover:text-white focus:outline-none p-2"
+            @click.stop="toggleMobileMenu"
+            class="text-gray-300 focus:outline-none p-2"
             aria-label="Ouvrir le menu"
+            :aria-expanded="mobileMenuOpen"
           >
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -32,7 +33,7 @@
           </button>
         </div>
 
-        <!-- Desktop nav (inchangé) -->
+        <!-- Desktop nav -->
         <nav class="hidden md:flex flex-1 items-center justify-center gap-6">
           <RouterLink :to="'/'" class="nav" :class="isActive('/')">Accueil</RouterLink>
           <RouterLink :to="'/stats'" class="nav" :class="isActive('/stats')">Stats</RouterLink>
@@ -45,9 +46,10 @@
         <div class="relative" @click.stop>
           <button
             type="button"
-            @click.stop="toggleMenu"
+            @click.stop="toggleUserMenu"
             class="ml-4 h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center border border-slate-600 hover:border-purple-400 focus:outline-none"
             aria-label="Menu utilisateur"
+            :aria-expanded="menuOpen"
           >
             <span class="text-sm font-semibold">{{ initials }}</span>
           </button>
@@ -97,24 +99,27 @@
       </div>
 
       <!-- Mobile menu -->
-      <div v-if="mobileMenuOpen" class="md:hidden bg-gray-800 border-b border-gray-700">
+      <div v-if="mobileMenuOpen" class="md:hidden bg-gray-800 border-b border-gray-700" @click.stop>
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <RouterLink
             :to="'/'"
             class="block px-3 py-2 rounded-md text-base font-medium"
             :class="isActiveMobile('/')"
+            @click="closeMenus"
             >Accueil</RouterLink
           >
           <RouterLink
             :to="'/stats'"
             class="block px-3 py-2 rounded-md text-base font-medium"
             :class="isActiveMobile('/stats')"
+            @click="closeMenus"
             >Stats</RouterLink
           >
           <RouterLink
             :to="'/gestion'"
             class="block px-3 py-2 rounded-md text-base font-medium"
             :class="isActiveMobile('/gestion')"
+            @click="closeMenus"
             >Gestion</RouterLink
           >
         </div>
@@ -155,13 +160,15 @@ const menuOpen = ref(false)
 const mobileMenuOpen = ref(false)
 
 const auth = useAuthStore()
-const currentUser = auth.user
+
+// ✅ important : computed pour rester réactif avec Pinia
+const currentUser = computed(() => auth.user?.value ?? auth.user ?? null)
 
 const initials = computed(() => {
-  if (!currentUser.value) return '👤'
-  if (!currentUser.value.firstName && !currentUser.value.lastName) return '👤'
-  const f = currentUser.value.firstName?.[0] || ''
-  const l = currentUser.value.lastName?.[0] || ''
+  const u = currentUser.value
+  if (!u) return '👤'
+  const f = u.firstName?.[0] || ''
+  const l = u.lastName?.[0] || ''
   return (f + l || '👤').toUpperCase()
 })
 
@@ -177,19 +184,22 @@ const closeMenus = () => {
   mobileMenuOpen.value = false
 }
 
-const toggleMenu = () => {
+const toggleUserMenu = () => {
   menuOpen.value = !menuOpen.value
-  // si on ouvre user menu, on ferme mobile
   if (menuOpen.value) mobileMenuOpen.value = false
 }
 
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
-  // si on ouvre mobile, on ferme user menu
   if (mobileMenuOpen.value) menuOpen.value = false
 }
 
-const onWindowClick = () => closeMenus()
+// ✅ ferme seulement si clic en dehors du header
+const onWindowClick = (e) => {
+  if (e.target.closest('header')) return
+  closeMenus()
+}
+
 const onKeyDown = (e) => {
   if (e.key === 'Escape') closeMenus()
 }
@@ -204,24 +214,25 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeyDown)
 })
 
+// ✅ ferme quand tu changes de page
 watch(
   () => route.fullPath,
   () => closeMenus(),
 )
 
 const goToAuth = (mode) => {
-  menuOpen.value = false
+  closeMenus()
   router.push({ name: 'auth', query: { mode } })
 }
 
 const goToAccount = () => {
-  menuOpen.value = false
+  closeMenus()
   router.push({ name: 'account' })
 }
 
 const logout = () => {
   auth.logout()
-  menuOpen.value = false
+  closeMenus()
   router.push({ name: 'auth', query: { mode: 'login' } })
 }
 </script>
