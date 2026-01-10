@@ -17,7 +17,7 @@ public class User {
   @Column(name = "last_name", length = 100, nullable = false)
   private String lastName;
 
-  @Column(length = 200, nullable = false)
+  @Column(length = 200, nullable = false, unique = true)
   private String email;
 
   @JsonIgnore

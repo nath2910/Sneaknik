@@ -4,46 +4,58 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties.Pageable;
+
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Pageable;
+
+
+
 
 import backend.dto.TopVenteProjection;
 import backend.entity.SnkVente;
 
+
 @Repository
 public interface SnkVenteRepository extends JpaRepository<SnkVente, Integer> {
 
-    // Toutes les ventes d’un user (triées par dateAchat décroissante)
-    List<SnkVente> findByUserIdOrderByDateAchatDesc(Integer userId);
 
-    // 10 dernières par date d’achat
-    List<SnkVente> findByUser_IdOrderByDateAchatDesc(Integer userId);
-
-   
-    List<SnkVente> findTop10ByUser_IdOrderByDateAchatDesc(Integer userId);
-
-    public interface BrandCount {
+  public interface BrandCount {
         String getMarque();
         long getNb();
     }
 
+
+  // Liste de tout les items dans la liste
+  List<SnkVente> findByUser_IdOrderByDateAchatDesc(Long userId);
+
+  // Trouver des dernier ajout 
+List<SnkVente> findByUser_IdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
+
+
+
+  // Delete sécurisé : un user ne peut supprimer que ses ventes
+    void deleteByIdAndUser_Id(Integer id, Long userId);
+
+    
     // Total global par user
-    @Query("""
-      select coalesce(
-               sum(
-                 case
-                   when v.prixResell is not null
-                     then coalesce(v.prixResell,0) - coalesce(v.prixRetail,0)
-                   else 0
-                 end
-               ), 0)
-      from SnkVente v
-      where v.user.id = :userId
-    """)
-    BigDecimal totalBenef(@Param("userId") Integer userId);
+      @Query("""
+    select coalesce(
+      sum(
+        case when v.prixResell is not null
+          then coalesce(v.prixResell,0) - coalesce(v.prixRetail,0)
+          else 0
+        end
+      ), 0)
+    from SnkVente v
+    where v.user.id = :userId
+  """)
+  BigDecimal totalBenef(@Param("userId") Long userId);
+
 
     // Total entre 2 dates par user
     @Query("""
@@ -55,12 +67,12 @@ public interface SnkVenteRepository extends JpaRepository<SnkVente, Integer> {
         and v.prixRetail is not null
     """)
     BigDecimal totalBenefBetween(
-            @Param("userId") Integer userId,
+            @Param("userId") Long userId,
             @Param("start") java.time.LocalDate start,
             @Param("end")   java.time.LocalDate end
     );
 
-    default BigDecimal totalBenefYear(Integer userId, int year) {
+    default BigDecimal totalBenefYear(Long userId, int year) {
         return totalBenefBetween(
                 userId,
                 java.time.LocalDate.of(year, 1, 1),
@@ -69,12 +81,12 @@ public interface SnkVenteRepository extends JpaRepository<SnkVente, Integer> {
     }
 
     // Somme des prixResell par user
-    @Query("""
-      select coalesce(sum(coalesce(v.prixResell, 0)), 0)
-      from SnkVente v
-      where v.user.id = :userId
-    """)
-    BigDecimal sumPrixResell(@Param("userId") Integer userId);
+   @Query("""
+    select coalesce(sum(coalesce(v.prixResell, 0)), 0)
+    from SnkVente v
+    where v.user.id = :userId
+  """)
+  BigDecimal sumPrixResell(@Param("userId") Long userId);
 
     // Graph par marque par user
     @Query("""
@@ -117,10 +129,9 @@ public interface SnkVenteRepository extends JpaRepository<SnkVente, Integer> {
         END
       ORDER BY nb DESC
     """)
-    List<BrandCount> graphMarque(@Param("userId") Integer userId);
+    List<BrandCount> graphMarque(@Param("userId") Long userId);
 
-    // Delete sécurisé : un user ne peut supprimer que ses ventes
-    void deleteByIdAndUserId(Integer id, Integer userId);
+    
 
     // Top ventes par nom d’item sur une période + user
 @Query("""
@@ -137,12 +148,12 @@ public interface SnkVenteRepository extends JpaRepository<SnkVente, Integer> {
     ORDER BY benefice DESC
     """)
 List<TopVenteProjection> topVentesBetween(
-        @Param("userId") Integer userId,
+        @Param("userId") Long userId,
         @Param("start") LocalDate start,
         @Param("end") LocalDate end
 );
     
-default List<TopVenteProjection> topVentesYear(Integer userId, int year) {
+default List<TopVenteProjection> topVentesYear(Long userId, int year) {
     return topVentesBetween(
             userId,
             LocalDate.of(year, 1, 1),
@@ -150,6 +161,33 @@ default List<TopVenteProjection> topVentesYear(Integer userId, int year) {
     );
 }
  
+ interface LabelCount {
+    String getLabel();
+    long getNb();
+  }
+
+  @Query("""
+    SELECT v.categorie AS label, COUNT(v) AS nb
+    FROM SnkVente v
+    WHERE v.user.id = :userId
+    GROUP BY v.categorie
+    ORDER BY nb DESC
+  """)
+  List<LabelCount> topCategories(@Param("userId") Long userId, PageRequest pageable);
+
+@Query("""
+  SELECT v.nomItem AS label, COUNT(v) AS nb
+  FROM SnkVente v
+  WHERE v.user.id = :userId
+    AND v.categorie = :categorie
+  GROUP BY v.nomItem
+  ORDER BY nb DESC
+""")
+List<LabelCount> topItemsByCategorie(
+    @Param("userId") Long userId,
+    @Param("categorie") String categorie,
+    PageRequest pageable
+);
 
 
 

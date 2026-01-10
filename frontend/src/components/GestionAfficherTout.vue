@@ -153,7 +153,7 @@
 
         <tr v-if="!snkVentes.length">
           <td :colspan="selectable ? 9 : 8" class="px-4 py-8 text-center text-sm text-gray-400">
-            Aucune paire à afficher pour le moment.
+            Aucun item à afficher pour le moment.
           </td>
         </tr>
       </tbody>

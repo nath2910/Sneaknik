@@ -7,11 +7,9 @@ class SnkVenteServices {
     return api.get('/snkVente') // header X-USER-ID ajouté par api.js
   }
 
-  // 10 dernières ventes de l’utilisateur courant
-  rechercher10() {
-    return api.get('/snkVente/recent')
+  recent(limit = 7) {
+    return api.get('/snkVente/recent', { params: { limit } })
   }
-
   totalBenef() {
     return api.get('/snkVente/total')
   }

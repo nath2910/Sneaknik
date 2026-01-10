@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Affichage10 from '@/components/AcceuilAffichageDix.vue'
+import Affichage10 from '@/components/AcceuilDernierItem.vue'
 import HomeOverview from '@/components/AcceuilWidgetLateral.vue'
 import DashboardHeader from '@/components/HeaderDePage.vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'

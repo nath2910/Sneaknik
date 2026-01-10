@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import backend.dto.LoginRequest;
 import backend.dto.ChangePasswordRequest;
 import backend.dto.RegisterRequest;
+import backend.dto.UserMapper;
 import backend.dto.UserMeResponse;
 import backend.entity.User;
 import backend.service.UserService;
@@ -29,16 +30,17 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public User register(@RequestBody RegisterRequest request) {
-        return userService.register(request);
-    }
+@ResponseStatus(HttpStatus.CREATED)
+public UserMeResponse register(@RequestBody RegisterRequest request) {
+  User user = userService.register(request);
+  return UserMapper.toMe(user);
+}
 
-    @PostMapping("/login")
+@PostMapping("/login")
 public LoginResponse login(@RequestBody LoginRequest request) {
-    User user = userService.login(request);
-    String token = jwtService.generateToken(user.getId());
-    return new LoginResponse(user, token);
+  User user = userService.login(request);
+  String token = jwtService.generateToken(user.getId());
+  return new LoginResponse(UserMapper.toMe(user), token);
 }
 
     @PostMapping("/change-password")

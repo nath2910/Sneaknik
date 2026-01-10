@@ -28,7 +28,7 @@
           <div>
             <h2 class="text-lg font-semibold text-gray-100 leading-tight">Liste des items</h2>
             <p class="text-xs text-gray-400">
-              {{ filteredVentes.length }} paire(s) trouvée(s)
+              {{ filteredVentes.length }} item(s) trouvée(s)
               <span v-if="selectedIds.length"> • {{ selectedIds.length }} sélectionnée(s) </span>
             </p>
           </div>

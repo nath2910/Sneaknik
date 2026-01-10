@@ -1,16 +1,14 @@
 package backend.dto;
 
-import backend.entity.User;
-
 public class LoginResponse {
-    private User user;
-    private String token;
+  private UserMeResponse user;
+  private String token;
 
-    public LoginResponse(User user, String token) {
-        this.user = user;
-        this.token = token;
-    }
+  public LoginResponse(UserMeResponse user, String token) {
+    this.user = user;
+    this.token = token;
+  }
 
-    public User getUser() { return user; }
-    public String getToken() { return token; }
+  public UserMeResponse getUser() { return user; }
+  public String getToken() { return token; }
 }

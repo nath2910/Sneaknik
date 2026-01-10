@@ -42,23 +42,26 @@ public class snkVenteController {
       @AuthenticationPrincipal User currentUser,
       @PathVariable Integer id
   ) {
-    Integer userId = currentUser.getId().intValue();
+    Long userId = (long) currentUser.getId().intValue();
     return snkVenteService.lire(userId, id);
   }
 
   // 🔹 liste complète pour le user connecté
   @GetMapping(produces = APPLICATION_JSON_VALUE)
   public List<SnkVente> rechercher(@AuthenticationPrincipal User currentUser) {
-    Integer userId = currentUser.getId().intValue();
+    Long userId = (long) currentUser.getId().intValue();
     return snkVenteService.rechercherParUser(userId);
   }
 
-  // 🔹 10 dernières pour le user connecté
-  @GetMapping("/recent")
-  public List<SnkVente> getDernieresVentes(@AuthenticationPrincipal User currentUser) {
-    Integer userId = currentUser.getId().intValue();
-    return snkVenteService.get10DernieresVentesParUser(userId);
-  }
+  // 🔹 dernières ventes pour le user connecté (par défaut 7)
+@GetMapping("/recent")
+public List<SnkVente> getDernieresVentes(
+    @AuthenticationPrincipal User currentUser,
+    @RequestParam(defaultValue = "7") int limit
+) {
+  Long userId = currentUser.getId(); // ✅ pas de cast bizarre
+  return snkVenteService.getDernieresVentesParUser(userId, limit);
+}
 
   // === AJOUT PAIRE (via ton bouton/forme AjoutPaire) ===
   @PostMapping("/add")
@@ -76,7 +79,7 @@ public class snkVenteController {
       @AuthenticationPrincipal User currentUser,
       @RequestParam(required = false) Integer year
   ) {
-    Integer userId = currentUser.getId().intValue();
+    Long userId = (long) currentUser.getId().intValue();
     if (year != null) return snkVenteService.totalBenefYear(userId, year);
     return snkVenteService.totalBenef(userId);
   }
@@ -84,14 +87,14 @@ public class snkVenteController {
   // === CA ===
   @GetMapping("/ca")
   public BigDecimal sumPrixResell(@AuthenticationPrincipal User currentUser) {
-    Integer userId = currentUser.getId().intValue();
+    Long userId = (long) currentUser.getId().intValue();
     return snkVenteService.sumPrixResell(userId);
   }
 
   // === GRAPHE PAR MARQUE ===
   @GetMapping("/marque")
   public List<BrandCount> marque(@AuthenticationPrincipal User currentUser) {
-    Integer userId = currentUser.getId().intValue();
+    Long userId = (long) currentUser.getId().intValue();
     return snkVenteService.graphMarque(userId);
   }
 
@@ -102,13 +105,13 @@ public class snkVenteController {
       @AuthenticationPrincipal User currentUser,
       @PathVariable Integer id
   ) {
-    Integer userId = currentUser.getId().intValue();
+    Long userId = (long) currentUser.getId().intValue();
     snkVenteService.deleteVente(userId, id);
   }
 
   @GetMapping("/topVentes")
   public List<TopVenteProjection> topVentes(@AuthenticationPrincipal User currentUser) {
-    Integer userId = currentUser.getId().intValue();
+    Long userId = (long) currentUser.getId().intValue();
     return snkVenteService.getTop3VentesAnneeCourante(userId);
   }
 
@@ -118,7 +121,7 @@ public SnkVente update(
     @PathVariable Integer id,
     @RequestBody SnkVente payload
 ) {
-  Integer userId = currentUser.getId().intValue();
+  Long userId = (long) currentUser.getId().intValue();
   return snkVenteService.updateVente(userId, id, payload);
 }
 
