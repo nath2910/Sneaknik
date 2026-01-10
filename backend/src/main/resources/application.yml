@@ -1,7 +1,12 @@
-spring:
-  profiles:
-    active: dev
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-dev-secret-change-me}
+    expiration-minutes: 60
 
+  oauth2:
+    success-redirect: ${OAUTH2_SUCCESS_REDIRECT:http://localhost:5173/auth/callback}
+
+spring:
   security:
     oauth2:
       client:
@@ -10,14 +15,6 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: [openid, profile, email]
-
-app:
-  oauth2:
-    success-redirect: ${OAUTH2_SUCCESS_REDIRECT:http://localhost:5173/auth/callback}
-
-  jwt:
-    secret: ${JWT_SECRET:dev-secret-change-me-dev-secret-change-me}
-    expiration-minutes: 60
 
 ---
 spring:
@@ -34,6 +31,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 logging:
   level:
@@ -55,3 +55,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  forward-headers-strategy: framework

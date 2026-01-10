@@ -328,9 +328,7 @@ const submitSignup = async () => {
   }
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-
 const loginWithGoogle = () => {
-  window.location.href = `${API_BASE_URL}/oauth2/authorization/google`
+  window.location.href = `https://governing-irina-sneaknik-1b4023c1.koyeb.app/oauth2/authorization/google`
 }
 </script>
