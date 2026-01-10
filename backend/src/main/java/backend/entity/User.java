@@ -21,8 +21,8 @@ public class User {
   private String email;
 
   @JsonIgnore
-  @Column(length = 200)
-  private String password; // nullable pour Google
+ @Column(nullable = true)
+private String password;
 
   @Column(length = 20, nullable = false)
   private String provider = "LOCAL"; // LOCAL | GOOGLE
