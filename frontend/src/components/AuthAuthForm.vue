@@ -151,7 +151,7 @@
             <input
               :type="showLoginPassword ? 'text' : 'password'"
               id="loginPassword"
-              v-model="signupFormForm.password"
+              v-model="signupForm.password"
               required
               class="block w-full pr-10 px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             />
