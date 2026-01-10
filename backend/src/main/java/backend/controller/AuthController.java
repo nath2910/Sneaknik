@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import backend.dto.LoginRequest;
 import backend.dto.ChangePasswordRequest;
 import backend.dto.RegisterRequest;
+import backend.dto.UserMeResponse;
 import backend.entity.User;
 import backend.service.UserService;
 
@@ -47,6 +48,19 @@ public String changePassword(
 ) {
     userService.changePassword(currentUser.getId(), request);
     return "Mot de passe modifié";
+}
+
+@GetMapping("/me")
+public UserMeResponse me(@AuthenticationPrincipal User currentUser) {
+    return new UserMeResponse(
+        currentUser.getId(),
+        currentUser.getEmail(),
+        currentUser.getFirstName(),
+        currentUser.getLastName(),
+        currentUser.getPictureUrl(),
+        currentUser.getProvider(),
+        currentUser.isEmailVerified()
+    );
 }
 
     

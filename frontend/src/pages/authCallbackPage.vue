@@ -2,11 +2,12 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/authStore.js'
+import api from '@/services/api.js'
 
 const router = useRouter()
 const auth = useAuthStore()
 
-onMounted(() => {
+onMounted(async () => {
   const hash = window.location.hash || ''
   const params = new URLSearchParams(hash.replace('#', ''))
   const token = params.get('token')
@@ -16,11 +17,18 @@ onMounted(() => {
     return
   }
 
-  // ✅ met à jour store + storage
   auth.setToken(token)
-
-  // nettoie l'URL (enlève #token=...)
   window.history.replaceState({}, document.title, window.location.pathname)
+
+  try {
+    const { data: me } = await api.get('/auth/me')
+    auth.setAuth({ user: me, token })
+  } catch (e) {
+    console.error('Erreur /auth/me après SSO', e)
+    auth.logout()
+    router.replace({ name: 'auth', query: { mode: 'login' } })
+    return
+  }
 
   router.replace({ name: 'home' })
 })
