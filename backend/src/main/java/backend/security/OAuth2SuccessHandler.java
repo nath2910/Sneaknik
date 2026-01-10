@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -34,14 +35,14 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                       Authentication authentication) throws IOException, ServletException {
 
-    OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
+    OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
 
-    String sub = oauthUser.getAttribute("sub");
-    String email = oauthUser.getAttribute("email");
-    Boolean emailVerified = oauthUser.getAttribute("email_verified");
-    String givenName = oauthUser.getAttribute("given_name");
-    String familyName = oauthUser.getAttribute("family_name");
-    String picture = oauthUser.getAttribute("picture");
+String sub = oidcUser.getSubject();
+String email = oidcUser.getEmail();
+String givenName = oidcUser.getGivenName();
+String familyName = oidcUser.getFamilyName();
+String picture = oidcUser.getPicture();
+Boolean emailVerified = oidcUser.getEmailVerified();
 
     if (sub == null || email == null) {
       response.sendError(400, "Google login missing sub/email");

@@ -1,35 +1,50 @@
-// src/services/api.js
-// peermet de créer les requetes en integrant directement dan sleheader le user id creant ainsi un espace dedier a chauq euser
-
 import axios from 'axios'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  headers: { 'Content-Type': 'application/json' },
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  },
 })
 
+function getToken() {
+  return localStorage.getItem('snk_token') || sessionStorage.getItem('snk_token')
+}
+
+function clearAuth() {
+  localStorage.removeItem('snk_token')
+  localStorage.removeItem('snk_user')
+  sessionStorage.removeItem('snk_token')
+  sessionStorage.removeItem('snk_user')
+}
+
 api.interceptors.request.use((config) => {
-  config.headers = config.headers || {}
-
-  const token = localStorage.getItem('snk_token') || sessionStorage.getItem('snk_token')
-
+  const token = getToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
+
+let redirecting = false
+
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
-      const hadToken = !!localStorage.getItem('snk_token') || !!sessionStorage.getItem('snk_token')
+    const status = err.response?.status
 
+    if (status === 401) {
+      const hadToken = !!getToken()
       if (hadToken) {
-        localStorage.removeItem('snk_token')
-        localStorage.removeItem('snk_user')
-        sessionStorage.removeItem('snk_token')
-        sessionStorage.removeItem('snk_user')
+        clearAuth()
+      }
+
+      if (!redirecting && !window.location.pathname.startsWith('/auth')) {
+        redirecting = true
         window.location.href = '/auth?mode=login'
       }
     }
+
     return Promise.reject(err)
   },
 )

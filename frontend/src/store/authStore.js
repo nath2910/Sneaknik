@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 const user = ref(null)
-const token = ref(null)
+const token = ref('')
 
 function safeGet(key) {
   try {
@@ -27,18 +27,26 @@ function safeRemove(key) {
 }
 
 function loadFromStorage() {
+  // user
   try {
     user.value = JSON.parse(safeGet('snk_user') || 'null')
   } catch {
     user.value = null
   }
-  token.value = safeGet('snk_token')
+  // token (toujours string)
+  token.value = safeGet('snk_token') || ''
 }
 loadFromStorage()
 
+/**
+ * payload attendu:
+ * { user?: object|null, token?: string|null }
+ */
 function setAuth(payload) {
   user.value = payload?.user ?? null
-  token.value = payload?.token ?? null
+
+  // IMPORTANT: token = string, jamais null
+  token.value = payload?.token ? String(payload.token) : ''
 
   if (user.value) safeSet('snk_user', JSON.stringify(user.value))
   else safeRemove('snk_user')
@@ -47,10 +55,18 @@ function setAuth(payload) {
   else safeRemove('snk_token')
 }
 
+function setToken(newToken) {
+  setAuth({ user: user.value, token: newToken })
+}
+
+function setUser(newUser) {
+  setAuth({ user: newUser, token: token.value })
+}
+
 function logout() {
   setAuth(null)
 }
 
 export function useAuthStore() {
-  return { user, token, setAuth, logout }
+  return { user, token, setAuth, setToken, setUser, logout }
 }
