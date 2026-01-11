@@ -1,43 +1,50 @@
-Sneaknik
+# Sneaknik
 
-Application web destiné à l'assitance dans la gestion du stock et de la comptabilité lors de projet entrepreunarial.  
+Application web destinée à l’assistance dans la gestion du **stock de sneakers** et de la **comptabilité** dans un contexte de projet entrepreneurial.
 
-Application decoupé en plusieurs page, une principal axé sur un aprecue simple, ensuite une page de statistique avec diagramme et chiffrage. 
-Enfin une page de gestion pour l'ajout, la supression et la modification de notre base de donnée.
+L’application est découpée en plusieurs pages :
+
+- une page principale axée sur un **aperçu simple** du stock,
+- une page **statistiques** (diagrammes + chiffres),
+- une page **gestion** pour l’ajout / suppression / modification de la base de données.
 
 ---
-Fonctionnalités 
+
+## Fonctionnalités
 
 - Parcourir la liste des sneakers (image, prix, description).
-- Statistique concernant les resultats ( bénéfice, CA..)
-- Ajout / suppression / modification du stock
+- Statistiques concernant les résultats (bénéfice, CA…).
+- Ajout / suppression / modification du stock.
 - Recherche / filtres (marque, taille, prix).
-Bonus de la 5.2 :
-  Ajout du système de création/connexion de compte 
-  Espace personnel pour gerer son stock 
+- Système de création / connexion de compte.
+- Espace personnel pour gérer son stock.
+- export CSV
 
 ---
 
-Stack technique
+## Stack technique
 
-- Frontend : VueJS 
-- UI : Tailwind CSS
-- Backend : SpringBoots / Axios
-- DB : PostgreSQL 
+- **Frontend** : Vue 3 (Vite)
+- **UI** : Tailwind CSS
+- **Backend** : Spring Boot (Spring Web + Spring Security + JWT + OAuth2)
+- **DB** : PostgreSQL
+- **Charts** : ApexCharts
+- **HTTP client** : Axios
 
 ---
 
-Démarrage rapide
+## Structure du projet
 
-1) Prérequis
+SNK V5/
+├─ frontend/ # Vue/Vite
+└─ backend/ # Spring Boot (Maven)
 
-Stack technique à jour !
+## Prérequis
 
-2) Installation
-```bash
-# Cloner le repo
-git clone https://github.com/nath2910/Sneaknik.git
-cd Sneaknik
+- **Node.js** : `20.19+` (ou `22.12+`)  
+  (voir `frontend/package.json` → champ `engines`)
+- **Java** : 17 (Spring Boot 3.x)
+- **Maven** : (ou `./mvnw` si présent)
+- **Docker** (recommandé) : pour lancer PostgreSQL facilement
 
-# Installer les dépendances
-npm install   
+---

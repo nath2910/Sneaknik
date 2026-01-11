@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS flyway_smoke_test (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

@@ -20,6 +20,8 @@ app:
     success-redirect: ${OAUTH2_SUCCESS_REDIRECT:http://localhost:5173/auth/callback}
 
 ---
+
+---
 spring:
   config:
     activate:
@@ -31,9 +33,13 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:Pipounet29}
     driver-class-name: org.postgresql.Driver
 
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -42,6 +48,8 @@ logging:
   level:
     org.springframework.security: DEBUG
     backend.security: DEBUG
+
+---
 
 ---
 spring:
@@ -55,9 +63,14 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
