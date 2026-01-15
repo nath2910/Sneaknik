@@ -25,26 +25,30 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 public class SecurityConfig {
 
   private final JwtAuthFilter jwtAuthFilter;
+  private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
-  public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
-    this.jwtAuthFilter = jwtAuthFilter;
-  }
+
+public SecurityConfig(JwtAuthFilter jwtAuthFilter, OAuth2SuccessHandler oAuth2SuccessHandler) {
+  this.jwtAuthFilter = jwtAuthFilter;
+  this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+}
 
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
   return http
       .csrf(csrf -> csrf.disable())
       .cors(Customizer.withDefaults())
-      .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+      .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // ✅
       .authorizeHttpRequests(auth -> auth
           .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
           .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/error").permitAll()
           .anyRequest().authenticated()
       )
-      .oauth2Login(Customizer.withDefaults()) // ✅ AJOUTE ÇA
+      .oauth2Login(oauth -> oauth.successHandler(oAuth2SuccessHandler)) // ✅ TON handler
       .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
       .build();
 }
+
 
  @Bean
 public CorsConfigurationSource corsConfigurationSource() {
