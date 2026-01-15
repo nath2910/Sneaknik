@@ -70,7 +70,8 @@ public CorsConfigurationSource corsConfigurationSource() {
       .collect(Collectors.toList());
 
   // ✅ IMPORTANT: patterns pour accepter des domaines render/vercel si besoin
-  config.setAllowedOriginPatterns(origins);
+  
+  config.setAllowedOrigins(origins);
 
   config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
   config.setAllowedHeaders(List.of("*"));
