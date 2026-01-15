@@ -30,25 +30,21 @@ public class SecurityConfig {
     this.jwtAuthFilter = jwtAuthFilter;
   }
 
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http
-        .csrf(csrf -> csrf.disable())
-        .cors(Customizer.withDefaults()) // ✅ IMPORTANT
-        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-            // ✅ autorise tous les preflights
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-            // ✅ routes publiques
-            .requestMatchers("/auth/**", "/oauth2/**","/error").permitAll()
-
-            // ✅ tout le reste protégé
-            .anyRequest().authenticated()
-        )
-        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-        .build();
-  }
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  return http
+      .csrf(csrf -> csrf.disable())
+      .cors(Customizer.withDefaults())
+      .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+      .authorizeHttpRequests(auth -> auth
+          .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+          .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/error").permitAll()
+          .anyRequest().authenticated()
+      )
+      .oauth2Login(Customizer.withDefaults()) // ✅ AJOUTE ÇA
+      .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+      .build();
+}
 
  @Bean
 public CorsConfigurationSource corsConfigurationSource() {
