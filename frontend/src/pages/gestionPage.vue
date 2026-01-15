@@ -75,13 +75,7 @@
       @deleted="handleDeleted"
     />
     <div class="[&_button:hover]:bg-gray-800">
-      <button
-        type="button"
-        class="px-4 py-2 text-xs rounded-lg bg-gray-700 text-white transition whitespace-nowrap"
-        @click="exportCsv"
-      >
-        Exporter le CSV
-      </button>
+      <CsvImportExportWidget :filteredRows="filteredVentes" @imported="reloadVentes" />
     </div>
   </div>
 </template>
@@ -91,12 +85,13 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useAuthStore } from '@/store/authStore'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 import DashboardHeader from '@/components/HeaderDePage.vue'
-import StockSummaryRow from '@/components/GestionRésumeStock.vue'
-import SearchBarre from '@/components/GestionSearchBarre.vue'
-import GestionActionsPanel from '@/components/GestionBlocBoutonAddDelete.vue'
-import afficherTout from '@/components/GestionAfficherTout.vue'
-import EditVenteModal from '@/components/GestionModifierItem.vue'
-import SupprimerModal from '@/components/GestionSupprimerModal.vue'
+import StockSummaryRow from '@/components/gestion/GestionRésumeStock.vue'
+import SearchBarre from '@/components/gestion/GestionSearchBarre.vue'
+import GestionActionsPanel from '@/components/gestion/GestionBlocBoutonAddDelete.vue'
+import afficherTout from '@/components/gestion/GestionAfficherTout.vue'
+import EditVenteModal from '@/components/gestion/GestionModifierItem.vue'
+import SupprimerModal from '@/components/gestion/GestionSupprimerModal.vue'
+import CsvImportExportWidget from '@/components/gestion/CsvImportExportWidget.vue'
 
 const snkVentes = ref([])
 const searchTerm = ref('')
@@ -182,12 +177,6 @@ const handleVenteUpdated = (updated) => {
   if (index !== -1) snkVentes.value[index] = updated
 }
 
-// Delete modal
-const openDeleteByName = () => {
-  deleteMode.value = 'name'
-  showDeleteModal.value = true
-}
-
 const openDeleteBulk = () => {
   deleteMode.value = 'bulk'
   showDeleteModal.value = true
@@ -199,63 +188,7 @@ const handleDeleted = (ids) => {
   selectedIds.value = selectedIds.value.filter((id) => !set.has(id))
 }
 
-const exportCsv = () => {
-  // ✅ tu peux choisir snkVentes.value (toute la liste) ou filteredVentes.value (liste filtrée)
-  const rows = filteredVentes.value
-
-  if (!rows.length) return
-
-  const safe = (v) => {
-    // CSV safe : guillemets + escape des guillemets
-    const s = String(v ?? '')
-    return `"${s.replaceAll('"', '""')}"`
-  }
-
-  const toIsoDate = (d) => {
-    if (!d) return ''
-    const date = new Date(d)
-    if (Number.isNaN(date.getTime())) return ''
-    return date.toISOString().slice(0, 10)
-  }
-
-  const headers = [
-    'nomItem',
-    'categorie',
-    'prixRetail',
-    'prixResell',
-    'dateAchat',
-    'dateVente',
-    'description',
-  ]
-
-  const lines = [
-    headers.join(';'),
-    ...rows.map((v) => {
-      const row = {
-        nomItem: v.nomItem ?? v.nom_item ?? '',
-        categorie: v.categorie ?? '',
-        prixRetail: v.prixRetail ?? v.prix_retail ?? '',
-        prixResell: v.prixResell ?? v.prix_resell ?? '',
-        dateAchat: toIsoDate(v.dateAchat ?? v.date_achat),
-        dateVente: toIsoDate(v.dateVente ?? v.date_vente),
-        description: v.description ?? '',
-      }
-
-      return headers.map((h) => safe(row[h])).join(';')
-    }),
-  ]
-
-  const csvContent = '\uFEFF' + lines.join('\n') // ✅ BOM pour Excel FR
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `sneaknik_export_${new Date().toISOString().slice(0, 10)}.csv`
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-
-  URL.revokeObjectURL(url)
+const reloadVentes = async () => {
+  await chargerVentes()
 }
 </script>

@@ -27,11 +27,14 @@ public class SnkVente {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
-  @JsonFormat(pattern = "yyyy-MM-dd")
-  private LocalDate dateAchat;
+ @Column(name = "date_achat")
+@JsonFormat(pattern = "yyyy-MM-dd")
+private LocalDate dateAchat;
 
-  @JsonFormat(pattern = "yyyy-MM-dd")
-  private LocalDate dateVente;
+  
+@Column(name = "date_vente")
+@JsonFormat(pattern = "yyyy-MM-dd")
+private LocalDate dateVente;
 
   @CreationTimestamp
 @Column(name = "created_at", updatable = false, nullable = false)

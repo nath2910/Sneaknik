@@ -28,6 +28,13 @@ public interface SnkVenteRepository extends JpaRepository<SnkVente, Integer> {
         long getNb();
     }
 
+    public interface TimePointRow {
+  java.time.LocalDate getBucket();
+  java.math.BigDecimal getCa();
+  java.math.BigDecimal getProfit();
+}
+
+
 
   // Liste de tout les items dans la liste
   List<SnkVente> findByUser_IdOrderByDateAchatDesc(Long userId);
@@ -188,6 +195,115 @@ List<LabelCount> topItemsByCategorie(
     @Param("categorie") String categorie,
     PageRequest pageable
 );
+
+@Query(value = """
+  SELECT COALESCE(SUM(t.prix_resell), 0)
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.prix_resell IS NOT NULL
+""", nativeQuery = true)
+BigDecimal caBetween(@Param("userId") Long userId,
+                     @Param("start") LocalDate start,
+                     @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT COALESCE(SUM(t.prix_resell - t.prix_retail), 0)
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.prix_resell IS NOT NULL
+    AND t.prix_retail IS NOT NULL
+""", nativeQuery = true)
+BigDecimal profitBetween(@Param("userId") Long userId,
+                         @Param("start") LocalDate start,
+                         @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT COUNT(*)
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+""", nativeQuery = true)
+long countSoldBetween(@Param("userId") Long userId,
+                      @Param("start") LocalDate start,
+                      @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT COUNT(*)
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente IS NULL
+""", nativeQuery = true)
+long countInStock(@Param("userId") Long userId);
+
+@Query(value = """
+  SELECT COALESCE(SUM(COALESCE(t.prix_retail, 0)), 0)
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente IS NULL
+""", nativeQuery = true)
+BigDecimal stockValue(@Param("userId") Long userId);
+
+@Query(value = """
+  SELECT (date_trunc('day', t.date_vente))::date AS bucket,
+         COALESCE(SUM(COALESCE(t.prix_resell,0)),0) AS ca,
+         COALESCE(SUM(COALESCE(t.prix_resell,0) - COALESCE(t.prix_retail,0)),0) AS profit
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.prix_resell IS NOT NULL
+  GROUP BY bucket
+  ORDER BY bucket
+""", nativeQuery = true)
+List<TimePointRow> timeseriesDay(@Param("userId") Long userId,
+                                 @Param("start") LocalDate start,
+                                 @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT (date_trunc('week', t.date_vente))::date AS bucket,
+         COALESCE(SUM(COALESCE(t.prix_resell,0)),0) AS ca,
+         COALESCE(SUM(COALESCE(t.prix_resell,0) - COALESCE(t.prix_retail,0)),0) AS profit
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.prix_resell IS NOT NULL
+  GROUP BY bucket
+  ORDER BY bucket
+""", nativeQuery = true)
+List<TimePointRow> timeseriesWeek(@Param("userId") Long userId,
+                                  @Param("start") LocalDate start,
+                                  @Param("end") LocalDate end);
+
+
+
+@Query("""
+  SELECT
+    CASE
+      WHEN lower(v.nomItem) LIKE '%nike%' THEN 'Nike'
+      WHEN lower(v.nomItem) LIKE '%adidas%' THEN 'Adidas'
+      WHEN lower(v.nomItem) LIKE '%jordan%' THEN 'Jordan'
+      WHEN lower(v.nomItem) LIKE '%pokemon%' THEN 'Pokemon'
+      ELSE 'Autre'
+    END AS label,
+    COUNT(v) AS nb
+  FROM SnkVente v
+  WHERE v.user.id = :userId
+    AND v.dateVente BETWEEN :start AND :end
+  GROUP BY
+    CASE
+      WHEN lower(v.nomItem) LIKE '%nike%' THEN 'Nike'
+      WHEN lower(v.nomItem) LIKE '%adidas%' THEN 'Adidas'
+      WHEN lower(v.nomItem) LIKE '%jordan%' THEN 'Jordan'
+      WHEN lower(v.nomItem) LIKE '%pokemon%' THEN 'Pokemon'
+      ELSE 'Autre'
+    END
+  ORDER BY nb DESC
+""")
+List<LabelCount> brandBreakdownSales(@Param("userId") Long userId,
+                                    @Param("start") LocalDate start,
+                                    @Param("end") LocalDate end);
+                                
 
 
 

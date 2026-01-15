@@ -4,11 +4,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import backend.dto.SnkVenteImportDto;
 import backend.dto.TopVenteProjection;
 import backend.entity.SnkVente;
 import backend.entity.User;
@@ -42,14 +45,14 @@ public class snkVenteController {
       @AuthenticationPrincipal User currentUser,
       @PathVariable Integer id
   ) {
-    Long userId = (long) currentUser.getId().intValue();
+    Long userId =  currentUser.getId();
     return snkVenteService.lire(userId, id);
   }
 
   // 🔹 liste complète pour le user connecté
   @GetMapping(produces = APPLICATION_JSON_VALUE)
   public List<SnkVente> rechercher(@AuthenticationPrincipal User currentUser) {
-    Long userId = (long) currentUser.getId().intValue();
+    Long userId =  currentUser.getId();
     return snkVenteService.rechercherParUser(userId);
   }
 
@@ -79,7 +82,7 @@ public List<SnkVente> getDernieresVentes(
       @AuthenticationPrincipal User currentUser,
       @RequestParam(required = false) Integer year
   ) {
-    Long userId = (long) currentUser.getId().intValue();
+    Long userId =  currentUser.getId();
     if (year != null) return snkVenteService.totalBenefYear(userId, year);
     return snkVenteService.totalBenef(userId);
   }
@@ -87,14 +90,14 @@ public List<SnkVente> getDernieresVentes(
   // === CA ===
   @GetMapping("/ca")
   public BigDecimal sumPrixResell(@AuthenticationPrincipal User currentUser) {
-    Long userId = (long) currentUser.getId().intValue();
+    Long userId = currentUser.getId();
     return snkVenteService.sumPrixResell(userId);
   }
 
   // === GRAPHE PAR MARQUE ===
   @GetMapping("/marque")
   public List<BrandCount> marque(@AuthenticationPrincipal User currentUser) {
-    Long userId = (long) currentUser.getId().intValue();
+    Long userId = currentUser.getId();
     return snkVenteService.graphMarque(userId);
   }
 
@@ -105,13 +108,13 @@ public List<SnkVente> getDernieresVentes(
       @AuthenticationPrincipal User currentUser,
       @PathVariable Integer id
   ) {
-    Long userId = (long) currentUser.getId().intValue();
+    Long userId =  currentUser.getId();
     snkVenteService.deleteVente(userId, id);
   }
 
   @GetMapping("/topVentes")
   public List<TopVenteProjection> topVentes(@AuthenticationPrincipal User currentUser) {
-    Long userId = (long) currentUser.getId().intValue();
+    Long userId = currentUser.getId();
     return snkVenteService.getTop3VentesAnneeCourante(userId);
   }
 
@@ -121,8 +124,29 @@ public SnkVente update(
     @PathVariable Integer id,
     @RequestBody SnkVente payload
 ) {
-  Long userId = (long) currentUser.getId().intValue();
+  Long userId =  currentUser.getId();
   return snkVenteService.updateVente(userId, id, payload);
 }
+
+@PostMapping(
+  path = "/import",
+  consumes = APPLICATION_JSON_VALUE,
+  produces = APPLICATION_JSON_VALUE
+)
+public ResponseEntity<Map<String, Integer>> importCsv(
+    @AuthenticationPrincipal User currentUser,
+    @RequestBody List<SnkVenteImportDto> items
+) {
+  if (currentUser == null) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        .body(Map.of("created", 0));
+  }
+
+  int created = snkVenteService.importBulk(currentUser.getId(), items);
+  return ResponseEntity.ok(Map.of("created", created));
+}
+
+
+
 
 }

@@ -1,42 +1,18 @@
 <template>
-  <div>
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <DashboardHeader
-        subtitle="Analytics • Sneaknik"
-        title="Statistiques"
-        description="Analyse ton bénéfice, ton chiffre d’affaires et tes marques les plus fortes."
-      />
-
-      <!-- Résumé chiffré -->
-      <section>
-        <statBase />
-      </section>
-
-      <!-- Graphiques & panneaux -->
-      <section class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-6">
-        <!-- Graphique par marque -->
-        <div class="bg-gray-800 border border-gray-700 rounded-3xl shadow-lg p-6">
-          <h2 class="text-sm font-semibold text-gray-100 mb-3">Répartition par marque</h2>
-
-          <div class="mt-4 pl-24 md:pl-32">
-            <graphMarque />
-          </div>
-        </div>
-
-        <!-- Top modèles + alertes -->
-        <StatsSidePanels />
-      </section>
-    </div>
-  </div>
+  <StatsCanvas v-model:from="from" v-model:to="to" />
 </template>
 
 <script setup lang="ts">
-import DashboardHeader from '@/components/HeaderDePage.vue'
-import statBase from '@/components/StatBase.vue'
-import graphMarque from '@/components/StatGraphMarque.vue'
-import StatsSidePanels from '@/components/StatPanneauStat.vue'
-import { useAuthStore } from '@/store/authStore'
+import { ref } from 'vue'
+import StatsCanvas from '@/components/stats/StatsCanvas.vue'
 
-const { user } = useAuthStore()
-const currentUser = user
+
+function ymd(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+const now = new Date()
+const from = ref(ymd(new Date(now.getFullYear(), now.getMonth(), 1)))
+const to = ref(ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0)))
 </script>

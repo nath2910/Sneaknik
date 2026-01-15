@@ -2,8 +2,10 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import './index.css'
+import VueECharts from 'vue-echarts'
+import './lib/echarts'
+import { MotionPlugin } from '@vueuse/motion'
 
 console.log('VITE_API_URL =', import.meta.env.VITE_API_URL)
 
-createApp(App).use(router).mount('#app')
+createApp(App).use(router).use(MotionPlugin).component('VChart', VueECharts).mount('#app')

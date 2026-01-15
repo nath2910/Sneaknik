@@ -1,0 +1,85 @@
+package backend.controller;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import backend.dto.*;
+import backend.dto.TopVenteProjection;
+import backend.entity.User;
+import backend.service.StatsService;
+
+@RestController
+@RequestMapping(path = { "stats", "snkVente/stats" }, produces = APPLICATION_JSON_VALUE)
+public class StatsController {
+
+  private final StatsService statsService;
+
+  public StatsController(StatsService statsService) {
+    this.statsService = statsService;
+  }
+
+  private LocalDate pickDate(LocalDate a, LocalDate b) {
+    return a != null ? a : b;
+  }
+
+  @GetMapping({"/summary"})
+  public StatsSummaryResponse summary(
+      @AuthenticationPrincipal User currentUser,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+  ) {
+    LocalDate f = pickDate(start, from);
+    LocalDate t = pickDate(end, to);
+    return statsService.summary(currentUser.getId(), f, t);
+  }
+
+  @GetMapping({"/timeseries"})
+  public List<StatsPointResponse> timeseries(
+      @AuthenticationPrincipal User currentUser,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @RequestParam(defaultValue = "day") String granularity
+  ) {
+    LocalDate f = pickDate(start, from);
+    LocalDate t = pickDate(end, to);
+    return statsService.timeseries(currentUser.getId(), f, t, granularity);
+  }
+
+  @GetMapping({"/brands", "/breakdown/brands"})
+  public List<StatsBreakdownResponse> brands(
+      @AuthenticationPrincipal User currentUser,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+  ) {
+    LocalDate f = pickDate(start, from);
+    LocalDate t = pickDate(end, to);
+    return statsService.brandBreakdown(currentUser.getId(), f, t);
+  }
+
+  @GetMapping({"/top-sales", "/topVentes"})
+  public List<TopVenteProjection> topSales(
+      @AuthenticationPrincipal User currentUser,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @RequestParam(defaultValue = "3") int limit
+  ) {
+    LocalDate f = pickDate(start, from);
+    LocalDate t = pickDate(end, to);
+    return statsService.topSales(currentUser.getId(), f, t, limit);
+  }
+}
+

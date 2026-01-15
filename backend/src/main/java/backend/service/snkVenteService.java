@@ -2,6 +2,7 @@ package backend.service;
 
 import java.math.BigDecimal;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
@@ -9,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-
+import backend.dto.SnkVenteImportDto;
 import backend.dto.TopVenteProjection;
 import backend.entity.SnkVente;
 import backend.entity.User;
@@ -117,7 +118,35 @@ public List<SnkVenteRepository.LabelCount> topItemsByCategorie(Long userId, Stri
 }
 
 public List<SnkVente> get7DernieresVentesParUser(Long userId) {
-  // TODO Auto-generated method stub
-  throw new UnsupportedOperationException("Unimplemented method 'get7DernieresVentesParUser'");
+  return getDernieresVentesParUser(userId, 7);
 }
+
+@Transactional
+public int importBulk(Long userId, List<SnkVenteImportDto> items) {
+  User user = getUserOrThrow(userId);
+  if (items == null || items.isEmpty()) return 0;
+
+  List<SnkVente> entities = items.stream()
+    .filter(dto -> dto != null && dto.getNomItem() != null && !dto.getNomItem().trim().isEmpty())
+    .map(dto -> {
+      SnkVente v = new SnkVente();
+      v.setUser(user);                 // ✅ isolement multi-users
+      v.setNomItem(dto.getNomItem().trim());
+      v.setPrixRetail(dto.getPrixRetail());
+      v.setPrixResell(dto.getPrixResell());
+      v.setDateAchat(dto.getDateAchat());
+      v.setDateVente(dto.getDateVente());
+      v.setDescription(dto.getDescription());
+      v.setCategorie(dto.getCategorie());
+      return v;
+    })
+    .toList();
+
+  snkVenteRepository.saveAll(entities);
+  return entities.size();
+}
+
+
+
+
 }

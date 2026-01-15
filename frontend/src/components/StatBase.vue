@@ -1,48 +1,73 @@
 <template>
-  <div class="bg-gray-900 py-20 sm:py-32">
-    <div class="mx-auto max-w-7xl px-6 lg:px-8">
-      <div class="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3 text-xl">
-        <div v-for="stat in stats" :key="stat.id" class="mx-auto flex max-w-xs flex-col gap-y-4">
-          <dt class="text-base text-gray-400">{{ stat.name }}</dt>
-          <dd class="order-first text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-            {{ stat.value }}
-          </dd>
-        </div>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <DashboardHeader
+      subtitle="Analytics • Sneaknik"
+      title="Statistiques"
+      description="Dashboard modulable : zoom, déplacement, widgets."
+    />
+
+    <!-- Barre période (simple, propre, pas de sidebar) -->
+    <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+      <div class="flex gap-2 items-center">
+        <input v-model="from" type="date" class="input" />
+        <span class="text-gray-500 text-sm">→</span>
+        <input v-model="to" type="date" class="input" />
+      </div>
+
+      <div class="sm:ml-auto flex gap-2">
+        <button class="btn" @click="resetMonth">Mois en cours</button>
+        <button class="btn btn-ghost" @click="resetLayout">Reset layout</button>
       </div>
     </div>
+
+    <!-- CANVAS Lucidchart-like -->
+    <StatsCanvas :from="from" :to="to" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import snkVenteServices from '@/services/SnkVenteServices.js'
+import DashboardHeader from '@/components/HeaderDePage.vue'
+import StatsCanvas from '@/components/stats/canvas/StatsCanvas.vue'
+import { useStatsRange } from '@/composables/useStatsRange'
 
-const loading = ref(true)
-const error = ref(null)
-const total = ref(0)
-const total2025 = ref(0)
-const totalCA = ref(0)
+const { from, to } = useStatsRange()
 
-const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
+function resetMonth() {
+  const now = new Date()
+  from.value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+  to.value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+}
 
-const stats = computed(() => [
-  { id: 1, name: 'Total Bénéfice', value: fmt.format(total.value) },
-  { id: 2, name: 'Total Chiffre d’affaires', value: fmt.format(totalCA.value) },
-  { id: 3, name: 'Total Bénéfice 2025', value: fmt.format(total2025.value) },
-])
-
-onMounted(async () => {
-  try {
-    const { data: totalGlobal } = await snkVenteServices.totalBenef()
-    const { data: benef2025 } = await snkVenteServices.totalBenefAnnee(2025)
-    const { data: CA } = await snkVenteServices.chiffreAffaire(2025)
-    total.value = Number(totalGlobal ?? 0)
-    total2025.value = Number(benef2025 ?? 0)
-    totalCA.value = Number(CA ?? 0)
-  } catch (e) {
-    error.value = e?.message || 'Impossible de récupérer les totaux'
-  } finally {
-    loading.value = false
-  }
-})
+function resetLayout() {
+  localStorage.removeItem('snk_stats_canvas_layout_v1')
+  window.location.reload()
+}
 </script>
+
+<style scoped>
+.input {
+  background: rgba(17, 24, 39, 0.85);
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: #e5e7eb;
+}
+
+.btn {
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  background: rgba(17, 24, 39, 0.75);
+  color: #e5e7eb;
+}
+.btn:hover {
+  background: rgba(31, 41, 55, 0.95);
+}
+
+.btn-ghost {
+  background: transparent;
+}
+.btn-ghost:hover {
+  background: rgba(31, 41, 55, 0.35);
+}
+</style>

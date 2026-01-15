@@ -7,7 +7,7 @@ class SnkVenteServices {
     return api.get('/snkVente') // header X-USER-ID ajouté par api.js
   }
 
-  recent(limit = 7) {
+  recent(limit = 8) {
     return api.get('/snkVente/recent', { params: { limit } })
   }
   totalBenef() {
@@ -41,6 +41,10 @@ class SnkVenteServices {
 
   update(id, vente) {
     return api.put(`/snkVente/${id}`, vente)
+  }
+
+  importBulk(items) {
+    return api.post('/snkVente/import', items)
   }
 }
 

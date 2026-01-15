@@ -28,7 +28,7 @@
           <table class="min-w-full text-sm text-left text-gray-300">
             <thead>
               <tr class="bg-slate-950/70 text-[0.7rem] uppercase tracking-wide">
-                <th class="px-4 py-3 font-semibold text-gray-300">Nom item</th>
+                <th class="px-4 py-3 font-semibold text-gray-300">Nom de l'item</th>
                 <th class="px-4 py-3 font-semibold text-gray-300 text-right">Prix retail</th>
                 <th class="px-4 py-3 font-semibold text-gray-300 text-right">Prix resell</th>
                 <th class="px-4 py-3 font-semibold text-gray-300 text-center">Date d’achat</th>
@@ -45,9 +45,6 @@
               >
                 <td class="px-4 py-3">
                   <p class="font-medium text-gray-100">{{ get(v, 'nomItem') }}</p>
-                  <p v-if="get(v, 'categorie')" class="text-[0.7rem] text-gray-500 uppercase">
-                    {{ get(v, 'categorie') }}
-                  </p>
                 </td>
 
                 <td class="px-4 py-3 text-right">
@@ -109,7 +106,7 @@ onMounted(async () => {
     rows.value = Array.isArray(data) ? data : []
   } catch (e) {
     console.error(e)
-    error.value = 'Impossible de charger les derniers items (auth ou API).'
+    error.value = "Vous n'etes pas connecte."
     rows.value = []
   } finally {
     loading.value = false

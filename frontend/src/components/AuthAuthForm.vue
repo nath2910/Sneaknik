@@ -38,13 +38,13 @@
         v-if="error"
         class="mb-4 rounded-lg border border-red-500/70 bg-red-500/10 p-3 text-sm text-red-200"
       >
-        ⚠️ {{ error }}
+        {{ error }}
       </div>
       <div
         v-if="success"
         class="mb-4 rounded-lg border border-emerald-500/70 bg-emerald-500/10 p-3 text-sm text-emerald-200"
       >
-        ✅ {{ success }}
+        {{ success }}
       </div>
 
       <!-- Login Form -->
@@ -149,7 +149,7 @@
 
           <div class="relative mt-1">
             <input
-              :type="showLoginPassword ? 'text' : 'password'"
+              :type="showSignupPassword ? 'text' : 'password'"
               id="loginPassword"
               v-model="signupForm.password"
               required
@@ -159,7 +159,7 @@
             <button
               type="button"
               class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-200"
-              @click="showLoginPassword = !showLoginPassword"
+              @click="showSignupPassword = !showSignupPassword"
               :aria-label="
                 showLoginPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'
               "
@@ -280,20 +280,18 @@ const submitLogin = async () => {
   loading.value = true
 
   try {
-    const { data } = await AuthService.login({
+    const { user, token } = await AuthService.login({
       email: loginForm.value.email,
       password: loginForm.value.password,
     })
 
-    setAuth(data) // car data = { user, token }
+    setAuth({ user, token }) // ✅ store + localStorage via ton authStore
 
-    success.value = 'Connexion réussie ✅'
-    setTimeout(() => {
-      router.push('/')
-    }, 500)
+    success.value = 'Connexion réussie '
+    await router.replace({ name: 'home' }) // mieux que setTimeout + push('/')
   } catch (err) {
     console.error(err)
-    error.value = err.response?.data?.message || 'Email ou mot de passe invalide.'
+    error.value = err.response?.data?.message || err.message || 'Email ou mot de passe invalide.'
   } finally {
     loading.value = false
   }
@@ -317,7 +315,7 @@ const submitSignup = async () => {
       password: signupForm.value.password,
     })
 
-    success.value = 'Compte créé avec succès 🎉'
+    success.value = 'Compte créé avec succès'
     mode.value = 'login'
     router.replace({ name: 'auth', query: { mode: 'login' } })
   } catch (err) {

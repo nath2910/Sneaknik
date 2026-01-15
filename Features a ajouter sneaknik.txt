@@ -1,7 +1,17 @@
 Features a ajouter sneaknik
 
+fix a faire : histoire de connexion deco genre le ptit truc en haut 
+
+faire en sorte que chacun a ces stat la ça marche pas 
+
+bien gerer l'echelle de la page stat
 
 
+Mode boutique (Hiboutik) et mode reseller
+
+stat style canva ?
+
+mode boutique :
 
 Import CSV propre
 
@@ -13,11 +23,11 @@ alertes : “rupture bientôt”, “dort en stock depuis 90j”
 
 marges, rotation, top ventes
 
-suggestions de réassort (même simple)
+suggestions de réassort (même simple)																								
 
 historique des mouvements (qui a fait quoi)
 
-plus de stat -> choix de des stats voulu
+plus de stat -> choix de des stats voulu 
 
 ajout iamge aux items
 
