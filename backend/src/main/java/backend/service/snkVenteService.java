@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import backend.dto.SnkVenteCreateDto;
 import backend.dto.SnkVenteImportDto;
 import backend.dto.TopVenteProjection;
 import backend.entity.SnkVente;
@@ -35,11 +36,21 @@ public class snkVenteService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
   }
 
-  public void creer(Long userId, SnkVente snkVente) {
-    User user = getUserOrThrow(userId);
-    snkVente.setUser(user);
-    snkVenteRepository.save(snkVente);
-  }
+  public SnkVente creer(Long userId, SnkVenteCreateDto dto) {
+  User user = getUserOrThrow(userId);
+
+  SnkVente v = new SnkVente();
+  v.setUser(user);
+  v.setNomItem(dto.nomItem());
+  v.setPrixRetail(dto.prixRetail());
+  v.setPrixResell(dto.prixResell());
+  v.setDateAchat(dto.dateAchat());
+  v.setDateVente(dto.dateVente());
+  v.setDescription(dto.description());
+  v.setCategorie(dto.categorie());
+
+  return snkVenteRepository.save(v); // INSERT garanti (id null)
+}
 
   public List<SnkVente> rechercherParUser(Long userId) {
     return snkVenteRepository.findByUser_IdOrderByDateAchatDesc(userId);
@@ -57,12 +68,7 @@ public class snkVenteService {
 }
 
 
-  public void ajouterPaire(Long userId, SnkVente s) {
-    User user = getUserOrThrow(userId);
-    s.setUser(user);
-    snkVenteRepository.save(s);
-  }
-
+ 
   public BigDecimal totalBenef(Long userId) {
     return snkVenteRepository.totalBenef(userId);
   }

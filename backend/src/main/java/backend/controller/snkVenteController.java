@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import backend.dto.SnkVenteCreateDto;
 import backend.dto.SnkVenteImportDto;
 import backend.dto.TopVenteProjection;
 import backend.entity.SnkVente;
@@ -29,15 +30,14 @@ public class snkVenteController {
   }
 
   // === CRÉATION GLOBALE ===
-  @ResponseStatus(HttpStatus.CREATED)
-  @PostMapping(consumes = APPLICATION_JSON_VALUE)
-  public void creer(
-      @AuthenticationPrincipal User currentUser,
-      @RequestBody SnkVente snkVente
-  ) {
-    Long userId = currentUser.getId();
-    snkVenteService.creer(userId, snkVente);
-  }
+@ResponseStatus(HttpStatus.CREATED)
+@PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+public SnkVente creer(
+    @AuthenticationPrincipal User currentUser,
+    @RequestBody SnkVenteCreateDto dto
+) {
+  return snkVenteService.creer(currentUser.getId(), dto);
+}
 
   // === LECTURE D'UNE VENTE PAR ID (sécurisée par user) ===
   @GetMapping(path = "{id}", produces = APPLICATION_JSON_VALUE)
@@ -65,17 +65,12 @@ public List<SnkVente> getDernieresVentes(
   Long userId = currentUser.getId(); // ✅ pas de cast bizarre
   return snkVenteService.getDernieresVentesParUser(userId, limit);
 }
-
-  // === AJOUT PAIRE (via ton bouton/forme AjoutPaire) ===
-  @PostMapping("/add")
-  public void ajouterPaire(
-      @AuthenticationPrincipal User currentUser,
-      @RequestBody SnkVente s
-  ) {
-    Long userId = currentUser.getId();
-    snkVenteService.ajouterPaire(userId, s);
-  }
-
+@PostMapping("/add")
+@ResponseStatus(HttpStatus.CREATED)
+public void ajouterPaire(@AuthenticationPrincipal User currentUser,
+                         @RequestBody SnkVenteCreateDto dto) {
+  snkVenteService.creer(currentUser.getId(), dto);
+}
   // === TOTAL BÉNÉFICE ===
   @GetMapping("/total")
   public BigDecimal total(
