@@ -3,6 +3,7 @@ package backend.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -21,9 +22,10 @@ public class StatsService {
   }
 
   public StatsSummaryResponse summary(Long userId, LocalDate from, LocalDate to) {
-    BigDecimal ca = repo.caBetween(userId, from, to);
-    BigDecimal profit = repo.profitBetween(userId, from, to);
-    long sold = repo.countSoldBetween(userId, from, to);
+    LocalDateRange range = normalizeRange(from, to);
+    BigDecimal ca = repo.caBetween(userId, range.from(), range.to());
+    BigDecimal profit = repo.profitBetween(userId, range.from(), range.to());
+    long sold = repo.countSoldBetween(userId, range.from(), range.to());
     long stock = repo.countInStock(userId);
     BigDecimal stockValue = repo.stockValue(userId);
 
@@ -43,9 +45,12 @@ public class StatsService {
   }
 
   public List<StatsPointResponse> timeseries(Long userId, LocalDate from, LocalDate to, String granularity) {
+    LocalDateRange range = normalizeRange(from, to);
     var rows = "week".equalsIgnoreCase(granularity)
-        ? repo.timeseriesWeek(userId, from, to)
-        : repo.timeseriesDay(userId, from, to);
+        ? repo.timeseriesWeek(userId, range.from(), range.to())
+        : "month".equalsIgnoreCase(granularity)
+            ? repo.timeseriesMonth(userId, range.from(), range.to())
+            : repo.timeseriesDay(userId, range.from(), range.to());
 
     return rows.stream()
         .map(r -> new StatsPointResponse(r.getBucket(), r.getCa(), r.getProfit()))
@@ -53,13 +58,258 @@ public class StatsService {
   }
 
   public List<StatsBreakdownResponse> brandBreakdown(Long userId, LocalDate from, LocalDate to) {
-    return repo.brandBreakdownSales(userId, from, to).stream()
+    LocalDateRange range = normalizeRange(from, to);
+    return repo.brandBreakdownSales(userId, range.from(), range.to()).stream()
         .map(r -> new StatsBreakdownResponse(r.getLabel(), r.getNb()))
         .toList();
   }
 
   public List<TopVenteProjection> topSales(Long userId, LocalDate from, LocalDate to, int limit) {
+    LocalDateRange range = normalizeRange(from, to);
     int safe = Math.min(Math.max(limit, 1), 20);
-    return repo.topVentesBetween(userId, from, to).stream().limit(safe).toList();
+    return repo.topVentesBetween(userId, range.from(), range.to()).stream().limit(safe).toList();
+  }
+
+  public StatsKpiResponse kpi(Long userId, LocalDate from, LocalDate to, String metric) {
+    LocalDateRange range = normalizeRange(from, to);
+    LocalDateRange prev = prevRange(range.from(), range.to());
+
+    StatsSummaryResponse curr = summary(userId, range.from(), range.to());
+    StatsSummaryResponse prevSummary = summary(userId, prev.from(), prev.to());
+
+    BigDecimal currentValue = metricFromSummary(userId, curr, metric, range.from(), range.to());
+    BigDecimal prevValue = metricFromSummary(userId, prevSummary, metric, prev.from(), prev.to());
+    BigDecimal delta = deltaPct(currentValue, prevValue);
+
+    return new StatsKpiResponse(currentValue, delta);
+  }
+
+  public List<StatsSeriesPointResponse> series(
+      Long userId,
+      LocalDate from,
+      LocalDate to,
+      String metric,
+      String granularity
+  ) {
+    LocalDateRange range = normalizeRange(from, to);
+
+    if ("avgDaysToSell".equalsIgnoreCase(metric)) {
+      var rows = avgDaysRows(userId, range.from(), range.to(), granularity);
+      return rows.stream()
+          .map(r -> new StatsSeriesPointResponse(r.getBucket(), toBigDecimal(r.getAvgDays())))
+          .toList();
+    }
+
+    var rows = timeseriesFull(userId, range.from(), range.to(), granularity);
+    long stockNow = repo.countInStock(userId);
+
+    return rows.stream()
+        .map(r -> new StatsSeriesPointResponse(
+            r.getBucket(),
+            metricFromTimeseries(r.getCa(), r.getProfit(), r.getNb(), stockNow, metric)
+        ))
+        .toList();
+  }
+
+  public List<StatsLabelValueResponse> breakdown(
+      Long userId,
+      String metric,
+      LocalDate from,
+      LocalDate to
+  ) {
+    LocalDateRange range = normalizeRange(from, to);
+
+    if ("deathPileAge".equalsIgnoreCase(metric)) {
+      return repo.deathPileAge(userId).stream()
+          .map(r -> new StatsLabelValueResponse(r.getLabel(), r.getValue()))
+          .toList();
+    }
+
+    if ("brands".equalsIgnoreCase(metric)) {
+      return repo.brandBreakdownSales(userId, range.from(), range.to()).stream()
+          .map(r -> new StatsLabelValueResponse(r.getLabel(), BigDecimal.valueOf(r.getNb())))
+          .toList();
+    }
+
+    return List.of();
+  }
+
+  public List<StatsLabelValueResponse> rank(
+      Long userId,
+      LocalDate from,
+      LocalDate to,
+      String metric,
+      int limit
+  ) {
+    LocalDateRange range = normalizeRange(from, to);
+    int safe = Math.min(Math.max(limit, 1), 50);
+
+    if ("topBrandsProfit".equalsIgnoreCase(metric)) {
+      return repo.topBrandsProfit(userId, range.from(), range.to()).stream()
+          .limit(safe)
+          .map(r -> new StatsLabelValueResponse(r.getLabel(), r.getValue()))
+          .toList();
+    }
+
+    if ("topCategoriesProfit".equalsIgnoreCase(metric)) {
+      return repo.topCategoriesProfit(userId, range.from(), range.to()).stream()
+          .limit(safe)
+          .map(r -> new StatsLabelValueResponse(r.getLabel(), r.getValue()))
+          .toList();
+    }
+
+    return List.of();
+  }
+
+  private record LocalDateRange(LocalDate from, LocalDate to) {}
+
+  private LocalDateRange normalizeRange(LocalDate from, LocalDate to) {
+    LocalDate end = to != null ? to : LocalDate.now();
+    LocalDate start = from != null ? from : end.minusDays(30);
+    if (start.isAfter(end)) {
+      LocalDate tmp = start;
+      start = end;
+      end = tmp;
+    }
+    return new LocalDateRange(start, end);
+  }
+
+  private LocalDateRange prevRange(LocalDate from, LocalDate to) {
+    long days = ChronoUnit.DAYS.between(from, to) + 1;
+    LocalDate prevTo = from.minusDays(1);
+    LocalDate prevFrom = prevTo.minusDays(days - 1);
+    return new LocalDateRange(prevFrom, prevTo);
+  }
+
+  private BigDecimal metricFromSummary(
+      Long userId,
+      StatsSummaryResponse summary,
+      String metric,
+      LocalDate from,
+      LocalDate to
+  ) {
+    BigDecimal ca = nz(summary.ca());
+    BigDecimal profit = nz(summary.profit());
+    BigDecimal margin = nz(summary.profitMargin());
+    long sold = summary.itemsVendues();
+    long stock = summary.itemsEnStock();
+
+    if ("roi".equalsIgnoreCase(metric)) {
+      return margin.multiply(BigDecimal.valueOf(100));
+    }
+    if ("avgMargin".equalsIgnoreCase(metric)) {
+      return sold > 0 ? profit.divide(BigDecimal.valueOf(sold), 4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+    }
+    if ("asp".equalsIgnoreCase(metric)) {
+      return sold > 0 ? ca.divide(BigDecimal.valueOf(sold), 4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+    }
+    if ("activeListings".equalsIgnoreCase(metric)) {
+      return BigDecimal.valueOf(stock);
+    }
+    if ("sellThrough".equalsIgnoreCase(metric)) {
+      long total = sold + stock;
+      if (total == 0) return BigDecimal.ZERO;
+      return BigDecimal.valueOf(sold).multiply(BigDecimal.valueOf(100))
+          .divide(BigDecimal.valueOf(total), 4, RoundingMode.HALF_UP);
+    }
+    if ("cashAvailable".equalsIgnoreCase(metric)) {
+      return profit;
+    }
+    if ("avgDaysToSell".equalsIgnoreCase(metric)) {
+      Double avg = repo.avgDaysToSellBetween(userId, from, to);
+      return toBigDecimal(avg);
+    }
+    if ("grossRevenue".equalsIgnoreCase(metric) || "ca".equalsIgnoreCase(metric)) {
+      return ca;
+    }
+    if ("netProfit".equalsIgnoreCase(metric) || "profit".equalsIgnoreCase(metric)) {
+      return profit;
+    }
+
+    return BigDecimal.ZERO;
+  }
+
+  private BigDecimal metricFromTimeseries(
+      BigDecimal ca,
+      BigDecimal profit,
+      long sold,
+      long stockNow,
+      String metric
+  ) {
+    BigDecimal safeCa = nz(ca);
+    BigDecimal safeProfit = nz(profit);
+
+    if ("avgMargin".equalsIgnoreCase(metric)) {
+      return sold > 0 ? safeProfit.divide(BigDecimal.valueOf(sold), 4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+    }
+    if ("asp".equalsIgnoreCase(metric)) {
+      return sold > 0 ? safeCa.divide(BigDecimal.valueOf(sold), 4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+    }
+    if ("roi".equalsIgnoreCase(metric)) {
+      if (safeCa.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
+      return safeProfit.divide(safeCa, 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
+    }
+    if ("sellThrough".equalsIgnoreCase(metric)) {
+      long total = sold + stockNow;
+      if (total == 0) return BigDecimal.ZERO;
+      return BigDecimal.valueOf(sold).multiply(BigDecimal.valueOf(100))
+          .divide(BigDecimal.valueOf(total), 4, RoundingMode.HALF_UP);
+    }
+    if ("activeListings".equalsIgnoreCase(metric)) {
+      return BigDecimal.valueOf(stockNow);
+    }
+    if ("grossRevenue".equalsIgnoreCase(metric) || "ca".equalsIgnoreCase(metric) || "asp".equalsIgnoreCase(metric)) {
+      return safeCa;
+    }
+    if ("netProfit".equalsIgnoreCase(metric) || "profit".equalsIgnoreCase(metric) || "cashAvailable".equalsIgnoreCase(metric)) {
+      return safeProfit;
+    }
+    return BigDecimal.ZERO;
+  }
+
+  private List<SnkVenteRepository.AvgDaysRow> avgDaysRows(
+      Long userId,
+      LocalDate from,
+      LocalDate to,
+      String granularity
+  ) {
+    if ("week".equalsIgnoreCase(granularity)) {
+      return repo.avgDaysToSellWeek(userId, from, to);
+    }
+    if ("month".equalsIgnoreCase(granularity)) {
+      return repo.avgDaysToSellMonth(userId, from, to);
+    }
+    return repo.avgDaysToSellDay(userId, from, to);
+  }
+
+  private List<SnkVenteRepository.TimePointFullRow> timeseriesFull(
+      Long userId,
+      LocalDate from,
+      LocalDate to,
+      String granularity
+  ) {
+    if ("week".equalsIgnoreCase(granularity)) {
+      return repo.timeseriesWeekFull(userId, from, to);
+    }
+    if ("month".equalsIgnoreCase(granularity)) {
+      return repo.timeseriesMonthFull(userId, from, to);
+    }
+    return repo.timeseriesDayFull(userId, from, to);
+  }
+
+  private BigDecimal deltaPct(BigDecimal current, BigDecimal previous) {
+    if (previous == null || previous.compareTo(BigDecimal.ZERO) == 0) return null;
+    return current.subtract(previous)
+        .divide(previous.abs(), 4, RoundingMode.HALF_UP)
+        .multiply(BigDecimal.valueOf(100));
+  }
+
+  private BigDecimal nz(BigDecimal value) {
+    return value == null ? BigDecimal.ZERO : value;
+  }
+
+  private BigDecimal toBigDecimal(Double value) {
+    if (value == null) return BigDecimal.ZERO;
+    return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP);
   }
 }

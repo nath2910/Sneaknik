@@ -92,6 +92,7 @@ import afficherTout from '@/components/gestion/GestionAfficherTout.vue'
 import EditVenteModal from '@/components/gestion/GestionModifierItem.vue'
 import SupprimerModal from '@/components/gestion/GestionSupprimerModal.vue'
 import CsvImportExportWidget from '@/components/gestion/CsvImportExportWidget.vue'
+import { isVendue, prixRetailOf } from '@/utils/snkVente'
 
 const snkVentes = ref([])
 const searchTerm = ref('')
@@ -125,9 +126,6 @@ const chargerVentes = async () => {
 onMounted(chargerVentes)
 
 // Stats
-const isVendue = (v) => Boolean(v.dateVente ?? v.date_vente)
-const prixRetailOf = (v) => Number(v.prixRetail ?? v.prix_retail ?? 0)
-
 const totalPaires = computed(() => snkVentes.value.length)
 const nbVendues = computed(() => snkVentes.value.filter(isVendue).length)
 const nbEnStock = computed(() => snkVentes.value.filter((v) => !isVendue(v)).length)

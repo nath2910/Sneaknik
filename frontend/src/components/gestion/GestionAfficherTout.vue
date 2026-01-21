@@ -163,6 +163,8 @@
 
 <script setup>
 import { computed } from 'vue'
+import { formatDateFR, formatEUR } from '@/utils/formatters'
+import { profitOf } from '@/utils/snkVente'
 
 const props = defineProps({
   snkVentes: { type: Array, required: true },
@@ -207,26 +209,13 @@ const toggleAll = () => {
 
 const formatCurrency = (val) => {
   const num = Number(val)
-  if (!val || isNaN(num)) return '—'
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-  }).format(num)
+  if (!val || Number.isNaN(num)) return '--'
+  return formatEUR(num, { digits: 0 })
 }
 
-const formatDate = (val) => {
-  if (!val) return '—'
-  return new Date(val).toLocaleDateString('fr-FR')
-}
+const formatDate = (val) => formatDateFR(val, { fallback: '--' })
 
-const profit = (vente) => {
-  const retail = Number(vente.prixRetail ?? vente.prix_retail ?? 0)
-  const resell = Number(vente.prixResell ?? vente.prix_resell ?? 0)
-  if (isNaN(retail) || isNaN(resell)) return 0
-  return resell - retail
-}
-
+const profit = (vente) => profitOf(vente)
 const badgeClass = (cat) => {
   if (!cat) return 'bg-gray-700 text-gray-100 border border-gray-500/60'
   const c = cat.toLowerCase()

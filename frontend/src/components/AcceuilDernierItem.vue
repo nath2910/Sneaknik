@@ -44,28 +44,28 @@
                 class="border-t border-slate-800/80 hover:bg-slate-800/70 transition"
               >
                 <td class="px-4 py-3">
-                  <p class="font-medium text-gray-100">{{ get(v, 'nomItem') }}</p>
+                  <p class="font-medium text-gray-100">{{ field(v, 'nomItem') }}</p>
                 </td>
 
                 <td class="px-4 py-3 text-right">
-                  <span class="font-medium">{{ euro(num(get(v, 'prixRetail'))) }}</span>
+                  <span class="font-medium">{{ prixRetailText(v) }}</span>
                 </td>
 
                 <td class="px-4 py-3 text-right">
                   <span
                     :class="['font-medium', hasResell(v) ? 'text-emerald-300' : 'text-gray-500']"
                   >
-                    {{ hasResell(v) ? euro(num(get(v, 'prixResell'))) : '—' }}
+                    {{ hasResell(v) ? prixResellText(v) : '--' }}
                   </span>
                 </td>
 
                 <td class="px-4 py-3 text-center">
-                  <span class="text-xs text-gray-300">{{ dateFr(get(v, 'dateAchat')) }}</span>
+                  <span class="text-xs text-gray-300">{{ dateFr(field(v, 'dateAchat')) }}</span>
                 </td>
 
                 <td class="px-4 py-3 text-center">
                   <span class="text-xs" :class="isVendue(v) ? 'text-gray-300' : 'text-gray-500'">
-                    {{ isVendue(v) ? dateFr(get(v, 'dateVente')) : '—' }}
+                    {{ isVendue(v) ? dateFr(field(v, 'dateVente')) : '--' }}
                   </span>
                 </td>
 
@@ -93,6 +93,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
+import { formatEUR, formatDateFR } from '@/utils/formatters'
+import { getField, hasResell, isVendue, prixResellOf, prixRetailOf } from '@/utils/snkVente'
 
 const rows = ref([])
 const loading = ref(false)
@@ -116,31 +118,11 @@ onMounted(async () => {
 /**
  * Helpers robustes : gère camelCase et snake_case
  */
-const get = (obj, key) => {
-  if (!obj) return ''
-  if (obj[key] != null) return obj[key]
-  const snake = key.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`)
-  return obj[snake] ?? ''
-}
-
-const num = (v) => {
-  const n = Number(v ?? 0)
-  return Number.isFinite(n) ? n : 0
-}
-
-const isVendue = (v) => !!get(v, 'dateVente')
-
-const hasResell = (v) => num(get(v, 'prixResell')) > 0
-
-const euro = (value) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value || 0)
-
-const dateFr = (value) => {
-  if (!value) return '—'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
+const field = (obj, key) => getField(obj, key, '')
+const euro = (value) => formatEUR(value)
+const dateFr = (value) => formatDateFR(value, { fallback: '--' })
+const prixRetailText = (v) => euro(prixRetailOf(v))
+const prixResellText = (v) => euro(prixResellOf(v))
 </script>
 
 <style scoped>

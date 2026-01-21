@@ -1,206 +1,187 @@
-// src/components/stats/widgetRegistry.js
+﻿// src/components/stats/widgets/widgetRegistry.js
 import {
-  Gauge,
-  LineChart,
-  PieChart,
-  BarChart3,
-  Trophy,
-  Activity,
   TrendingUp,
-  Waves,
   GitCompareArrows,
+  LineChart,
+  Gauge,
   Boxes,
+  BarChart3,
+  Activity,
+  Trophy,
 } from 'lucide-vue-next'
 
-import StatsKpisWidget from './widgets/StatsKpisWidget.vue'
-import StatsLineWidget from './widgets/StatsLineWidget.vue'
-import StatsPieWidget from './widgets/StatsPieWidget.vue'
-import StatsBarWidget from './widgets/StatsBarWidget.vue'
-import StatsTopWidget from './widgets/StatsTopWidget.vue'
+// src/components/stats/widgets/widgetRegistry.js
+import NetProfitWidget from './widgets/NetProfitWidget.vue'
 
-// nouveaux
-import StatsSparkWidget from './widgets/StatsSparkWidget.vue'
-import StatsCumulativeWidget from './widgets/StatsCumulativeWidget.vue'
-import StatsMovingAvgWidget from './widgets/StatsMovingAvgWidget.vue'
-import StatsCompareWidget from './widgets/StatsCompareWidget.vue'
-import StatsStockWidget from './widgets/StatsStockWidget.vue'
+import RoiWidget from './widgets/RoiWidget.vue'
+import GrossRevenueWidget from './widgets/GrossRevenueWidget.vue'
+import AvgMarginWidget from './widgets/AvgMarginWidget.vue'
 
-const GRANULARITY_OPTIONS = [
+import InventoryValueWidget from './widgets/InventoryValueWidget.vue'
+import SellThroughWidget from './widgets/SellThroughWidget.vue'
+import AvgDaysToSellWidget from './widgets/AvgDaysToSellWidget.vue'
+import DeathPileWidget from './widgets/DeathPileWidget.vue'
+import ActiveListingsWidget from './widgets/ActiveListingsWidget.vue'
+
+import TopProfitDriversWidget from './widgets/TopProfitDriversWidget.vue'
+import AspWidget from './widgets/AspWidget.vue'
+import CashFlowWidget from './widgets/CashFlowWidget.vue'
+
+import BrandsWidget from './widgets/BrandsWidget.vue'
+import TopSalesWidget from './widgets/TopSalesWidget.vue'
+
+const BUCKET_OPTIONS = [
   { label: 'Jour', value: 'day' },
   { label: 'Semaine', value: 'week' },
   { label: 'Mois', value: 'month' },
 ]
 
 export const WIDGET_DEFS = [
+  // 💰 Finance
   {
-    type: 'kpis',
-    title: 'KPIs',
-    help: 'Résumé rapide',
-    icon: Gauge,
-    component: StatsKpisWidget,
-    defaultSize: { w: 640, h: 250 },
-    defaultProps: { showMargin: true, showSold: true, showStock: true, showStockValue: true },
-    settings: [
-      { key: 'showMargin', label: 'Afficher marge', type: 'toggle', hint: 'ProfitMargin' },
-      { key: 'showSold', label: 'Afficher vendues', type: 'toggle', hint: 'itemsVendues' },
-      { key: 'showStock', label: 'Afficher stock', type: 'toggle', hint: 'itemsEnStock' },
-      {
-        key: 'showStockValue',
-        label: 'Afficher valeur stock',
-        type: 'toggle',
-        hint: 'valeurStock',
-      },
-    ],
+    type: 'netProfit',
+    title: 'Bénéfice net',
+    help: 'Profit total sur la période',
+    icon: TrendingUp,
+    component: NetProfitWidget,
+    defaultSize: { w: 520, h: 240 },
+    defaultProps: { bucket: 'week' },
+    settings: [{ key: 'bucket', label: 'Granularité', type: 'select', options: BUCKET_OPTIONS }],
   },
-
   {
-    type: 'line',
-    title: 'Courbes (CA & Profit)',
-    help: 'Évolution dans le temps',
+    type: 'roi',
+    title: 'ROI moyen',
+    help: 'Retour sur investissement',
+    icon: GitCompareArrows,
+    component: RoiWidget,
+    defaultSize: { w: 520, h: 260 },
+    defaultProps: {},
+    settings: [],
+  },
+  {
+    type: 'grossRevenue',
+    title: 'Chiffre d’affaires',
+    help: 'Courbe du CA',
     icon: LineChart,
-    component: StatsLineWidget,
-    defaultSize: { w: 820, h: 460 },
-    defaultProps: { granularity: 'day', showCA: true, showProfit: true },
-    settings: [
-      { key: 'granularity', label: 'Granularité', type: 'select', options: GRANULARITY_OPTIONS },
-      { key: 'showCA', label: 'Afficher CA', type: 'toggle' },
-      { key: 'showProfit', label: 'Afficher Profit', type: 'toggle' },
-    ],
+    component: GrossRevenueWidget,
+    defaultSize: { w: 820, h: 420 },
+    defaultProps: { bucket: 'day' },
+    settings: [{ key: 'bucket', label: 'Granularité', type: 'select', options: BUCKET_OPTIONS }],
   },
-
   {
-    type: 'pie',
-    title: 'Donut (Marques)',
-    help: 'Répartition marques (nb)',
-    icon: PieChart,
-    component: StatsPieWidget,
-    defaultSize: { w: 460, h: 460 },
-    defaultProps: { top: 8 },
-    settings: [{ key: 'top', label: 'Top N', type: 'number', min: 3, max: 20 }],
+    type: 'avgMargin',
+    title: 'Marge moyenne',
+    help: 'Marge moyenne par article',
+    icon: Gauge,
+    component: AvgMarginWidget,
+    defaultSize: { w: 520, h: 240 },
+    defaultProps: { bucket: 'week' },
+    settings: [{ key: 'bucket', label: 'Granularité', type: 'select', options: BUCKET_OPTIONS }],
   },
-
+  // 📦 Stock & vélocité
   {
-    type: 'bar',
-    title: 'Barres (Top marques)',
-    help: 'Top marques (volume)',
+    type: 'inventoryValue',
+    title: 'Valeur du stock',
+    help: 'Capital immobilisé',
+    icon: Boxes,
+    component: InventoryValueWidget,
+    defaultSize: { w: 520, h: 240 },
+    defaultProps: { bucket: 'week' },
+    settings: [{ key: 'bucket', label: 'Granularité', type: 'select', options: BUCKET_OPTIONS }],
+  },
+  {
+    type: 'sellThrough',
+    title: 'Sell-through',
+    help: 'Taux d’écoulement',
     icon: BarChart3,
-    component: StatsBarWidget,
+    component: SellThroughWidget,
+    defaultSize: { w: 520, h: 260 },
+    defaultProps: { bucket: 'week' },
+    settings: [{ key: 'bucket', label: 'Granularité', type: 'select', options: BUCKET_OPTIONS }],
+  },
+  {
+    type: 'avgDaysToSell',
+    title: 'Délai moyen',
+    help: 'Days to sell',
+    icon: Activity,
+    component: AvgDaysToSellWidget,
+    defaultSize: { w: 520, h: 240 },
+    defaultProps: { bucket: 'week' },
+    settings: [{ key: 'bucket', label: 'Granularité', type: 'select', options: BUCKET_OPTIONS }],
+  },
+  {
+    type: 'deathPile',
+    title: 'Death pile',
+    help: 'Stock dormant',
+    icon: Boxes,
+    component: DeathPileWidget,
+    defaultSize: { w: 520, h: 380 },
+    defaultProps: {},
+    settings: [],
+  },
+  {
+    type: 'activeListings',
+    title: 'Annonces actives',
+    help: 'Nb annonces actives',
+    icon: Activity,
+    component: ActiveListingsWidget,
+    defaultSize: { w: 520, h: 240 },
+    defaultProps: { bucket: 'week' },
+    settings: [{ key: 'bucket', label: 'Granularité', type: 'select', options: BUCKET_OPTIONS }],
+  },
+
+  // 🚀 Performance
+  {
+    type: 'topProfitDrivers',
+    title: 'Top profit (marques/cat)',
+    help: 'Ce qui te rapporte le plus',
+    icon: Trophy,
+    component: TopProfitDriversWidget,
     defaultSize: { w: 720, h: 420 },
     defaultProps: { top: 8 },
     settings: [{ key: 'top', label: 'Top N', type: 'number', min: 3, max: 20 }],
   },
-
   {
-    type: 'top',
+    type: 'asp',
+    title: 'Prix moyen (ASP)',
+    help: 'Average selling price',
+    icon: Gauge,
+    component: AspWidget,
+    defaultSize: { w: 520, h: 240 },
+    defaultProps: { bucket: 'week' },
+    settings: [{ key: 'bucket', label: 'Granularité', type: 'select', options: BUCKET_OPTIONS }],
+  },
+  {
+    type: 'cashFlow',
+    title: 'Cash disponible',
+    help: 'Cash pour racheter du stock',
+    icon: TrendingUp,
+    component: CashFlowWidget,
+    defaultSize: { w: 520, h: 240 },
+    defaultProps: { bucket: 'week' },
+    settings: [{ key: 'bucket', label: 'Granularité', type: 'select', options: BUCKET_OPTIONS }],
+  },
+
+  // Bonus (si tu veux garder)
+  {
+    type: 'brands',
+    title: 'Top marques (volume)',
+    help: 'Barres marques',
+    icon: BarChart3,
+    component: BrandsWidget,
+    defaultSize: { w: 720, h: 420 },
+    defaultProps: { top: 8 },
+    settings: [{ key: 'top', label: 'Top N', type: 'number', min: 3, max: 20 }],
+  },
+  {
+    type: 'topSales',
     title: 'Top ventes',
     help: 'Top par bénéfice',
     icon: Trophy,
-    component: StatsTopWidget,
+    component: TopSalesWidget,
     defaultSize: { w: 620, h: 420 },
     defaultProps: { limit: 5 },
     settings: [{ key: 'limit', label: 'Limite', type: 'number', min: 3, max: 30 }],
-  },
-
-  // 5 nouveaux
-  {
-    type: 'spark',
-    title: 'Sparkline',
-    help: 'Mini tendance',
-    icon: Activity,
-    component: StatsSparkWidget,
-    defaultSize: { w: 420, h: 220 },
-    defaultProps: { metric: 'ca', granularity: 'day', label: 'Tendance' },
-    settings: [
-      { key: 'label', label: 'Titre', type: 'text' },
-      {
-        key: 'metric',
-        label: 'Métrique',
-        type: 'select',
-        options: [
-          { label: 'CA', value: 'ca' },
-          { label: 'Profit', value: 'profit' },
-        ],
-      },
-      { key: 'granularity', label: 'Granularité', type: 'select', options: GRANULARITY_OPTIONS },
-    ],
-  },
-
-  {
-    type: 'cumul',
-    title: 'Cumul',
-    help: 'Cumul CA/Profit',
-    icon: TrendingUp,
-    component: StatsCumulativeWidget,
-    defaultSize: { w: 720, h: 380 },
-    defaultProps: { metric: 'ca', granularity: 'day' },
-    settings: [
-      {
-        key: 'metric',
-        label: 'Métrique',
-        type: 'select',
-        options: [
-          { label: 'CA', value: 'ca' },
-          { label: 'Profit', value: 'profit' },
-        ],
-      },
-      { key: 'granularity', label: 'Granularité', type: 'select', options: GRANULARITY_OPTIONS },
-    ],
-  },
-
-  {
-    type: 'ma',
-    title: 'Moyenne mobile',
-    help: 'Lissage de courbe',
-    icon: Waves,
-    component: StatsMovingAvgWidget,
-    defaultSize: { w: 760, h: 380 },
-    defaultProps: { metric: 'ca', granularity: 'day', window: 7 },
-    settings: [
-      {
-        key: 'metric',
-        label: 'Métrique',
-        type: 'select',
-        options: [
-          { label: 'CA', value: 'ca' },
-          { label: 'Profit', value: 'profit' },
-        ],
-      },
-      { key: 'granularity', label: 'Granularité', type: 'select', options: GRANULARITY_OPTIONS },
-      { key: 'window', label: 'Fenêtre', type: 'number', min: 2, max: 30 },
-    ],
-  },
-
-  {
-    type: 'compare',
-    title: 'Comparatif',
-    help: 'Vs période précédente',
-    icon: GitCompareArrows,
-    component: StatsCompareWidget,
-    defaultSize: { w: 460, h: 240 },
-    defaultProps: { metric: 'ca' },
-    settings: [
-      {
-        key: 'metric',
-        label: 'Métrique',
-        type: 'select',
-        options: [
-          { label: 'CA', value: 'ca' },
-          { label: 'Profit', value: 'profit' },
-          { label: 'Vendues', value: 'itemsVendues' },
-        ],
-      },
-    ],
-  },
-
-  {
-    type: 'stock',
-    title: 'Stock',
-    help: 'Vendues vs stock + valeur',
-    icon: Boxes,
-    component: StatsStockWidget,
-    defaultSize: { w: 520, h: 360 },
-    defaultProps: {},
-    settings: [],
   },
 ]
 
@@ -213,6 +194,7 @@ export function newWidget(type, x, y) {
     globalThis.crypto?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`
   const def = getWidgetDef(type)
   if (!def) throw new Error(`Unknown widget type: ${type}`)
+
   return {
     id: `${type}_${uid}`,
     type,
@@ -224,3 +206,4 @@ export function newWidget(type, x, y) {
     props: { ...def.defaultProps },
   }
 }
+

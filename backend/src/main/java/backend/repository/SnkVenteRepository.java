@@ -34,6 +34,23 @@ public interface SnkVenteRepository extends JpaRepository<SnkVente, Integer> {
   java.math.BigDecimal getProfit();
 }
 
+  public interface TimePointFullRow {
+    java.time.LocalDate getBucket();
+    java.math.BigDecimal getCa();
+    java.math.BigDecimal getProfit();
+    long getNb();
+  }
+
+  public interface AvgDaysRow {
+    java.time.LocalDate getBucket();
+    Double getAvgDays();
+  }
+
+  public interface LabelValueRow {
+    String getLabel();
+    java.math.BigDecimal getValue();
+  }
+
 
 
   // Liste de tout les items dans la liste
@@ -275,6 +292,215 @@ List<TimePointRow> timeseriesWeek(@Param("userId") Long userId,
                                   @Param("start") LocalDate start,
                                   @Param("end") LocalDate end);
 
+@Query(value = """
+  SELECT (date_trunc('month', t.date_vente))::date AS bucket,
+         COALESCE(SUM(COALESCE(t.prix_resell,0)),0) AS ca,
+         COALESCE(SUM(COALESCE(t.prix_resell,0) - COALESCE(t.prix_retail,0)),0) AS profit
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.prix_resell IS NOT NULL
+  GROUP BY bucket
+  ORDER BY bucket
+""", nativeQuery = true)
+List<TimePointRow> timeseriesMonth(@Param("userId") Long userId,
+                                   @Param("start") LocalDate start,
+                                   @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT (date_trunc('day', t.date_vente))::date AS bucket,
+         COALESCE(SUM(COALESCE(t.prix_resell,0)),0) AS ca,
+         COALESCE(SUM(COALESCE(t.prix_resell,0) - COALESCE(t.prix_retail,0)),0) AS profit,
+         COUNT(*) AS nb
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.prix_resell IS NOT NULL
+  GROUP BY bucket
+  ORDER BY bucket
+""", nativeQuery = true)
+List<TimePointFullRow> timeseriesDayFull(@Param("userId") Long userId,
+                                         @Param("start") LocalDate start,
+                                         @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT (date_trunc('week', t.date_vente))::date AS bucket,
+         COALESCE(SUM(COALESCE(t.prix_resell,0)),0) AS ca,
+         COALESCE(SUM(COALESCE(t.prix_resell,0) - COALESCE(t.prix_retail,0)),0) AS profit,
+         COUNT(*) AS nb
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.prix_resell IS NOT NULL
+  GROUP BY bucket
+  ORDER BY bucket
+""", nativeQuery = true)
+List<TimePointFullRow> timeseriesWeekFull(@Param("userId") Long userId,
+                                          @Param("start") LocalDate start,
+                                          @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT (date_trunc('month', t.date_vente))::date AS bucket,
+         COALESCE(SUM(COALESCE(t.prix_resell,0)),0) AS ca,
+         COALESCE(SUM(COALESCE(t.prix_resell,0) - COALESCE(t.prix_retail,0)),0) AS profit,
+         COUNT(*) AS nb
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.prix_resell IS NOT NULL
+  GROUP BY bucket
+  ORDER BY bucket
+""", nativeQuery = true)
+List<TimePointFullRow> timeseriesMonthFull(@Param("userId") Long userId,
+                                           @Param("start") LocalDate start,
+                                           @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT (date_trunc('day', t.date_vente))::date AS bucket,
+         AVG(t.date_vente - t.date_achat) AS avg_days
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.date_vente IS NOT NULL
+    AND t.date_achat IS NOT NULL
+  GROUP BY bucket
+  ORDER BY bucket
+""", nativeQuery = true)
+List<AvgDaysRow> avgDaysToSellDay(@Param("userId") Long userId,
+                                  @Param("start") LocalDate start,
+                                  @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT (date_trunc('week', t.date_vente))::date AS bucket,
+         AVG(t.date_vente - t.date_achat) AS avg_days
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.date_vente IS NOT NULL
+    AND t.date_achat IS NOT NULL
+  GROUP BY bucket
+  ORDER BY bucket
+""", nativeQuery = true)
+List<AvgDaysRow> avgDaysToSellWeek(@Param("userId") Long userId,
+                                   @Param("start") LocalDate start,
+                                   @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT (date_trunc('month', t.date_vente))::date AS bucket,
+         AVG(t.date_vente - t.date_achat) AS avg_days
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.date_vente IS NOT NULL
+    AND t.date_achat IS NOT NULL
+  GROUP BY bucket
+  ORDER BY bucket
+""", nativeQuery = true)
+List<AvgDaysRow> avgDaysToSellMonth(@Param("userId") Long userId,
+                                    @Param("start") LocalDate start,
+                                    @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT AVG(t.date_vente - t.date_achat) AS avg_days
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente BETWEEN :start AND :end
+    AND t.date_vente IS NOT NULL
+    AND t.date_achat IS NOT NULL
+""", nativeQuery = true)
+Double avgDaysToSellBetween(@Param("userId") Long userId,
+                            @Param("start") LocalDate start,
+                            @Param("end") LocalDate end);
+
+@Query(value = """
+  SELECT
+    s.label AS label,
+    COUNT(*)::numeric AS value
+  FROM (
+    SELECT
+      CASE
+        WHEN (CURRENT_DATE - t.date_achat) <= 30 THEN '0-30'
+        WHEN (CURRENT_DATE - t.date_achat) <= 90 THEN '31-90'
+        WHEN (CURRENT_DATE - t.date_achat) <= 180 THEN '91-180'
+        ELSE '180+'
+      END AS label
+    FROM public.tableauventes t
+    WHERE t.user_id = :userId
+      AND t.date_vente IS NULL
+      AND t.date_achat IS NOT NULL
+  ) s
+  GROUP BY s.label
+  ORDER BY
+    CASE s.label
+      WHEN '0-30' THEN 1
+      WHEN '31-90' THEN 2
+      WHEN '91-180' THEN 3
+      ELSE 4
+    END
+""", nativeQuery = true)
+List<LabelValueRow> deathPileAge(@Param("userId") Long userId);
+
+@Query("""
+  SELECT
+    CASE
+      WHEN lower(v.nomItem) LIKE '%nike%' THEN 'Nike'
+      WHEN lower(v.nomItem) LIKE '%adidas%' THEN 'Adidas'
+      WHEN lower(v.nomItem) LIKE '%puma%' THEN 'Puma'
+      WHEN lower(v.nomItem) LIKE '%new balance%' THEN 'New Balance'
+      WHEN lower(v.nomItem) LIKE '%asics%' THEN 'ASICS'
+      WHEN lower(v.nomItem) LIKE '%pokemon%' THEN 'Pokemon'
+      WHEN lower(v.nomItem) LIKE '%air%' THEN 'Nike'
+      WHEN lower(v.nomItem) LIKE '%jordan%' THEN 'Jordan'
+      WHEN lower(v.nomItem) LIKE '%dunk%' THEN 'Nike'
+      WHEN lower(v.nomItem) LIKE '%yeezy%' THEN 'Yeezy'
+      WHEN lower(v.nomItem) LIKE '%samba%' THEN 'Adidas'
+      WHEN lower(v.nomItem) LIKE '%spezial%' THEN 'Adidas'
+      WHEN lower(v.nomItem) LIKE '%gazelle%' THEN 'Adidas'
+      ELSE 'Autre'
+    END AS label,
+    SUM(COALESCE(v.prixResell,0) - COALESCE(v.prixRetail,0)) AS value
+  FROM SnkVente v
+  WHERE v.user.id = :userId
+    AND v.dateVente BETWEEN :start AND :end
+    AND v.prixResell IS NOT NULL
+    AND v.prixRetail IS NOT NULL
+  GROUP BY
+    CASE
+      WHEN lower(v.nomItem) LIKE '%nike%' THEN 'Nike'
+      WHEN lower(v.nomItem) LIKE '%adidas%' THEN 'Adidas'
+      WHEN lower(v.nomItem) LIKE '%puma%' THEN 'Puma'
+      WHEN lower(v.nomItem) LIKE '%new balance%' THEN 'New Balance'
+      WHEN lower(v.nomItem) LIKE '%asics%' THEN 'ASICS'
+      WHEN lower(v.nomItem) LIKE '%pokemon%' THEN 'Pokemon'
+      WHEN lower(v.nomItem) LIKE '%air%' THEN 'Nike'
+      WHEN lower(v.nomItem) LIKE '%jordan%' THEN 'Jordan'
+      WHEN lower(v.nomItem) LIKE '%dunk%' THEN 'Nike'
+      WHEN lower(v.nomItem) LIKE '%yeezy%' THEN 'Yeezy'
+      WHEN lower(v.nomItem) LIKE '%samba%' THEN 'Adidas'
+      WHEN lower(v.nomItem) LIKE '%spezial%' THEN 'Adidas'
+      WHEN lower(v.nomItem) LIKE '%gazelle%' THEN 'Adidas'
+      ELSE 'Autre'
+    END
+  ORDER BY value DESC
+""")
+List<LabelValueRow> topBrandsProfit(@Param("userId") Long userId,
+                                    @Param("start") LocalDate start,
+                                    @Param("end") LocalDate end);
+
+@Query("""
+  SELECT v.categorie AS label,
+         SUM(COALESCE(v.prixResell,0) - COALESCE(v.prixRetail,0)) AS value
+  FROM SnkVente v
+  WHERE v.user.id = :userId
+    AND v.dateVente BETWEEN :start AND :end
+    AND v.prixResell IS NOT NULL
+    AND v.prixRetail IS NOT NULL
+  GROUP BY v.categorie
+  ORDER BY value DESC
+""")
+List<LabelValueRow> topCategoriesProfit(@Param("userId") Long userId,
+                                        @Param("start") LocalDate start,
+                                        @Param("end") LocalDate end);
 
 
 @Query("""

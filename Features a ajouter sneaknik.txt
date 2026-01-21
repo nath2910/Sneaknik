@@ -6,6 +6,8 @@ faire en sorte que chacun a ces stat la ça marche pas
 
 bien gerer l'echelle de la page stat
 
+Ajouter zone de texte stat + pouvoir avoir une vue full screen de la stat quand on veut
+
 
 Mode boutique (Hiboutik) et mode reseller
 

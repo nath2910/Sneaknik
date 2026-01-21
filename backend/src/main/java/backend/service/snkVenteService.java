@@ -1,8 +1,8 @@
 package backend.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.Year;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
@@ -37,20 +37,14 @@ public class snkVenteService {
   }
 
   public SnkVente creer(Long userId, SnkVenteCreateDto dto) {
-  User user = getUserOrThrow(userId);
+    User user = getUserOrThrow(userId);
 
-  SnkVente v = new SnkVente();
-  v.setUser(user);
-  v.setNomItem(dto.nomItem());
-  v.setPrixRetail(dto.prixRetail());
-  v.setPrixResell(dto.prixResell());
-  v.setDateAchat(dto.dateAchat());
-  v.setDateVente(dto.dateVente());
-  v.setDescription(dto.description());
-  v.setCategorie(dto.categorie());
+    SnkVente v = new SnkVente();
+    v.setUser(user);
+    applyFields(v, dto);
 
-  return snkVenteRepository.save(v); // INSERT garanti (id null)
-}
+    return snkVenteRepository.save(v);
+  }
 
   public List<SnkVente> rechercherParUser(Long userId) {
     return snkVenteRepository.findByUser_IdOrderByDateAchatDesc(userId);
@@ -62,13 +56,11 @@ public class snkVenteService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vente introuvable"));
   }
 
- public List<SnkVente> getDernieresVentesParUser(Long userId, int limit) {
-  int safeLimit = Math.min(Math.max(limit, 1), 50); // limite 1..50 (sécurité)
-  return snkVenteRepository.findByUser_IdOrderByCreatedAtDesc(userId, PageRequest.of(0, safeLimit));
-}
+  public List<SnkVente> getDernieresVentesParUser(Long userId, int limit) {
+    int safeLimit = Math.min(Math.max(limit, 1), 50);
+    return snkVenteRepository.findByUser_IdOrderByCreatedAtDesc(userId, PageRequest.of(0, safeLimit));
+  }
 
-
- 
   public BigDecimal totalBenef(Long userId) {
     return snkVenteRepository.totalBenef(userId);
   }
@@ -101,58 +93,100 @@ public class snkVenteService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vente introuvable"));
 
     if (existing.getUser() == null || !userId.equals(existing.getUser().getId())) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Accès interdit");
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acces interdit");
     }
 
-    existing.setNomItem(payload.getNomItem());
-    existing.setPrixRetail(payload.getPrixRetail());
-    existing.setPrixResell(payload.getPrixResell());
-    existing.setDateAchat(payload.getDateAchat());
-    existing.setDateVente(payload.getDateVente());
-    existing.setDescription(payload.getDescription());
-    existing.setCategorie(payload.getCategorie());
-
+    applyFields(existing, payload);
     return snkVenteRepository.save(existing);
   }
-  // stat par categorie
+
   public List<SnkVenteRepository.LabelCount> topCategories(Long userId) {
-  return snkVenteRepository.topCategories(userId, PageRequest.of(0, 10));
-}
+    return snkVenteRepository.topCategories(userId, PageRequest.of(0, 10));
+  }
 
-public List<SnkVenteRepository.LabelCount> topItemsByCategorie(Long userId, String categorie) {
-  return snkVenteRepository.topItemsByCategorie(userId, categorie, PageRequest.of(0, 10));
-}
+  public List<SnkVenteRepository.LabelCount> topItemsByCategorie(Long userId, String categorie) {
+    return snkVenteRepository.topItemsByCategorie(userId, categorie, PageRequest.of(0, 10));
+  }
 
-public List<SnkVente> get7DernieresVentesParUser(Long userId) {
-  return getDernieresVentesParUser(userId, 7);
-}
+  public List<SnkVente> get7DernieresVentesParUser(Long userId) {
+    return getDernieresVentesParUser(userId, 7);
+  }
 
-@Transactional
-public int importBulk(Long userId, List<SnkVenteImportDto> items) {
-  User user = getUserOrThrow(userId);
-  if (items == null || items.isEmpty()) return 0;
+  @Transactional
+  public int importBulk(Long userId, List<SnkVenteImportDto> items) {
+    User user = getUserOrThrow(userId);
+    if (items == null || items.isEmpty()) return 0;
 
-  List<SnkVente> entities = items.stream()
-    .filter(dto -> dto != null && dto.getNomItem() != null && !dto.getNomItem().trim().isEmpty())
-    .map(dto -> {
-      SnkVente v = new SnkVente();
-      v.setUser(user);                 // ✅ isolement multi-users
-      v.setNomItem(dto.getNomItem().trim());
-      v.setPrixRetail(dto.getPrixRetail());
-      v.setPrixResell(dto.getPrixResell());
-      v.setDateAchat(dto.getDateAchat());
-      v.setDateVente(dto.getDateVente());
-      v.setDescription(dto.getDescription());
-      v.setCategorie(dto.getCategorie());
-      return v;
-    })
-    .toList();
+    List<SnkVente> entities = items.stream()
+      .filter(dto -> dto != null && dto.getNomItem() != null && !dto.getNomItem().trim().isEmpty())
+      .map(dto -> {
+        SnkVente v = new SnkVente();
+        v.setUser(user);
+        applyFields(v, dto);
+        v.setNomItem(dto.getNomItem().trim());
+        return v;
+      })
+      .toList();
 
-  snkVenteRepository.saveAll(entities);
-  return entities.size();
-}
+    snkVenteRepository.saveAll(entities);
+    return entities.size();
+  }
 
+  private void applyFields(
+      SnkVente target,
+      String nomItem,
+      BigDecimal prixRetail,
+      BigDecimal prixResell,
+      LocalDate dateAchat,
+      LocalDate dateVente,
+      String description,
+      String categorie
+  ) {
+    target.setNomItem(nomItem);
+    target.setPrixRetail(prixRetail);
+    target.setPrixResell(prixResell);
+    target.setDateAchat(dateAchat);
+    target.setDateVente(dateVente);
+    target.setDescription(description);
+    target.setCategorie(categorie);
+  }
 
+  private void applyFields(SnkVente target, SnkVenteCreateDto dto) {
+    applyFields(
+        target,
+        dto.nomItem(),
+        dto.prixRetail(),
+        dto.prixResell(),
+        dto.dateAchat(),
+        dto.dateVente(),
+        dto.description(),
+        dto.categorie()
+    );
+  }
 
+  private void applyFields(SnkVente target, SnkVente payload) {
+    applyFields(
+        target,
+        payload.getNomItem(),
+        payload.getPrixRetail(),
+        payload.getPrixResell(),
+        payload.getDateAchat(),
+        payload.getDateVente(),
+        payload.getDescription(),
+        payload.getCategorie()
+    );
+  }
 
+  private void applyFields(SnkVente target, SnkVenteImportDto dto) {
+    applyFields(
+        target,
+        dto.getNomItem(),
+        dto.getPrixRetail(),
+        dto.getPrixResell(),
+        dto.getDateAchat(),
+        dto.getDateVente(),
+        dto.getDescription(),
+        dto.getCategorie()
+    );
+  }
 }

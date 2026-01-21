@@ -9,7 +9,16 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import backend.dto.SnkVenteCreateDto;
 import backend.dto.SnkVenteImportDto;
@@ -29,119 +38,102 @@ public class snkVenteController {
     this.snkVenteService = snkVenteService;
   }
 
-  // === CRÉATION GLOBALE ===
-@ResponseStatus(HttpStatus.CREATED)
-@PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-public SnkVente creer(
-    @AuthenticationPrincipal User currentUser,
-    @RequestBody SnkVenteCreateDto dto
-) {
-  return snkVenteService.creer(currentUser.getId(), dto);
-}
+  @ResponseStatus(HttpStatus.CREATED)
+  @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+  public SnkVente creer(
+      @AuthenticationPrincipal User currentUser,
+      @RequestBody SnkVenteCreateDto dto
+  ) {
+    return snkVenteService.creer(userId(currentUser), dto);
+  }
 
-  // === LECTURE D'UNE VENTE PAR ID (sécurisée par user) ===
   @GetMapping(path = "{id}", produces = APPLICATION_JSON_VALUE)
   public SnkVente lire(
       @AuthenticationPrincipal User currentUser,
       @PathVariable Integer id
   ) {
-    Long userId =  currentUser.getId();
-    return snkVenteService.lire(userId, id);
+    return snkVenteService.lire(userId(currentUser), id);
   }
 
-  // 🔹 liste complète pour le user connecté
   @GetMapping(produces = APPLICATION_JSON_VALUE)
   public List<SnkVente> rechercher(@AuthenticationPrincipal User currentUser) {
-    Long userId =  currentUser.getId();
-    return snkVenteService.rechercherParUser(userId);
+    return snkVenteService.rechercherParUser(userId(currentUser));
   }
 
-  // 🔹 dernières ventes pour le user connecté (par défaut 7)
-@GetMapping("/recent")
-public List<SnkVente> getDernieresVentes(
-    @AuthenticationPrincipal User currentUser,
-    @RequestParam(defaultValue = "7") int limit
-) {
-  Long userId = currentUser.getId(); // ✅ pas de cast bizarre
-  return snkVenteService.getDernieresVentesParUser(userId, limit);
-}
-@PostMapping("/add")
-@ResponseStatus(HttpStatus.CREATED)
-public void ajouterPaire(@AuthenticationPrincipal User currentUser,
-                         @RequestBody SnkVenteCreateDto dto) {
-  snkVenteService.creer(currentUser.getId(), dto);
-}
-  // === TOTAL BÉNÉFICE ===
+  @GetMapping("/recent")
+  public List<SnkVente> getDernieresVentes(
+      @AuthenticationPrincipal User currentUser,
+      @RequestParam(defaultValue = "7") int limit
+  ) {
+    return snkVenteService.getDernieresVentesParUser(userId(currentUser), limit);
+  }
+
+  @PostMapping("/add")
+  @ResponseStatus(HttpStatus.CREATED)
+  public void ajouterPaire(
+      @AuthenticationPrincipal User currentUser,
+      @RequestBody SnkVenteCreateDto dto
+  ) {
+    snkVenteService.creer(userId(currentUser), dto);
+  }
+
   @GetMapping("/total")
   public BigDecimal total(
       @AuthenticationPrincipal User currentUser,
       @RequestParam(required = false) Integer year
   ) {
-    Long userId =  currentUser.getId();
+    Long userId = userId(currentUser);
     if (year != null) return snkVenteService.totalBenefYear(userId, year);
     return snkVenteService.totalBenef(userId);
   }
 
-  // === CA ===
   @GetMapping("/ca")
   public BigDecimal sumPrixResell(@AuthenticationPrincipal User currentUser) {
-    Long userId = currentUser.getId();
-    return snkVenteService.sumPrixResell(userId);
+    return snkVenteService.sumPrixResell(userId(currentUser));
   }
 
-  // === GRAPHE PAR MARQUE ===
   @GetMapping("/marque")
   public List<BrandCount> marque(@AuthenticationPrincipal User currentUser) {
-    Long userId = currentUser.getId();
-    return snkVenteService.graphMarque(userId);
+    return snkVenteService.graphMarque(userId(currentUser));
   }
 
-  // === DELETE SÉCURISÉE ===
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteVente(
       @AuthenticationPrincipal User currentUser,
       @PathVariable Integer id
   ) {
-    Long userId =  currentUser.getId();
-    snkVenteService.deleteVente(userId, id);
+    snkVenteService.deleteVente(userId(currentUser), id);
   }
 
   @GetMapping("/topVentes")
   public List<TopVenteProjection> topVentes(@AuthenticationPrincipal User currentUser) {
-    Long userId = currentUser.getId();
-    return snkVenteService.getTop3VentesAnneeCourante(userId);
+    return snkVenteService.getTop3VentesAnneeCourante(userId(currentUser));
   }
 
   @PutMapping(path = "{id}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-public SnkVente update(
-    @AuthenticationPrincipal User currentUser,
-    @PathVariable Integer id,
-    @RequestBody SnkVente payload
-) {
-  Long userId =  currentUser.getId();
-  return snkVenteService.updateVente(userId, id, payload);
-}
-
-@PostMapping(
-  path = "/import",
-  consumes = APPLICATION_JSON_VALUE,
-  produces = APPLICATION_JSON_VALUE
-)
-public ResponseEntity<Map<String, Integer>> importCsv(
-    @AuthenticationPrincipal User currentUser,
-    @RequestBody List<SnkVenteImportDto> items
-) {
-  if (currentUser == null) {
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-        .body(Map.of("created", 0));
+  public SnkVente update(
+      @AuthenticationPrincipal User currentUser,
+      @PathVariable Integer id,
+      @RequestBody SnkVente payload
+  ) {
+    return snkVenteService.updateVente(userId(currentUser), id, payload);
   }
 
-  int created = snkVenteService.importBulk(currentUser.getId(), items);
-  return ResponseEntity.ok(Map.of("created", created));
-}
+  @PostMapping(path = "/import", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+  public ResponseEntity<Map<String, Integer>> importCsv(
+      @AuthenticationPrincipal User currentUser,
+      @RequestBody List<SnkVenteImportDto> items
+  ) {
+    if (currentUser == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("created", 0));
+    }
 
+    int created = snkVenteService.importBulk(currentUser.getId(), items);
+    return ResponseEntity.ok(Map.of("created", created));
+  }
 
-
-
+  private Long userId(User currentUser) {
+    return currentUser.getId();
+  }
 }

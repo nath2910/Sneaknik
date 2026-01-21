@@ -28,7 +28,7 @@
 <script setup>
 import DashboardHeader from '@/components/HeaderDePage.vue'
 import StatsCanvas from '@/components/stats/canvas/StatsCanvas.vue'
-import { useStatsRange } from '@/composables/useStatsRange'
+import { useStatsRange } from '@/composables/useStatsDashboard.js'
 
 const { from, to } = useStatsRange()
 

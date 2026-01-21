@@ -7,13 +7,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
-
 import backend.dto.LoginRequest;
 import backend.dto.ChangePasswordRequest;
+import backend.dto.ForgotPasswordRequest;
 import backend.dto.RegisterRequest;
+import backend.dto.ResetPasswordRequest;
 import backend.dto.UserMapper;
 import backend.dto.UserMeResponse;
 import backend.entity.User;
+import backend.service.PasswordResetService;
 import backend.service.UserService;
 
 @RestController
@@ -22,10 +24,12 @@ public class AuthController {
 
     private final UserService userService;
     private final JwtService jwtService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(UserService userService, JwtService jwtService) {
+    public AuthController(UserService userService, JwtService jwtService, PasswordResetService passwordResetService) {
     this.userService = userService;
     this.jwtService = jwtService;
+    this.passwordResetService = passwordResetService;
 }
 
 
@@ -49,7 +53,19 @@ public String changePassword(
         @RequestBody ChangePasswordRequest request
 ) {
     userService.changePassword(currentUser.getId(), request);
-    return "Mot de passe modifié";
+    return "Mot de passe modifiǸ";
+}
+
+@PostMapping("/forgot-password")
+public String forgotPassword(@RequestBody ForgotPasswordRequest request) {
+    passwordResetService.requestReset(request != null ? request.getEmail() : null);
+    return "Si un compte existe, un email a ete envoye";
+}
+
+@PostMapping("/reset-password")
+public String resetPassword(@RequestBody ResetPasswordRequest request) {
+    passwordResetService.resetPassword(request);
+    return "Mot de passe modifie";
 }
 
 @GetMapping("/me")

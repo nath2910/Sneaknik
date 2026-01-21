@@ -1,139 +1,44 @@
 <template>
-  <div class="canvas-root" :data-edit="editMode ? 'true' : 'false'">
-    <!-- Dock -->
-    <div ref="dockEl" class="dock">
-      <button
-        type="button"
-        class="fab"
-        @click.stop="toggleDock"
-        @pointerdown.stop
-        :aria-expanded="dockOpen"
-        title="Outils"
-      >
-        <Plus v-if="!dockOpen" class="fab-icon w-6 h-6" />
-        <X v-else class="fab-icon w-6 h-6" />
-      </button>
-
-      <Transition name="dock">
-        <div v-if="dockOpen" class="dock-panel" @click.stop @pointerdown.stop>
-          <button
-            type="button"
-            class="dock-btn"
-            @click="toggleEditMode"
-            title="Mode édition / figé"
-          >
-            <component :is="editMode ? LockOpen : Lock" class="w-5 h-5" />
-            <span>{{ editMode ? 'Mode édition' : 'Mode figé' }}</span>
-          </button>
-
-          <div class="dock-sep"></div>
-
-          <button
-            type="button"
-            class="dock-btn"
-            :disabled="!editMode"
-            :class="{ disabled: !editMode }"
-            @click="paletteOpen = true"
-            title="Ajouter un bloc"
-          >
-            <PlusSquare class="w-5 h-5" />
-            <span>Ajouter</span>
-          </button>
-
-          <div class="dock-sep"></div>
-
-          <div class="dock-section">
-            <div class="dock-title">Période</div>
-
-            <label class="dock-field">
-              <span>Du</span>
-              <input class="date" type="date" v-model="localFrom" />
-            </label>
-
-            <label class="dock-field">
-              <span>Au</span>
-              <input class="date" type="date" v-model="localTo" />
-            </label>
-
-            <div class="dock-row">
-              <button type="button" class="chip" @click="preset('month')">Mois</button>
-              <button type="button" class="chip" @click="preset('ytd')">YTD</button>
-              <button type="button" class="chip" @click="preset('year')">Année</button>
-            </div>
-          </div>
-
-          <div class="dock-sep"></div>
-
-          <div class="dock-section">
-            <div class="dock-title">Vue</div>
-
-            <div class="dock-row">
-              <button type="button" class="btn btn-icon" @click="zoomOut" title="Dézoomer">
-                <Minus class="w-5 h-5" />
-              </button>
-
-              <button type="button" class="btn btn-pill" @click="resetZoom" title="Reset zoom">
-                {{ Math.round(scale * 100) }}%
-              </button>
-
-              <button type="button" class="btn btn-icon" @click="zoomIn" title="Zoomer">
-                <PlusSquare class="w-5 h-5" />
-              </button>
-            </div>
-
-            <div class="dock-row">
-              <button type="button" class="btn btn-icon" @click="centerView" title="Centrer">
-                <LocateFixed class="w-5 h-5" />
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-icon"
-                :disabled="!editMode"
-                :class="{ disabled: !editMode }"
-                @click="resetLayout"
-                title="Reset layout"
-              >
-                <RotateCcw class="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </div>
+  <div
+    class="canvas-root"
+    :data-edit="editMode ? 'true' : 'false'"
+    @pointerdown="onCanvasPointerDown"
+  >
+    <CanvasDock
+      :edit-mode="editMode"
+      :scale="scale"
+      :from="localFrom"
+      :to="localTo"
+      @toggleEdit="toggleEditMode"
+      @openPalette="paletteOpen = true"
+      @preset="preset"
+      @zoomIn="zoomIn"
+      @zoomOut="zoomOut"
+      @resetZoom="resetZoom"
+      @centerView="centerView"
+      @resetLayout="resetLayout"
+      @update:from="setFrom"
+      @update:to="setTo"
+    />
 
     <!-- Canvas -->
     <div ref="viewportEl" class="viewport">
       <div ref="boardEl" class="board">
-        <div
+        <WidgetFrame
           v-for="w in widgets"
           :key="w.id"
-          class="widget panzoom-exclude"
-          :data-id="w.id"
+          :widget="w"
+          :edit-mode="editMode"
+          :drag-armed="dragArmedId === w.id"
+          :comp="getComp(w.type)"
+          :from="from"
+          :to="to"
           :style="widgetStyle(w)"
-        >
-          <div class="widget__header">
-            <div class="widget__title">
-              <span class="dot" />
-              <span class="title">{{ w.title }}</span>
-            </div>
-
-            <div class="widget__actions" v-if="editMode">
-              <button type="button" class="iconbtn" title="Réglages" @click="openSettings(w)">
-                <Settings class="w-4 h-4" />
-              </button>
-              <button type="button" class="iconbtn" title="Supprimer" @click="removeWidget(w.id)">
-                <Trash2 class="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div class="widget__body">
-            <component :is="getComp(w.type)" :from="from" :to="to" v-bind="w.props" />
-          </div>
-
-          <div class="widget__resize" v-if="editMode" title="Redimensionner" />
-        </div>
+          :ref="(c: any) => setWidgetRef(w.id, c)"
+          @dragStart="startDrag(w.id, $event)"
+          @settings="openSettings(w)"
+          @remove="removeWidget(w.id)"
+        />
       </div>
     </div>
 
@@ -156,29 +61,16 @@
     />
   </div>
 </template>
+
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch, toRefs, computed } from 'vue'
-import Panzoom from '@panzoom/panzoom'
-import interact from 'interactjs'
-import {
-  Plus,
-  Minus,
-  PlusSquare,
-  LocateFixed,
-  RotateCcw,
-  Trash2,
-  X,
-  Lock,
-  LockOpen,
-  Settings,
-} from 'lucide-vue-next'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue'
+import CanvasDock from './canvas/CanvasDock.vue'
+import WidgetFrame from './canvas/WidgetFrame.vue'
+import { useCanvasCamera } from './canvas/useCanvaCamera'
 
 import WidgetPalette from './WidgetPalette.vue'
 import WidgetSettingsModal from './WidgetSettingsModal.vue'
 import { WIDGET_DEFS, getWidgetDef, newWidget } from './widgetRegistry'
-
-let ro: ResizeObserver | null = null
-let didInitialCenter = false
 
 type Widget = {
   id: string
@@ -192,6 +84,7 @@ type Widget = {
   z?: number
 }
 
+/* props/emit */
 const props = defineProps({
   from: { type: String, required: true },
   to: { type: String, required: true },
@@ -204,6 +97,7 @@ const EDIT_KEY = 'snk_stats_canvas_edit_v1'
 const editMode = ref(
   localStorage.getItem(EDIT_KEY) ? localStorage.getItem(EDIT_KEY) === 'true' : true,
 )
+
 function persistEditMode() {
   localStorage.setItem(EDIT_KEY, String(editMode.value))
 }
@@ -212,7 +106,7 @@ function toggleEditMode() {
   persistEditMode()
 }
 
-/* ===== Dates ===== */
+/* ===== Dates (local + safe sync) ===== */
 const localFrom = ref(from.value)
 const localTo = ref(to.value)
 
@@ -224,17 +118,24 @@ watch(
   },
 )
 
-watch(localFrom, (v) => {
+function setFrom(v: string) {
   if (!v) return
+  localFrom.value = v
   emit('update:from', v)
-  if (v > localTo.value) emit('update:to', v)
-})
-
-watch(localTo, (v) => {
+  if (v > localTo.value) {
+    localTo.value = v
+    emit('update:to', v)
+  }
+}
+function setTo(v: string) {
   if (!v) return
+  localTo.value = v
   emit('update:to', v)
-  if (v < localFrom.value) emit('update:from', v)
-})
+  if (v < localFrom.value) {
+    localFrom.value = v
+    emit('update:from', v)
+  }
+}
 
 function preset(kind: 'month' | 'ytd' | 'year') {
   const now = new Date()
@@ -242,43 +143,15 @@ function preset(kind: 'month' | 'ytd' | 'year') {
   const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
   if (kind === 'month') {
-    localFrom.value = ymd(new Date(now.getFullYear(), now.getMonth(), 1))
-    localTo.value = ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0))
+    setFrom(ymd(new Date(now.getFullYear(), now.getMonth(), 1)))
+    setTo(ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0)))
   } else if (kind === 'ytd') {
-    localFrom.value = ymd(new Date(now.getFullYear(), 0, 1))
-    localTo.value = ymd(now)
+    setFrom(ymd(new Date(now.getFullYear(), 0, 1)))
+    setTo(ymd(now))
   } else {
-    localFrom.value = ymd(new Date(now.getFullYear(), 0, 1))
-    localTo.value = ymd(new Date(now.getFullYear(), 11, 31))
+    setFrom(ymd(new Date(now.getFullYear(), 0, 1)))
+    setTo(ymd(new Date(now.getFullYear(), 11, 31)))
   }
-}
-
-/* ===== Dock ===== */
-const dockOpen = ref(false)
-const dockEl = ref<HTMLElement | null>(null)
-
-function toggleDock() {
-  dockOpen.value = !dockOpen.value
-}
-
-function onWindowPointerDown(e: PointerEvent) {
-  if (!dockOpen.value) return
-  const path = (e.composedPath?.() ?? []) as EventTarget[]
-  if (dockEl.value && path.includes(dockEl.value)) return
-  dockOpen.value = false
-}
-function onKeyDown(e: KeyboardEvent) {
-  if (e.key === 'Escape') dockOpen.value = false
-}
-
-/* ===== Panzoom ===== */
-const viewportEl = ref<HTMLElement | null>(null)
-const boardEl = ref<HTMLElement | null>(null)
-let panzoom: any = null
-const scale = ref(1)
-
-const onPanzoomChange = () => {
-  if (panzoom) scale.value = panzoom.getScale?.() ?? 1
 }
 
 /* ===== Layout ===== */
@@ -298,26 +171,7 @@ function clampWidget(w: Widget) {
   w.y = clamp(w.y, 0, BOARD_H - w.h)
 }
 
-function applyWidgetDOM(el: HTMLElement, w: Widget) {
-  el.style.width = `${w.w}px`
-  el.style.height = `${w.h}px`
-  el.style.transform = `translate3d(${w.x}px, ${w.y}px, 0)`
-}
-
-/* ===== Widgets ===== */
-const STORAGE_KEY = 'snk_stats_canvas_layout_v3'
-const paletteOpen = ref(false)
-
-const palette = WIDGET_DEFS.map((w) => ({
-  type: w.type,
-  title: w.title,
-  icon: w.icon,
-  help: w.help ?? 'Ajoute ce widget au canvas',
-}))
-
-function getComp(type: string) {
-  return getWidgetDef(type)?.component
-}
+const STORAGE_KEY = 'snk_stats_canvas_layout_v4'
 
 function loadLayout(): Widget[] | null {
   try {
@@ -329,16 +183,40 @@ function loadLayout(): Widget[] | null {
 }
 
 const defaultLayout = (): Widget[] => [
-  { ...newWidget('kpis', 180, 160) },
-  { ...newWidget('line', 180, 380) },
-  { ...newWidget('pie', 980, 380) },
-  { ...newWidget('bar', 180, 840) },
-  { ...newWidget('top', 820, 840) },
+  //mettre un widget de texte
 ]
 
-const widgets = ref<Widget[]>(loadLayout() ?? defaultLayout())
+function normalizeLayout(raw: unknown): Widget[] | null {
+  if (!Array.isArray(raw)) return null
 
-/* save (debounced) */
+  const list: Widget[] = []
+  for (const item of raw) {
+    const def = getWidgetDef((item as any)?.type)
+    if (!def) continue
+
+    const w: Widget = {
+      id:
+        typeof (item as any)?.id === 'string'
+          ? (item as any).id
+          : `${def.type}_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      type: def.type,
+      title: typeof (item as any)?.title === 'string' ? (item as any).title : def.title,
+      x: Number.isFinite((item as any)?.x) ? Number((item as any).x) : 0,
+      y: Number.isFinite((item as any)?.y) ? Number((item as any).y) : 0,
+      w: Number.isFinite((item as any)?.w) ? Number((item as any).w) : def.defaultSize.w,
+      h: Number.isFinite((item as any)?.h) ? Number((item as any).h) : def.defaultSize.h,
+      props: { ...def.defaultProps, ...((item as any)?.props ?? {}) },
+    }
+
+    clampWidget(w)
+    list.push(w)
+  }
+
+  return list
+}
+
+const widgets = ref<Widget[]>(normalizeLayout(loadLayout()) ?? defaultLayout())
+
 let saveTimer: number | null = null
 function saveLayoutNow() {
   const minimal = widgets.value.map(({ id, type, title, x, y, w, h, props }) => ({
@@ -370,234 +248,18 @@ function widgetStyle(w: Widget) {
   }
 }
 
-/* ===== Interact ===== */
-const interactables = new Map<string, any>()
-let zTop = 10
+/* ===== Widget registry ===== */
+const paletteOpen = ref(false)
+const palette = WIDGET_DEFS.map((w) => ({
+  type: w.type,
+  title: w.title,
+  icon: w.icon,
+  help: w.help ?? 'Ajoute ce widget au canvas',
+}))
+const dragArmedId = ref<string | null>(null)
 
-function attachInteract(w: Widget) {
-  if (!editMode.value) return
-  const el = boardEl.value?.querySelector(`.widget[data-id="${w.id}"]`) as HTMLElement | null
-  if (!el) return
-
-  if (interactables.has(w.id)) {
-    interactables.get(w.id).unset()
-    interactables.delete(w.id)
-  }
-
-  const api = interact(el)
-    .draggable({
-      allowFrom: '.widget',
-      ignoreFrom: '.iconbtn, button, a, input, select, textarea, .widget__resize',
-      inertia: true,
-      listeners: {
-        start() {
-          w.z = ++zTop
-        },
-        move(event) {
-          const s = panzoom?.getScale?.() ?? 1
-          w.x = snap(w.x + event.dx / s)
-          w.y = snap(w.y + event.dy / s)
-          clampWidget(w)
-          applyWidgetDOM(el, w)
-        },
-        end() {
-          scheduleSave()
-        },
-      },
-    })
-    .resizable({
-      edges: { right: '.widget__resize', bottom: '.widget__resize' },
-      inertia: true,
-      listeners: {
-        start() {
-          w.z = ++zTop
-        },
-        move(event) {
-          const s = panzoom?.getScale?.() ?? 1
-          w.w = snap(w.w + event.deltaRect.width / s)
-          w.h = snap(w.h + event.deltaRect.height / s)
-          clampWidget(w)
-          applyWidgetDOM(el, w)
-        },
-        end() {
-          scheduleSave()
-        },
-      },
-    })
-
-  interactables.set(w.id, api)
-}
-
-function detachInteract(id: string) {
-  const api = interactables.get(id)
-  if (api) api.unset()
-  interactables.delete(id)
-}
-function detachAllInteract() {
-  for (const id of interactables.keys()) detachInteract(id)
-}
-
-watch(editMode, async (enabled) => {
-  if (!enabled) {
-    detachAllInteract()
-    return
-  }
-  await nextTick()
-  widgets.value.forEach((w) => attachInteract(w))
-})
-
-/* ===== Panzoom math (stable + anti drift) ===== */
-function getTransformStable() {
-  // 1) meilleur cas
-  if (panzoom?.getTransform) {
-    const t = panzoom.getTransform()
-    const s = Number(t?.scale ?? panzoom.getScale?.() ?? 1)
-    return { x: Number(t?.x ?? 0), y: Number(t?.y ?? 0), s }
-  }
-  // 2) autre API
-  const s = Number(panzoom?.getScale?.() ?? 1)
-  if (panzoom?.getPan) {
-    const p = panzoom.getPan()
-    return { x: Number(p?.x ?? 0), y: Number(p?.y ?? 0), s }
-  }
-  return { x: 0, y: 0, s }
-}
-
-/** pan ABSOLU : on calcule un delta => plus jamais de drift */
-function panToAbsolute(targetX: number, targetY: number) {
-  if (!panzoom) return
-  const cur = getTransformStable()
-  const dx = targetX - cur.x
-  const dy = targetY - cur.y
-  panzoom.pan(dx, dy, { force: true } as unknown) // relatif via delta, stable
-}
-
-/** board coords sous un point du viewport */
-function boardPointFromViewport(vx: number, vy: number) {
-  const vp = viewportEl.value
-  if (!vp || !panzoom) return { x: BOARD_W / 2, y: BOARD_H / 2 }
-
-  const rect = vp.getBoundingClientRect()
-  if (rect.width < 50 || rect.height < 50) return { x: BOARD_W / 2, y: BOARD_H / 2 }
-
-  const t = getTransformStable()
-  const x = (vx - t.x) / t.s
-  const y = (vy - t.y) / t.s
-  if (!Number.isFinite(x) || !Number.isFinite(y)) return { x: BOARD_W / 2, y: BOARD_H / 2 }
-  return { x, y }
-}
-
-/** centre de la vue courante (où tu es) */
-function boardPointFromViewportCenter() {
-  const vp = viewportEl.value
-  if (!vp) return { x: BOARD_W / 2, y: BOARD_H / 2 }
-  const rect = vp.getBoundingClientRect()
-  return boardPointFromViewport(rect.width / 2, rect.height / 2)
-}
-
-/** bounds widgets */
-function widgetsBounds() {
-  const list = widgets.value
-  if (!list.length) return { cx: BOARD_W / 2, cy: BOARD_H / 2 }
-
-  let minX = Infinity,
-    minY = Infinity,
-    maxX = -Infinity,
-    maxY = -Infinity
-
-  for (const w of list) {
-    minX = Math.min(minX, w.x)
-    minY = Math.min(minY, w.y)
-    maxX = Math.max(maxX, w.x + w.w)
-    maxY = Math.max(maxY, w.y + w.h)
-  }
-  return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 }
-}
-
-/** centre un point board au milieu du viewport (ABSOLU) */
-function centerOn(boardX: number, boardY: number) {
-  const vp = viewportEl.value
-  if (!vp || !panzoom) return
-
-  const rect = vp.getBoundingClientRect()
-  const t = getTransformStable()
-
-  const targetX = rect.width / 2 - boardX * t.s
-  const targetY = rect.height / 2 - boardY * t.s
-
-  panToAbsolute(targetX, targetY)
-}
-
-function centerView() {
-  const { cx, cy } = widgetsBounds()
-  centerOn(cx, cy)
-}
-
-/** centre seulement quand viewport est prêt */
-function safeInitialCenter() {
-  if (didInitialCenter) return
-  const vp = viewportEl.value
-  if (!vp) return
-  const rect = vp.getBoundingClientRect()
-  if (rect.width < 50 || rect.height < 50) return
-  didInitialCenter = true
-  centerView()
-}
-
-/* ===== Actions ===== */
-function removeWidget(id: string) {
-  if (!editMode.value) return
-  detachInteract(id)
-  widgets.value = widgets.value.filter((w) => w.id !== id)
-  scheduleSave()
-  // ✅ aucun recentrage, jamais
-}
-
-function resetLayout() {
-  if (!editMode.value) return
-  detachAllInteract()
-  widgets.value = defaultLayout()
-  nextTick(() => {
-    widgets.value.forEach((w) => {
-      clampWidget(w)
-      attachInteract(w)
-    })
-    centerView()
-    scheduleSave()
-  })
-}
-
-function addWidget(type: string) {
-  if (!editMode.value) return
-  paletteOpen.value = false
-
-  // ✅ spawn EXACTEMENT là où tu regardes (centre du viewport actuel)
-  const p = boardPointFromViewportCenter()
-
-  // on crée d'abord pour connaître w/h
-  const w = newWidget(type, 0, 0) as Widget
-  w.x = snap(p.x - w.w / 2)
-  w.y = snap(p.y - w.h / 2)
-
-  clampWidget(w)
-  widgets.value.push(w)
-
-  nextTick(() => {
-    attachInteract(w)
-    scheduleSave()
-    // ✅ on ne bouge pas la caméra (il pop déjà là où tu es)
-  })
-}
-
-/* ===== Pan/zoom helpers ===== */
-function zoomIn() {
-  panzoom?.zoomIn?.()
-}
-function zoomOut() {
-  panzoom?.zoomOut?.()
-}
-function resetZoom() {
-  panzoom?.reset?.({ force: true } as unknown)
+function getComp(type: string) {
+  return getWidgetDef(type)?.component
 }
 
 /* ===== Settings ===== */
@@ -623,6 +285,13 @@ function closeSettings() {
   settingsOpen.value = false
   settingsWidgetId.value = null
 }
+
+function onCanvasPointerDown(e: PointerEvent) {
+  if (!editMode.value) return
+  const target = e.target as HTMLElement | null
+  if (target?.closest('.widget')) return
+  dragArmedId.value = null
+}
 function applySettings(newModel: Record<string, unknown>) {
   const w = settingsWidget.value
   if (!w) return
@@ -631,66 +300,337 @@ function applySettings(newModel: Record<string, unknown>) {
   closeSettings()
 }
 
-/* ===== Lifecycle ===== */
-onMounted(async () => {
-  window.addEventListener('pointerdown', onWindowPointerDown)
-  window.addEventListener('keydown', onKeyDown)
+/* ===== Camera (Panzoom) ===== */
+const viewportEl = ref<HTMLElement | null>(null)
+const boardEl = ref<HTMLElement | null>(null)
 
-  panzoom = Panzoom(boardEl.value!, {
-    maxScale: 3,
-    minScale: 0.15,
-    contain: 'outside',
-    excludeClass: 'panzoom-exclude',
+const camera = useCanvasCamera(viewportEl, boardEl, {
+  boardWidth: BOARD_W,
+  boardHeight: BOARD_H,
+  maxScale: 3,
+  minScale: 0.15,
+  contain: 'outside',
+  excludeClass: 'panzoom-exclude',
+})
+
+const scale = computed(() => camera.scale.value)
+
+function widgetsBounds() {
+  const list = widgets.value
+  if (!list.length) return { cx: BOARD_W / 2, cy: BOARD_H / 2 }
+
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity
+
+  for (const w of list) {
+    minX = Math.min(minX, w.x)
+    minY = Math.min(minY, w.y)
+    maxX = Math.max(maxX, w.x + w.w)
+    maxY = Math.max(maxY, w.y + w.h)
+  }
+  return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 }
+}
+
+function centerView() {
+  const { cx, cy } = widgetsBounds()
+  camera.centerOn(cx, cy)
+}
+
+function zoomIn() {
+  camera.zoomIn()
+}
+function zoomOut() {
+  camera.zoomOut()
+}
+function resetZoom() {
+  camera.resetZoom()
+}
+
+/* ===== Drag ===== */
+const widgetEls = new Map<string, HTMLElement>()
+type DragState = {
+  x: number
+  y: number
+  scale: number
+  lastX: number
+  lastY: number
+  raf: number | null
+}
+const dragStates = new Map<string, DragState>()
+let activeDragId: string | null = null
+let zTop = 10
+
+function setWidgetRef(id: string, c: any) {
+  const el = (c?.root?.value ?? c?.$el ?? null) as HTMLElement | null
+  if (el) {
+    widgetEls.set(id, el)
+  } else {
+    const dragEl = widgetEls.get(id)
+    if (dragEl) dragEl.classList.remove('is-dragging')
+    widgetEls.delete(id)
+    clearDragState(id)
+  }
+}
+
+function applyWidgetDOM(el: HTMLElement, w: Widget) {
+  el.style.width = `${w.w}px`
+  el.style.height = `${w.h}px`
+  el.style.transform = `translate3d(${w.x}px, ${w.y}px, 0)`
+}
+
+function applyWidgetDOMAt(el: HTMLElement, w: Widget, x: number, y: number) {
+  el.style.width = `${w.w}px`
+  el.style.height = `${w.h}px`
+  el.style.transform = `translate3d(${x}px, ${y}px, 0)`
+}
+
+function clampWidgetPosition(x: number, y: number, w: Widget) {
+  return {
+    x: clamp(x, 0, BOARD_W - w.w),
+    y: clamp(y, 0, BOARD_H - w.h),
+  }
+}
+
+function rectsOverlap(
+  a: { x: number; y: number; w: number; h: number },
+  b: { x: number; y: number; w: number; h: number },
+  pad = GRID,
+) {
+  return !(
+    a.x + a.w + pad <= b.x ||
+    b.x + b.w + pad <= a.x ||
+    a.y + a.h + pad <= b.y ||
+    b.y + b.h + pad <= a.y
+  )
+}
+
+function placeWidget(w: Widget, centerX: number, centerY: number) {
+  const baseX = snap(centerX - w.w / 2)
+  const baseY = snap(centerY - w.h / 2)
+  const step = GRID * 6
+  const maxR = Math.max(BOARD_W, BOARD_H)
+
+  const hasOverlap = (x: number, y: number) =>
+    widgets.value.some((o) => rectsOverlap({ x, y, w: w.w, h: w.h }, o))
+
+  const base = clampWidgetPosition(baseX, baseY, w)
+  if (!hasOverlap(base.x, base.y)) return base
+
+  for (let r = step; r <= maxR; r += step) {
+    for (let dx = -r; dx <= r; dx += step) {
+      for (let dy = -r; dy <= r; dy += step) {
+        if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue
+        const p = clampWidgetPosition(baseX + dx, baseY + dy, w)
+        if (!hasOverlap(p.x, p.y)) return p
+      }
+    }
+  }
+
+  return base
+}
+
+function clearDragState(id: string) {
+  const state = dragStates.get(id)
+  if (!state) return
+  if (state.raf) cancelAnimationFrame(state.raf)
+  dragStates.delete(id)
+}
+
+function scheduleDragApply(el: HTMLElement, w: Widget, state: DragState) {
+  if (state.raf) return
+  state.raf = requestAnimationFrame(() => {
+    state.raf = null
+    applyWidgetDOMAt(el, w, state.x, state.y)
+  })
+}
+
+function startDrag(id: string, event: PointerEvent) {
+  if (!editMode.value) return
+  const w = widgets.value.find((x) => x.id === id)
+  const el = widgetEls.get(id)
+  if (!w || !el) return
+
+  event.preventDefault()
+  event.stopPropagation()
+
+  dragArmedId.value = id
+  w.z = ++zTop
+  activeDragId = id
+
+  const s = Number(camera.scale.value || 1)
+  dragStates.set(id, {
+    x: w.x,
+    y: w.y,
+    scale: s > 0 ? s : 1,
+    lastX: event.clientX,
+    lastY: event.clientY,
+    raf: null,
   })
 
-  viewportEl.value!.addEventListener('wheel', panzoom.zoomWithWheel, { passive: false })
-  boardEl.value!.addEventListener('panzoomchange', onPanzoomChange as any)
+  el.classList.add('is-dragging')
+  setCanvasPanEnabled(false)
 
-  // reset propre (évite les vieux transforms)
-  panzoom.reset?.({ force: true } as unknown)
+  window.addEventListener('pointermove', onGlobalPointerMove)
+  window.addEventListener('pointerup', onGlobalPointerUp, { once: true })
+  window.addEventListener('pointercancel', onGlobalPointerUp, { once: true })
+}
+
+function onGlobalPointerMove(event: PointerEvent) {
+  if (!activeDragId) return
+  const state = dragStates.get(activeDragId)
+  const w = widgets.value.find((x) => x.id === activeDragId)
+  const el = widgetEls.get(activeDragId)
+  if (!state || !w || !el) return
+
+  const dx = event.clientX - state.lastX
+  const dy = event.clientY - state.lastY
+  state.lastX = event.clientX
+  state.lastY = event.clientY
+
+  state.x += dx / state.scale
+  state.y += dy / state.scale
+
+  const clamped = clampWidgetPosition(state.x, state.y, w)
+  state.x = clamped.x
+  state.y = clamped.y
+
+  scheduleDragApply(el, w, state)
+}
+
+function finishDrag(id: string) {
+  const state = dragStates.get(id)
+  const w = widgets.value.find((x) => x.id === id)
+  const el = widgetEls.get(id)
+  if (el) el.classList.remove('is-dragging')
+
+  if (!state || !w) {
+    clearDragState(id)
+    setCanvasPanEnabled(true)
+    activeDragId = null
+    return
+  }
+
+  const snapped = clampWidgetPosition(snap(state.x), snap(state.y), w)
+  w.x = snapped.x
+  w.y = snapped.y
+  clampWidget(w)
+  if (el) applyWidgetDOM(el, w)
+
+  clearDragState(id)
+  setCanvasPanEnabled(true)
+  scheduleSave()
+  activeDragId = null
+  if (dragArmedId.value === id) dragArmedId.value = null
+}
+
+function onGlobalPointerUp() {
+  window.removeEventListener('pointermove', onGlobalPointerMove)
+  if (!activeDragId) return
+  if (!dragStates.has(activeDragId)) {
+    activeDragId = null
+    setCanvasPanEnabled(true)
+    return
+  }
+  finishDrag(activeDragId)
+}
+/** active/désactive le pan du board */
+function setCanvasPanEnabled(enabled: boolean) {
+  const pz = camera.getPanzoom()
+  pz?.setOptions?.({ disablePan: !enabled })
+}
+
+function detachAllInteract() {
+  window.removeEventListener('pointermove', onGlobalPointerMove)
+  widgetEls.forEach((el) => el.classList.remove('is-dragging'))
+  dragStates.clear()
+  activeDragId = null
+  setCanvasPanEnabled(true)
+}
+
+watch(editMode, async (enabled) => {
+  if (!enabled) {
+    dragArmedId.value = null
+    detachAllInteract()
+    return
+  }
+})
+
+/* ===== Actions ===== */
+function removeWidget(id: string) {
+  if (!editMode.value) return
+  widgets.value = widgets.value.filter((w) => w.id !== id)
+  scheduleSave()
+}
+
+function resetLayout() {
+  if (!editMode.value) return
+
+  // on ferme les modales si besoin
+  paletteOpen.value = false
+  closeSettings()
+
+  // on débranche tout et on vide
+  detachAllInteract()
+  widgets.value = []
+
+  nextTick(() => {
+    // recentre la caméra au milieu de la board (vu que plus de widgets)
+    centerView()
+    // save immédiat (pour être sûr que le layout vide est persisté)
+    saveLayoutNow()
+  })
+}
+
+function addWidget(type: string) {
+  if (!editMode.value) return
+  paletteOpen.value = false
+
+  let w: Widget
+  try {
+    w = newWidget(type, 0, 0) as Widget
+  } catch (err) {
+    console.warn('[stats] addWidget failed', err)
+    return
+  }
+
+  const p = camera.boardPointFromViewportCenter()
+  const placed = placeWidget(w, p.x, p.y)
+  w.x = placed.x
+  w.y = placed.y
+  w.z = ++zTop
+  clampWidget(w)
+
+  widgets.value.push(w)
+
+  nextTick(() => {
+    scheduleSave()
+  })
+}
+
+/* ===== Lifecycle ===== */
+onMounted(async () => {
+  // init camera + centre quand la vue est prête
+  camera.init(() => {
+    centerView()
+  })
 
   await nextTick()
 
   widgets.value.forEach((w) => clampWidget(w))
-  if (editMode.value) widgets.value.forEach((w) => attachInteract(w))
-
-  ro = new ResizeObserver(() => safeInitialCenter())
-  if (viewportEl.value) ro.observe(viewportEl.value)
-
-  // fallback
-  safeInitialCenter()
-  onPanzoomChange()
+  if (editMode.value) disarmWidget()
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('pointerdown', onWindowPointerDown)
-  window.removeEventListener('keydown', onKeyDown)
-
-  if (viewportEl.value && panzoom)
-    viewportEl.value.removeEventListener('wheel', panzoom.zoomWithWheel)
-  if (boardEl.value) boardEl.value.removeEventListener('panzoomchange', onPanzoomChange as any)
-
   detachAllInteract()
-
-  if (ro) {
-    ro.disconnect()
-    ro = null
-  }
-
-  panzoom = null
+  camera.destroy()
 })
 </script>
 
 <style scoped>
 .canvas-root {
   --bg: #060a12;
-  --text: rgba(255, 255, 255, 0.92);
-  --text-soft: rgba(255, 255, 255, 0.8);
-  --ring: rgba(139, 92, 246, 0.35);
-  --btn: rgba(255, 255, 255, 0.06);
-  --btn-hover: rgba(255, 255, 255, 0.1);
-  --btn-border: rgba(255, 255, 255, 0.12);
-
   position: relative;
   width: 100%;
   height: 100%;
@@ -702,10 +642,10 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  cursor: grab;
 }
-.viewport:active {
-  cursor: grabbing;
+.viewport,
+.board {
+  touch-action: none;
 }
 
 .board {
@@ -720,259 +660,7 @@ onBeforeUnmount(() => {
     linear-gradient(180deg, #050812 0%, #040611 100%);
 }
 
-.viewport,
-.board {
-  touch-action: none;
-}
-
-.widget {
-  position: absolute;
-  border-radius: 22px;
-  overflow: hidden;
-  background: rgba(17, 24, 39, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-  will-change: transform, width, height;
-  contain: layout paint style;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease;
-}
-.widget:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
-}
-
-.widget__header {
-  height: 44px;
-  display: flex;
-  align-items: center;
-  padding: 0 10px 0 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(10, 15, 30, 0.88);
-}
-
-.widget__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  user-select: none;
-}
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: #8b5cf6;
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
-}
-.title {
-  color: var(--text);
-  font-weight: 650;
-  font-size: 0.9rem;
-}
-
-.widget__actions {
-  margin-left: auto;
-  display: inline-flex;
-  gap: 8px;
-}
-.iconbtn {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-  display: grid;
-  place-items: center;
-  transition:
-    background 160ms ease,
-    border-color 160ms ease;
-}
-.iconbtn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.16);
-}
-.iconbtn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ring);
-}
-
-.widget__body {
-  height: calc(100% - 44px);
-  padding: 12px;
-}
-
-/* ✅ IMPORTANT : en mode édition, on désactive l’interaction interne
-   => drag possible en cliquant PARTOUT (même sur le chart) */
-.canvas-root[data-edit='true'] .widget__body {
-  pointer-events: none;
-}
-/* ✅ mais on garde les boutons cliquables */
-.canvas-root[data-edit='true'] .iconbtn,
-.canvas-root[data-edit='true'] .widget__resize {
-  pointer-events: auto;
-}
-
-.widget__resize {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 14px;
-  height: 14px;
-  border-right: 2px solid rgba(255, 255, 255, 0.55);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.55);
-  border-radius: 2px;
-  opacity: 0.75;
-  cursor: nwse-resize;
-  touch-action: none;
-}
-
-/* Dock (identique à ton style) */
-.dock {
-  position: fixed;
-  top: 86px;
-  right: 18px;
-  z-index: 60;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-}
-.fab {
-  width: 46px;
-  height: 46px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(11, 18, 32, 0.72);
-  backdrop-filter: blur(12px);
-  color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
-}
-.fab-icon,
-.fab-icon * {
-  pointer-events: none;
-}
-
-.dock-panel {
-  width: 320px;
-  padding: 12px;
-  border-radius: 18px;
-  background: rgba(11, 18, 32, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.45);
-}
-.dock-btn {
-  width: 100%;
-  height: 42px;
-  padding: 0 12px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
-}
-.dock-btn span {
-  font-weight: 650;
-  font-size: 0.95rem;
-}
-.dock-btn.disabled,
-.dock-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.dock-sep {
-  height: 1px;
-  margin: 12px 0;
-  background: rgba(255, 255, 255, 0.08);
-}
-.dock-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.dock-title {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
-}
-.dock-field {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 10px;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.9rem;
-}
-.dock-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.btn {
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 14px;
-  border: 1px solid var(--btn-border);
-  background: var(--btn);
-  color: var(--text);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.btn-icon {
-  width: 40px;
-  padding: 0;
-}
-.btn-pill {
-  width: 84px;
-  font-variant-numeric: tabular-nums;
-}
-.btn.disabled,
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.date {
-  height: 36px;
-  padding: 0 10px;
-  border-radius: 12px;
-  border: 1px solid var(--btn-border);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-soft);
-  color-scheme: dark;
-}
-.chip {
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid var(--btn-border);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-soft);
-  font-size: 0.82rem;
-}
-
-/* Anim */
-.dock-enter-active,
-.dock-leave-active {
-  transition:
-    opacity 180ms ease,
-    transform 200ms ease;
-}
-.dock-enter-from,
-.dock-leave-to {
-  opacity: 0;
-  transform: translateX(10px) scale(0.98);
-}
+/* ✅ en mode édition, on peut drag “partout” (même sur les charts) */
 </style>
+
+

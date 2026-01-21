@@ -50,6 +50,7 @@ import HomeOverview from '@/components/AcceuilWidgetLateral.vue'
 import DashboardHeader from '@/components/HeaderDePage.vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 import { useAuthStore } from '@/store/authStore'
+import { isVendue, prixRetailOf, prixResellOf } from '@/utils/snkVente'
 
 const router = useRouter()
 
@@ -80,10 +81,6 @@ const chargerVentes = async () => {
 }
 
 onMounted(chargerVentes)
-
-const isVendue = (v: any) => Boolean(v.dateVente ?? v.date_vente)
-const prixRetailOf = (v: any) => Number(v.prixRetail ?? v.prix_retail ?? 0)
-const prixResellOf = (v: any) => Number(v.prixResell ?? v.prix_resell ?? 0)
 
 /**
  * Stats globales stock

@@ -43,6 +43,16 @@ class AuthService {
     const res = await api.post('/auth/change-password', payload)
     return res.data
   }
+
+  async requestPasswordReset(payload) {
+    const res = await api.post('/auth/forgot-password', payload)
+    return res.data
+  }
+
+  async resetPassword(payload) {
+    const res = await api.post('/auth/reset-password', payload)
+    return res.data
+  }
 }
 
 export default new AuthService()

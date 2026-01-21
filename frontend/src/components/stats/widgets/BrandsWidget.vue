@@ -1,31 +1,52 @@
 <template>
-  <div class="h-full">
-    <p class="text-xs text-white/60 mb-2">Top marques (volume)</p>
+  <WidgetCard
+    title="Top marques"
+    subtitle="Volume des ventes"
+    :accent="accent"
+    :loading="loading"
+    :error="error"
+  >
     <VChart class="chart" :option="option" autoresize />
-  </div>
+  </WidgetCard>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import StatsServices from '@/services/StatsServices'
 import { normalizeBrands } from '@/services/statsAdapters'
+import WidgetCard from './_parts/WidgetCard.vue'
 
 const props = defineProps({ from: String, to: String, top: { type: Number, default: 8 } })
-const items = ref([])
+const accent = '#8B5CF6'
+
+const loading = ref(false)
+const error = ref('')
+const brands = ref([])
 let req = 0
 
 async function load() {
   const id = ++req
-  const { data } = await StatsServices.brands(props.from, props.to)
-  if (id !== req) return
-  items.value = normalizeBrands(data).slice(0, props.top)
+  loading.value = true
+  error.value = ''
+  try {
+    const { data } = await StatsServices.brands(props.from, props.to)
+    if (id !== req) return
+    brands.value = normalizeBrands(data)
+  } catch (e) {
+    if (id !== req) return
+    error.value = e?.response?.data?.message ?? e?.message ?? 'Impossible de charger'
+  } finally {
+    if (id === req) loading.value = false
+  }
 }
+
 onMounted(load)
 watch(() => [props.from, props.to, props.top], load)
 
 const option = computed(() => {
-  const labels = items.value.map((i) => i.label)
-  const values = items.value.map((i) => i.nb)
+  const items = brands.value.slice(0, props.top)
+  const labels = items.map((i) => i.label)
+  const values = items.map((i) => i.nb)
 
   return {
     backgroundColor: 'transparent',

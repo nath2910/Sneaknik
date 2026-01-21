@@ -87,6 +87,14 @@
               </span>
             </button>
           </div>
+          <div class="mt-2 flex justify-end">
+            <router-link
+              class="text-xs text-gray-400 hover:text-gray-200"
+              :to="{ name: 'forgot-password' }"
+            >
+              Mot de passe oublie ?
+            </router-link>
+          </div>
           <br />
           <button
             type="button"

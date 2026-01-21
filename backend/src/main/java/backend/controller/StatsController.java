@@ -55,7 +55,7 @@ public class StatsController {
     return statsService.timeseries(currentUser.getId(), f, t, granularity);
   }
 
-  @GetMapping({"/brands", "/breakdown/brands"})
+  @GetMapping({"/brands"})
   public List<StatsBreakdownResponse> brands(
       @AuthenticationPrincipal User currentUser,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
@@ -80,6 +80,64 @@ public class StatsController {
     LocalDate f = pickDate(start, from);
     LocalDate t = pickDate(end, to);
     return statsService.topSales(currentUser.getId(), f, t, limit);
+  }
+
+  @GetMapping({"/kpi/{metric}"})
+  public StatsKpiResponse kpi(
+      @AuthenticationPrincipal User currentUser,
+      @PathVariable String metric,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+  ) {
+    LocalDate f = pickDate(start, from);
+    LocalDate t = pickDate(end, to);
+    return statsService.kpi(currentUser.getId(), f, t, metric);
+  }
+
+  @GetMapping({"/series/{metric}"})
+  public List<StatsSeriesPointResponse> series(
+      @AuthenticationPrincipal User currentUser,
+      @PathVariable String metric,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @RequestParam(defaultValue = "day") String granularity
+  ) {
+    LocalDate f = pickDate(start, from);
+    LocalDate t = pickDate(end, to);
+    return statsService.series(currentUser.getId(), f, t, metric, granularity);
+  }
+
+  @GetMapping({"/breakdown/{metric}"})
+  public List<StatsLabelValueResponse> breakdown(
+      @AuthenticationPrincipal User currentUser,
+      @PathVariable String metric,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+  ) {
+    LocalDate f = pickDate(start, from);
+    LocalDate t = pickDate(end, to);
+    return statsService.breakdown(currentUser.getId(), metric, f, t);
+  }
+
+  @GetMapping({"/rank/{metric}"})
+  public List<StatsLabelValueResponse> rank(
+      @AuthenticationPrincipal User currentUser,
+      @PathVariable String metric,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @RequestParam(defaultValue = "10") int limit
+  ) {
+    LocalDate f = pickDate(start, from);
+    LocalDate t = pickDate(end, to);
+    return statsService.rank(currentUser.getId(), f, t, metric, limit);
   }
 }
 

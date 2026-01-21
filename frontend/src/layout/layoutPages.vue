@@ -5,7 +5,7 @@
       class="z-50 transition-all duration-300 ease-out"
       :class="
         compactNav
-          ? 'fixed top-3 left-0 right-0 bg-transparent border-transparent pointer-events-none'
+          ? 'fixed top-3 left-0 right-0 bg-transparent border-transparent'
           : 'bg-gray-800/90 backdrop-blur border-b border-gray-700'
       "
     >
@@ -372,4 +372,12 @@ const normalLink = (path) => {
     transform: translateY(0);
   }
 }
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+
 </style>

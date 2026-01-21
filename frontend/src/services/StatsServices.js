@@ -1,20 +1,96 @@
 // src/services/StatsServices.js
 import api from './api'
 
+/**
+ * Controller accepts: start/end OR from/to.
+ * We send both to be robust.
+ */
+function dateParams(from, to) {
+  return {
+    from,
+    to,
+    start: from,
+    end: to,
+  }
+}
+
+/**
+ * Supports:
+ *  - summary(from, to)
+ *  - summary({ from, to })
+ */
+function resolveRange(a, b) {
+  if (a && typeof a === 'object') return { from: a.from, to: a.to }
+  return { from: a, to: b }
+}
+
+function summary(a, b) {
+  const { from, to } = resolveRange(a, b)
+  return api.get('/stats/summary', { params: dateParams(from, to) })
+}
+
+function timeseries(a, b, granularityOrOpts = 'day') {
+  const { from, to } = resolveRange(a, b)
+
+  let granularity = 'day'
+  if (typeof granularityOrOpts === 'string') {
+    granularity = granularityOrOpts
+  } else if (granularityOrOpts && typeof granularityOrOpts === 'object') {
+    granularity = granularityOrOpts.granularity || granularityOrOpts.bucket || 'day'
+  }
+
+  return api.get('/stats/timeseries', {
+    params: { ...dateParams(from, to), granularity },
+  })
+}
+
+function brands(a, b) {
+  const { from, to } = resolveRange(a, b)
+  return api.get('/stats/brands', { params: dateParams(from, to) })
+}
+
+function topSales(a, b, limit = 3) {
+  const { from, to } = resolveRange(a, b)
+  return api.get('/stats/top-sales', { params: { ...dateParams(from, to), limit } })
+}
+
+function kpi(metric, a, b) {
+  const { from, to } = resolveRange(a, b)
+  return api.get(`/stats/kpi/${metric}`, { params: dateParams(from, to) })
+}
+
+function series(metric, a, b, granularityOrOpts = 'day') {
+  const { from, to } = resolveRange(a, b)
+
+  let granularity = 'day'
+  if (typeof granularityOrOpts === 'string') {
+    granularity = granularityOrOpts
+  } else if (granularityOrOpts && typeof granularityOrOpts === 'object') {
+    granularity = granularityOrOpts.granularity || granularityOrOpts.bucket || 'day'
+  }
+
+  return api.get(`/stats/series/${metric}`, {
+    params: { ...dateParams(from, to), granularity },
+  })
+}
+
+function breakdown(metric, a, b) {
+  const { from, to } = resolveRange(a, b)
+  return api.get(`/stats/breakdown/${metric}`, { params: dateParams(from, to) })
+}
+
+function rank(metric, a, b, limit = 10) {
+  const { from, to } = resolveRange(a, b)
+  return api.get(`/stats/rank/${metric}`, { params: { ...dateParams(from, to), limit } })
+}
+
 export default {
-  summary(from, to) {
-    return api.get('/stats/summary', { params: { from, to } })
-  },
-
-  timeseries(from, to, granularity = 'day') {
-    return api.get('/stats/timeseries', { params: { from, to, granularity } })
-  },
-
-  brands(from, to) {
-    return api.get('/stats/breakdown/brands', { params: { from, to } })
-  },
-
-  topSales(from, to, limit = 3) {
-    return api.get('/stats/top-sales', { params: { from, to, limit } })
-  },
+  summary,
+  timeseries,
+  brands,
+  topSales,
+  kpi,
+  series,
+  breakdown,
+  rank,
 }

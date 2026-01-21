@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import StatBadge from '@/components/StatBadge.vue'
+import { formatEUR } from '@/utils/formatters'
 
 interface Props {
   totalBenefice: number
@@ -70,18 +71,8 @@ const beneficeTone = computed(() =>
 )
 
 const formattedBenefice = computed(() =>
-  props.loading
-    ? '...'
-    : new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(
-        props.totalBenefice || 0,
-      ),
+  props.loading ? '...' : formatEUR(props.totalBenefice),
 )
 
-const formattedCA = computed(() =>
-  props.loading
-    ? '...'
-    : new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(
-        props.totalCA || 0,
-      ),
-)
+const formattedCA = computed(() => (props.loading ? '...' : formatEUR(props.totalCA)))
 </script>
