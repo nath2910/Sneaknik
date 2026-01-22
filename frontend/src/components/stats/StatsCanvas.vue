@@ -245,22 +245,22 @@ function loadLayout(key: string): unknown | null {
 }
 
 const defaultLayout = (): Widget[] => {
-  const def = getWidgetDef('textTitle')
+  const def = getWidgetDef('textBlock')
   if (!def) return []
 
   const w: Widget = {
-    id: 'textTitle_welcome',
+    id: 'textBlock_welcome',
     type: def.type,
     title: def.title,
-    x: 160,
-    y: 140,
+    x: 0,
+    y: 0,
     w: def.defaultSize.w,
     h: def.defaultSize.h,
     props: {
       ...def.defaultProps,
-      content: 'Bienvenue. Ajoute des widgets depuis la palette pour commencer.',
-      align: 'left',
-      tight: true,
+      content:
+        "Bienvenue sur ton espace stats. Ajoute des widgets depuis la palette pour composer ton dashboard.",
+      align: 'center',
     },
   }
 
