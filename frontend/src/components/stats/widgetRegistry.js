@@ -8,6 +8,7 @@ import {
   BarChart3,
   Activity,
   Trophy,
+  StickyNote,
 } from 'lucide-vue-next'
 
 // src/components/stats/widgets/widgetRegistry.js
@@ -29,6 +30,7 @@ import CashFlowWidget from './widgets/CashFlowWidget.vue'
 
 import BrandsWidget from './widgets/BrandsWidget.vue'
 import TopSalesWidget from './widgets/TopSalesWidget.vue'
+import TextSectionWidget from './widgets/TextSectionWidget.vue'
 
 const BUCKET_OPTIONS = [
   { label: 'Jour', value: 'day' },
@@ -37,6 +39,39 @@ const BUCKET_OPTIONS = [
 ]
 
 export const WIDGET_DEFS = [
+  // ?? Structure / notes
+  {
+    type: 'textSection',
+    title: 'Texte / Section',
+    help: 'Bloc de texte pour structurer la page',
+    icon: StickyNote,
+    component: TextSectionWidget,
+    defaultSize: { w: 520, h: 200 },
+    defaultProps: { content: 'Section title', variant: 'title', align: 'left' },
+    settings: [
+      { key: 'content', label: 'Texte', type: 'textarea' },
+      {
+        key: 'variant',
+        label: 'Style',
+        type: 'select',
+        options: [
+          { label: 'Titre', value: 'title' },
+          { label: 'Note', value: 'note' },
+          { label: 'Discret', value: 'muted' },
+        ],
+      },
+      {
+        key: 'align',
+        label: 'Alignement',
+        type: 'select',
+        options: [
+          { label: 'Gauche', value: 'left' },
+          { label: 'Centre', value: 'center' },
+          { label: 'Droite', value: 'right' },
+        ],
+      },
+    ],
+  },
   // 💰 Finance
   {
     type: 'netProfit',

@@ -3,7 +3,7 @@
     <Dialog as="div" class="relative z-50" @close="$emit('close')">
       <TransitionChild
         as="template"
-        enter="duration-150 ease-out"
+        enter="duration-200 ease-out"
         enterFrom="opacity-0"
         enterTo="opacity-100"
         leave="duration-150 ease-in"
@@ -17,12 +17,12 @@
         <div class="flex min-h-full items-center justify-center p-4">
           <TransitionChild
             as="template"
-            enter="duration-150 ease-out"
-            enterFrom="opacity-0 scale-95"
-            enterTo="opacity-100 scale-100"
+            enter="duration-200 ease-out"
+            enterFrom="opacity-0 scale-95 translate-y-1"
+            enterTo="opacity-100 scale-100 translate-y-0"
             leave="duration-150 ease-in"
-            leaveFrom="opacity-100 scale-100"
-            leaveTo="opacity-0 scale-95"
+            leaveFrom="opacity-100 scale-100 translate-y-0"
+            leaveTo="opacity-0 scale-95 translate-y-1"
           >
             <DialogPanel
               class="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0b1220] shadow-2xl"
@@ -39,7 +39,12 @@
                   Pas de réglages pour ce widget.
                 </div>
 
-                <div v-for="f in fields" :key="f.key" class="space-y-1">
+                <div
+                  v-for="f in fields"
+                  :key="f.key"
+                  v-if="!(f.type === 'date' && draft.useGlobalRange !== false)"
+                  class="space-y-1"
+                >
                   <div class="text-sm text-white/80 font-semibold">{{ f.label }}</div>
 
                   <select
@@ -67,6 +72,18 @@
                     v-model="draft[f.key]"
                     class="w-full h-10 rounded-xl border border-white/10 bg-white/5 text-white px-3"
                   />
+                  <input
+                    v-else-if="f.type === 'date'"
+                    type="date"
+                    v-model="draft[f.key]"
+                    class="w-full h-10 rounded-xl border border-white/10 bg-white/5 text-white px-3"
+                  />
+                  <textarea
+                    v-else-if="f.type === 'textarea'"
+                    v-model="draft[f.key]"
+                    rows="4"
+                    class="w-full rounded-xl border border-white/10 bg-white/5 text-white px-3 py-2"
+                  ></textarea>
 
                   <label
                     v-else-if="f.type === 'toggle'"

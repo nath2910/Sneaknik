@@ -38,40 +38,6 @@
           <span>Ajouter</span>
         </button>
 
-        <div class="dock-sep"></div>
-
-        <div class="dock-section">
-          <div class="dock-title">Période</div>
-
-          <label class="dock-field">
-            <span>Du</span>
-            <input
-              class="date"
-              type="date"
-              :value="from"
-              @input="$emit('update:from', ($event.target as HTMLInputElement).value)"
-            />
-          </label>
-
-          <label class="dock-field">
-            <span>Au</span>
-            <input
-              class="date"
-              type="date"
-              :value="to"
-              @input="$emit('update:to', ($event.target as HTMLInputElement).value)"
-            />
-          </label>
-
-          <div class="dock-row">
-            <button type="button" class="chip" @click="$emit('preset', 'month')">Mois</button>
-            <button type="button" class="chip" @click="$emit('preset', 'ytd')">YTD</button>
-            <button type="button" class="chip" @click="$emit('preset', 'year')">Année</button>
-          </div>
-        </div>
-
-        <div class="dock-sep"></div>
-
         <div class="dock-section">
           <div class="dock-title">Vue</div>
 
@@ -117,27 +83,23 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Plus, Minus, PlusSquare, LocateFixed, RotateCcw, X, Lock, LockOpen } from 'lucide-vue-next'
 
-defineProps<{
+const props = defineProps<{
   editMode: boolean
   scale: number
-  from: string
-  to: string
+  paletteOpen?: boolean
 }>()
 
 defineEmits<{
   (e: 'toggleEdit'): void
   (e: 'openPalette'): void
-  (e: 'preset', kind: 'month' | 'ytd' | 'year'): void
   (e: 'zoomIn'): void
   (e: 'zoomOut'): void
   (e: 'resetZoom'): void
   (e: 'centerView'): void
   (e: 'resetLayout'): void
-  (e: 'update:from', v: string): void
-  (e: 'update:to', v: string): void
 }>()
 
 const dockOpen = ref(false)
@@ -146,6 +108,13 @@ const dockEl = ref<HTMLElement | null>(null)
 function toggleDock() {
   dockOpen.value = !dockOpen.value
 }
+
+watch(
+  () => props.paletteOpen,
+  (open) => {
+    if (open) dockOpen.value = false
+  },
+)
 
 function onWindowPointerDown(e: PointerEvent) {
   if (!dockOpen.value) return
@@ -185,11 +154,11 @@ onBeforeUnmount(() => {
   border-radius: 16px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(11, 18, 32, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(2, 6, 23, 0.4);
   backdrop-filter: blur(12px);
   color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 .fab-icon,
 .fab-icon * {
@@ -200,10 +169,10 @@ onBeforeUnmount(() => {
   width: 320px;
   padding: 12px;
   border-radius: 18px;
-  background: rgba(11, 18, 32, 0.72);
+  background: rgba(2, 6, 23, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
-  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 .dock-btn {
   width: 100%;
@@ -244,14 +213,6 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.55);
 }
-.dock-field {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 10px;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.9rem;
-}
 .dock-row {
   display: flex;
   gap: 8px;
@@ -284,15 +245,6 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-.date {
-  height: 36px;
-  padding: 0 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.8);
-  color-scheme: dark;
-}
 .chip {
   height: 32px;
   padding: 0 10px;

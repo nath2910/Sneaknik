@@ -7,22 +7,59 @@
     <CanvasDock
       :edit-mode="editMode"
       :scale="scale"
-      :from="localFrom"
-      :to="localTo"
+      :palette-open="paletteOpen"
       @toggleEdit="toggleEditMode"
       @openPalette="paletteOpen = true"
-      @preset="preset"
       @zoomIn="zoomIn"
       @zoomOut="zoomOut"
       @resetZoom="resetZoom"
       @centerView="centerView"
       @resetLayout="resetLayout"
-      @update:from="setFrom"
-      @update:to="setTo"
     />
 
     <!-- Canvas -->
     <div ref="viewportEl" class="viewport">
+      <div class="date-panel">
+        <div class="date-title">Periode</div>
+        <div class="date-row">
+          <label class="date-field">
+            <span>Du</span>
+            <input
+              class="date-input"
+              type="date"
+              :value="localFrom"
+              @input="setFrom($event.target.value)"
+            />
+          </label>
+          <label class="date-field">
+            <span>Au</span>
+            <input
+              class="date-input"
+              type="date"
+              :value="localTo"
+              @input="setTo($event.target.value)"
+            />
+          </label>
+        </div>
+        <div class="date-actions">
+          <button type="button" class="date-chip" @click="preset('month')">Mois</button>
+          <button type="button" class="date-chip" @click="preset('ytd')">YTD</button>
+          <button type="button" class="date-chip" @click="preset('year')">Annee</button>
+        </div>
+      </div>
+      <div v-if="editMode" class="edit-grid" aria-hidden="true"></div>
+      <div
+        v-if="snapGuides.x !== null"
+        class="snap-guide snap-guide--x"
+        :style="{ left: `${snapGuides.x}px` }"
+        aria-hidden="true"
+      ></div>
+      <div
+        v-if="snapGuides.y !== null"
+        class="snap-guide snap-guide--y"
+        :style="{ top: `${snapGuides.y}px` }"
+        aria-hidden="true"
+      ></div>
       <div ref="boardEl" class="board">
         <WidgetFrame
           v-for="w in widgets"
@@ -31,8 +68,8 @@
           :edit-mode="editMode"
           :drag-armed="dragArmedId === w.id"
           :comp="getComp(w.type)"
-          :from="from"
-          :to="to"
+          :from="widgetFrom(w)"
+          :to="widgetTo(w)"
           :style="widgetStyle(w)"
           :ref="(c: any) => setWidgetRef(w.id, c)"
           @dragStart="startDrag(w.id, $event)"
@@ -59,6 +96,11 @@
       @close="closeSettings"
       @save="applySettings"
     />
+
+    <Transition name="save-toast">
+      <div v-if="showSaveToast" class="save-toast" role="status">Layout enregistre</div>
+    </Transition>
+
   </div>
 </template>
 
@@ -218,6 +260,19 @@ function normalizeLayout(raw: unknown): Widget[] | null {
 const widgets = ref<Widget[]>(normalizeLayout(loadLayout()) ?? defaultLayout())
 
 let saveTimer: number | null = null
+let toastTimer: number | null = null
+const showSaveToast = ref(false)
+
+function showSavedToast() {
+  showSaveToast.value = true
+  if (toastTimer) window.clearTimeout(toastTimer)
+  toastTimer = window.setTimeout(() => {
+    showSaveToast.value = false
+    toastTimer = null
+  }, 1600)
+}
+
+
 function saveLayoutNow() {
   const minimal = widgets.value.map(({ id, type, title, x, y, w, h, props }) => ({
     id,
@@ -230,6 +285,7 @@ function saveLayoutNow() {
     props,
   }))
   localStorage.setItem(STORAGE_KEY, JSON.stringify(minimal))
+  showSavedToast()
 }
 function scheduleSave() {
   if (saveTimer) window.clearTimeout(saveTimer)
@@ -262,6 +318,16 @@ function getComp(type: string) {
   return getWidgetDef(type)?.component
 }
 
+function widgetFrom(w: Widget) {
+  const useGlobal = w.props?.useGlobalRange !== false
+  return useGlobal ? from.value : (w.props?.from ?? from.value)
+}
+
+function widgetTo(w: Widget) {
+  const useGlobal = w.props?.useGlobalRange !== false
+  return useGlobal ? to.value : (w.props?.to ?? to.value)
+}
+
 /* ===== Settings ===== */
 const settingsOpen = ref(false)
 const settingsWidgetId = ref<string | null>(null)
@@ -274,8 +340,29 @@ const settingsDef = computed(() =>
 )
 
 const settingsTitle = computed(() => settingsWidget.value?.title ?? 'Réglages')
-const settingsFields = computed(() => settingsDef.value?.settings ?? [])
-const settingsModel = computed(() => ({ ...(settingsWidget.value?.props ?? {}) }))
+const settingsFields = computed(() => {
+  const base = settingsDef.value?.settings ?? []
+  return [
+    {
+      key: 'useGlobalRange',
+      label: 'Utiliser periode globale',
+      type: 'toggle',
+      hint: 'Active par defaut',
+    },
+    { key: 'from', label: 'Du', type: 'date' },
+    { key: 'to', label: 'Au', type: 'date' },
+    ...base,
+  ]
+})
+const settingsModel = computed(() => {
+  const base = settingsWidget.value?.props ?? {}
+  return {
+    useGlobalRange: base.useGlobalRange ?? true,
+    from: base.from ?? localFrom.value,
+    to: base.to ?? localTo.value,
+    ...base,
+  }
+})
 
 function openSettings(w: Widget) {
   settingsWidgetId.value = w.id
@@ -361,6 +448,8 @@ type DragState = {
 const dragStates = new Map<string, DragState>()
 let activeDragId: string | null = null
 let zTop = 10
+const snapGuides = ref<{ x: number | null; y: number | null }>({ x: null, y: null })
+const SNAP_DIST = 8
 
 function setWidgetRef(id: string, c: any) {
   const el = (c?.root?.value ?? c?.$el ?? null) as HTMLElement | null
@@ -391,6 +480,19 @@ function clampWidgetPosition(x: number, y: number, w: Widget) {
     x: clamp(x, 0, BOARD_W - w.w),
     y: clamp(y, 0, BOARD_H - w.h),
   }
+}
+
+function snapValue(value: number, targets: number[]) {
+  let best = value
+  let bestDiff = SNAP_DIST + 1
+  for (const t of targets) {
+    const diff = Math.abs(value - t)
+    if (diff < bestDiff) {
+      bestDiff = diff
+      best = t
+    }
+  }
+  return best
 }
 
 function rectsOverlap(
@@ -492,9 +594,30 @@ function onGlobalPointerMove(event: PointerEvent) {
   state.x += dx / state.scale
   state.y += dy / state.scale
 
+  // snap vs other widgets (center + edges)
+  const targetsX: number[] = []
+  const targetsY: number[] = []
+  for (const other of widgets.value) {
+    if (other.id === activeDragId) continue
+    targetsX.push(other.x, other.x + other.w / 2, other.x + other.w)
+    targetsY.push(other.y, other.y + other.h / 2, other.y + other.h)
+  }
+
+  const snappedX = snapValue(state.x, targetsX)
+  const snappedY = snapValue(state.y, targetsY)
+  const showX = Math.abs(snappedX - state.x) <= SNAP_DIST
+  const showY = Math.abs(snappedY - state.y) <= SNAP_DIST
+  state.x = showX ? snappedX : state.x
+  state.y = showY ? snappedY : state.y
+
   const clamped = clampWidgetPosition(state.x, state.y, w)
   state.x = clamped.x
   state.y = clamped.y
+
+  snapGuides.value = {
+    x: showX ? state.x : null,
+    y: showY ? state.y : null,
+  }
 
   scheduleDragApply(el, w, state)
 }
@@ -517,6 +640,8 @@ function finishDrag(id: string) {
   w.y = snapped.y
   clampWidget(w)
   if (el) applyWidgetDOM(el, w)
+
+  snapGuides.value = { x: null, y: null }
 
   clearDragState(id)
   setCanvasPanEnabled(true)
@@ -652,12 +777,139 @@ onBeforeUnmount(() => {
   width: 9000px;
   height: 6000px;
   position: relative;
+  z-index: 1;
   background:
     radial-gradient(circle at 1px 1px, rgba(170, 200, 255, 0.1) 1px, transparent 1.6px) 0 0 / 28px
       28px,
     radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.04) 1px, transparent 1.8px) 0 0 / 8px
       8px,
     linear-gradient(180deg, #050812 0%, #040611 100%);
+}
+
+.edit-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  z-index: 2;
+  background:
+    linear-gradient(transparent 23px, rgba(148, 163, 184, 0.08) 24px) 0 0 / 24px 24px,
+    linear-gradient(90deg, transparent 23px, rgba(148, 163, 184, 0.08) 24px) 0 0 / 24px 24px;
+  mix-blend-mode: screen;
+}
+
+.date-panel {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.date-title {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.date-row {
+  display: grid;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .date-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.date-field {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  align-items: center;
+  gap: 6px;
+  color: rgba(226, 232, 240, 0.85);
+  font-size: 0.7rem;
+}
+
+.date-input {
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.7rem;
+  color-scheme: dark;
+}
+
+.date-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.date-chip {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.65rem;
+}
+
+.snap-guide {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  background: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+}
+.snap-guide--x {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+.snap-guide--y {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.save-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 80;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: rgba(226, 232, 240, 0.95);
+  font-size: 0.85rem;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.save-toast-enter-active,
+.save-toast-leave-active {
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.save-toast-enter-from,
+.save-toast-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
 }
 
 /* ✅ en mode édition, on peut drag “partout” (même sur les charts) */

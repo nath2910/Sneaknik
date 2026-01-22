@@ -31,7 +31,7 @@
                 <th class="px-4 py-3 font-semibold text-gray-300">Nom de l'item</th>
                 <th class="px-4 py-3 font-semibold text-gray-300 text-right">Prix retail</th>
                 <th class="px-4 py-3 font-semibold text-gray-300 text-right">Prix resell</th>
-                <th class="px-4 py-3 font-semibold text-gray-300 text-center">Date d’achat</th>
+                <th class="px-4 py-3 font-semibold text-gray-300 text-center">Date d'achat</th>
                 <th class="px-4 py-3 font-semibold text-gray-300 text-center">Date de vente</th>
                 <th class="px-4 py-3 font-semibold text-gray-300 text-center">Statut</th>
               </tr>
