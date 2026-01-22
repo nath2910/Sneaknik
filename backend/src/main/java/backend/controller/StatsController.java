@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import backend.dto.*;
 import backend.dto.TopVenteProjection;
 import backend.entity.User;
+import backend.service.StatsLayoutService;
 import backend.service.StatsService;
 
 @RestController
@@ -19,9 +20,11 @@ import backend.service.StatsService;
 public class StatsController {
 
   private final StatsService statsService;
+  private final StatsLayoutService statsLayoutService;
 
-  public StatsController(StatsService statsService) {
+  public StatsController(StatsService statsService, StatsLayoutService statsLayoutService) {
     this.statsService = statsService;
+    this.statsLayoutService = statsLayoutService;
   }
 
   private LocalDate pickDate(LocalDate a, LocalDate b) {
@@ -138,6 +141,20 @@ public class StatsController {
     LocalDate f = pickDate(start, from);
     LocalDate t = pickDate(end, to);
     return statsService.rank(currentUser.getId(), f, t, metric, limit);
+  }
+
+  @GetMapping({"/layout"})
+  public StatsLayoutResponse getLayout(@AuthenticationPrincipal User currentUser) {
+    return new StatsLayoutResponse(statsLayoutService.getLayout(currentUser.getId()));
+  }
+
+  @PutMapping({"/layout"})
+  public StatsLayoutResponse saveLayout(
+      @AuthenticationPrincipal User currentUser,
+      @RequestBody StatsLayoutRequest request
+  ) {
+    statsLayoutService.saveLayout(currentUser.getId(), request != null ? request.getLayout() : null);
+    return new StatsLayoutResponse(statsLayoutService.getLayout(currentUser.getId()));
   }
 }
 

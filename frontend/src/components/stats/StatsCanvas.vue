@@ -114,6 +114,7 @@ import WidgetPalette from './WidgetPalette.vue'
 import WidgetSettingsModal from './WidgetSettingsModal.vue'
 import { WIDGET_DEFS, getWidgetDef, newWidget } from './widgetRegistry'
 import { useAuthStore } from '@/store/authStore'
+import StatsServices from '@/services/StatsServices'
 
 type Widget = {
   id: string
@@ -243,7 +244,29 @@ function loadLayout(key: string): unknown | null {
   }
 }
 
-const defaultLayout = (): Widget[] => []
+const defaultLayout = (): Widget[] => {
+  const def = getWidgetDef('textTitle')
+  if (!def) return []
+
+  const w: Widget = {
+    id: 'textTitle_welcome',
+    type: def.type,
+    title: def.title,
+    x: 160,
+    y: 140,
+    w: def.defaultSize.w,
+    h: def.defaultSize.h,
+    props: {
+      ...def.defaultProps,
+      content: 'Bienvenue. Ajoute des widgets depuis la palette pour commencer.',
+      align: 'left',
+      tight: true,
+    },
+  }
+
+  clampWidget(w)
+  return [w]
+}
 
 function normalizeLayout(raw: unknown): Widget[] | null {
   if (!Array.isArray(raw)) return null
@@ -288,6 +311,7 @@ const widgets = ref<Widget[]>(loadLayoutForUser())
 
 let saveTimer: number | null = null
 let toastTimer: number | null = null
+let remoteSaveTimer: number | null = null
 const showSaveToast = ref(false)
 
 function showSavedToast() {
@@ -299,6 +323,22 @@ function showSavedToast() {
   }, 1600)
 }
 
+async function loadLayoutFromServer() {
+  try {
+    const res = await StatsServices.getLayout()
+    const payload = res?.data?.layout
+    if (payload === null || typeof payload === 'undefined') {
+      return
+    }
+    const normalized = normalizeLayout(payload)
+    if (normalized) {
+      widgets.value = normalized
+      localStorage.setItem(layoutKey.value, JSON.stringify(payload))
+    }
+  } catch (err) {
+    console.warn('[stats] remote load failed', err)
+  }
+}
 
 function saveLayoutNow() {
   const minimal = widgets.value.map(({ id, type, title, x, y, w, h, props }) => ({
@@ -313,6 +353,7 @@ function saveLayoutNow() {
   }))
   localStorage.setItem(layoutKey.value, JSON.stringify(minimal))
   showSavedToast()
+  scheduleRemoteSave(minimal)
 }
 function scheduleSave() {
   if (saveTimer) window.clearTimeout(saveTimer)
@@ -320,6 +361,20 @@ function scheduleSave() {
     saveLayoutNow()
     saveTimer = null
   }, 250)
+}
+
+function scheduleRemoteSave(minimal: Array<Record<string, unknown>>) {
+  if (userId.value === 'guest') return
+  if (remoteSaveTimer) window.clearTimeout(remoteSaveTimer)
+  remoteSaveTimer = window.setTimeout(async () => {
+    try {
+      await StatsServices.saveLayout(minimal)
+    } catch (err) {
+      console.warn('[stats] remote save failed', err)
+    } finally {
+      remoteSaveTimer = null
+    }
+  }, 800)
 }
 
 function widgetStyle(w: Widget) {
@@ -718,6 +773,9 @@ watch(
     await nextTick()
     widgets.value.forEach((w) => clampWidget(w))
     centerView()
+    if (userId.value !== 'guest') {
+      await loadLayoutFromServer()
+    }
   },
   { immediate: false },
 )
@@ -785,6 +843,10 @@ onMounted(async () => {
 
   widgets.value.forEach((w) => clampWidget(w))
   if (editMode.value) disarmWidget()
+
+  if (userId.value !== 'guest') {
+    await loadLayoutFromServer()
+  }
 })
 
 onBeforeUnmount(() => {

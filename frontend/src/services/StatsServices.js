@@ -84,6 +84,14 @@ function rank(metric, a, b, limit = 10) {
   return api.get(`/stats/rank/${metric}`, { params: { ...dateParams(from, to), limit } })
 }
 
+function getLayout() {
+  return api.get('/stats/layout')
+}
+
+function saveLayout(layout) {
+  return api.put('/stats/layout', { layout })
+}
+
 export default {
   summary,
   timeseries,
@@ -93,4 +101,6 @@ export default {
   series,
   breakdown,
   rank,
+  getLayout,
+  saveLayout,
 }
