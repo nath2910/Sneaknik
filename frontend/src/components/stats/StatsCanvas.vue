@@ -113,6 +113,7 @@ import { useCanvasCamera } from './canvas/useCanvaCamera'
 import WidgetPalette from './WidgetPalette.vue'
 import WidgetSettingsModal from './WidgetSettingsModal.vue'
 import { WIDGET_DEFS, getWidgetDef, newWidget } from './widgetRegistry'
+import { useAuthStore } from '@/store/authStore'
 
 type Widget = {
   id: string
@@ -134,14 +135,22 @@ const props = defineProps({
 const emit = defineEmits(['update:from', 'update:to'])
 const { from, to } = toRefs(props)
 
+const { user } = useAuthStore()
+const userId = computed(() => user.value?.id ?? 'guest')
+
 /* ===== Mode édition/figé ===== */
-const EDIT_KEY = 'snk_stats_canvas_edit_v1'
-const editMode = ref(
-  localStorage.getItem(EDIT_KEY) ? localStorage.getItem(EDIT_KEY) === 'true' : true,
-)
+const EDIT_KEY_PREFIX = 'snk_stats_canvas_edit_v1'
+const editKey = computed(() => `${EDIT_KEY_PREFIX}_${userId.value}`)
+const editMode = ref(true)
+
+function loadEditMode() {
+  const raw = localStorage.getItem(editKey.value)
+  editMode.value = raw ? raw === 'true' : true
+}
+loadEditMode()
 
 function persistEditMode() {
-  localStorage.setItem(EDIT_KEY, String(editMode.value))
+  localStorage.setItem(editKey.value, String(editMode.value))
 }
 function toggleEditMode() {
   editMode.value = !editMode.value
@@ -222,12 +231,13 @@ function clampWidget(w: Widget) {
   w.y = clamp(w.y, 0, BOARD_H - w.h)
 }
 
-const STORAGE_KEY = 'snk_stats_canvas_layout_v4'
+const STORAGE_KEY_PREFIX = 'snk_stats_canvas_layout_v4'
+const layoutKey = computed(() => `${STORAGE_KEY_PREFIX}_${userId.value}`)
 
-function loadLayout(): Widget[] | null {
+function loadLayout(key: string): unknown | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as Widget[]) : null
+    const raw = localStorage.getItem(key)
+    return raw ? JSON.parse(raw) : null
   } catch {
     return null
   }
@@ -269,7 +279,12 @@ function normalizeLayout(raw: unknown): Widget[] | null {
   return list
 }
 
-const widgets = ref<Widget[]>(normalizeLayout(loadLayout()) ?? defaultLayout())
+function loadLayoutForUser() {
+  const raw = loadLayout(layoutKey.value) ?? loadLayout(STORAGE_KEY_PREFIX)
+  return normalizeLayout(raw) ?? defaultLayout()
+}
+
+const widgets = ref<Widget[]>(loadLayoutForUser())
 
 let saveTimer: number | null = null
 let toastTimer: number | null = null
@@ -296,7 +311,7 @@ function saveLayoutNow() {
     h,
     props,
   }))
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(minimal))
+  localStorage.setItem(layoutKey.value, JSON.stringify(minimal))
   showSavedToast()
 }
 function scheduleSave() {
@@ -693,6 +708,19 @@ watch(editMode, async (enabled) => {
     return
   }
 })
+
+watch(
+  userId,
+  async () => {
+    loadEditMode()
+    detachAllInteract()
+    widgets.value = loadLayoutForUser()
+    await nextTick()
+    widgets.value.forEach((w) => clampWidget(w))
+    centerView()
+  },
+  { immediate: false },
+)
 
 /* ===== Actions ===== */
 function removeWidget(id: string) {
