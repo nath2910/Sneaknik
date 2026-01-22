@@ -228,7 +228,7 @@ const router = useRouter()
 
 const compactNav = computed(() => !!route.meta.fullBleed)
 const isAuthRoute = computed(() =>
-  ['auth', 'forgot-password', 'reset-password', 'authCallback'].includes(route.name),
+  ['auth', 'forgot-password', 'reset-password', 'authCallback', 'verify-email'].includes(route.name),
 )
 
 // Spring “iOS-like”

@@ -32,10 +32,16 @@ app:
 
   frontend:
     reset-password-url: ${APP_FRONTEND_RESET_PASSWORD_URL:http://localhost:5173/reset-password}
+    verify-email-url: ${APP_FRONTEND_VERIFY_EMAIL_URL:http://localhost:5173/verify-email}
 
   password-reset:
     expiration-minutes: ${APP_PASSWORD_RESET_EXP_MINUTES:60}
     mail-from: ${APP_MAIL_FROM:}
+
+  email-verification:
+    expiration-minutes: ${APP_EMAIL_VERIFICATION_EXP_MINUTES:60}
+    mail-from: ${APP_MAIL_FROM:}
+    cleanup-interval-ms: ${APP_EMAIL_VERIFICATION_CLEANUP_MS:3600000}
 
 ---
 

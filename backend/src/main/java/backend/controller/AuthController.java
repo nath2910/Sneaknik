@@ -9,12 +9,14 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import backend.dto.LoginRequest;
 import backend.dto.ChangePasswordRequest;
+import backend.dto.EmailVerificationRequest;
 import backend.dto.ForgotPasswordRequest;
 import backend.dto.RegisterRequest;
 import backend.dto.ResetPasswordRequest;
 import backend.dto.UserMapper;
 import backend.dto.UserMeResponse;
 import backend.entity.User;
+import backend.service.EmailVerificationService;
 import backend.service.PasswordResetService;
 import backend.service.UserService;
 
@@ -25,11 +27,13 @@ public class AuthController {
     private final UserService userService;
     private final JwtService jwtService;
     private final PasswordResetService passwordResetService;
+    private final EmailVerificationService emailVerificationService;
 
-    public AuthController(UserService userService, JwtService jwtService, PasswordResetService passwordResetService) {
+    public AuthController(UserService userService, JwtService jwtService, PasswordResetService passwordResetService, EmailVerificationService emailVerificationService) {
     this.userService = userService;
     this.jwtService = jwtService;
     this.passwordResetService = passwordResetService;
+    this.emailVerificationService = emailVerificationService;
 }
 
 
@@ -66,6 +70,18 @@ public String forgotPassword(@RequestBody ForgotPasswordRequest request) {
 public String resetPassword(@RequestBody ResetPasswordRequest request) {
     passwordResetService.resetPassword(request);
     return "Mot de passe modifie";
+}
+
+@GetMapping("/verify-email")
+public String verifyEmail(@RequestParam("token") String token) {
+    emailVerificationService.verifyToken(token);
+    return "Email verifie";
+}
+
+@PostMapping("/resend-verification")
+public String resendVerification(@RequestBody EmailVerificationRequest request) {
+    emailVerificationService.requestVerification(request != null ? request.getEmail() : null);
+    return "Si un compte existe, un email a ete envoye";
 }
 
 @GetMapping("/me")

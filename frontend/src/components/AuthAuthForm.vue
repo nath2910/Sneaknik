@@ -323,9 +323,8 @@ const submitSignup = async () => {
       password: signupForm.value.password,
     })
 
-    success.value = 'Compte créé avec succès'
-    mode.value = 'login'
-    router.replace({ name: 'auth', query: { mode: 'login' } })
+    success.value = 'Compte cree, verification email envoyee.'
+    router.replace({ name: 'verify-email', query: { email: signupForm.value.email } })
   } catch (err) {
     console.error(err)
     error.value = err.response?.data?.message || 'Erreur lors de la création du compte.'

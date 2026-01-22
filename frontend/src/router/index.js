@@ -10,6 +10,7 @@ const AccountPage = () => import('@/pages/accountPage.vue')
 const AuthCallbackPage = () => import('@/pages/authCallbackPage.vue')
 const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue')
 const ResetPasswordPage = () => import('@/pages/ResetPasswordPage.vue')
+const VerifyEmailPage = () => import('@/pages/VerifyEmailPage.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -21,6 +22,12 @@ const router = createRouter({
     { path: '/auth', name: 'auth', component: AuthPage },
     { path: '/forgot-password', name: 'forgot-password', component: ForgotPasswordPage },
     { path: '/reset-password', name: 'reset-password', component: ResetPasswordPage },
+    {
+      path: '/verify-email',
+      name: 'verify-email',
+      component: VerifyEmailPage,
+      meta: { fullBleed: true },
+    },
 
     // ✅ pages protégées, required auth permet de bloque des pages si pas connecte
     { path: '/', name: 'home', component: HomePage, meta: { requiresAuth: true } },
