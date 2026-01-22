@@ -82,10 +82,16 @@ export function useCanvasCamera(
   }
 
   function zoomIn() {
-    panzoom?.zoomIn?.()
+    if (!panzoom) return
+    const anchor = boardPointFromViewportCenter()
+    panzoom.zoomIn?.()
+    centerOn(anchor.x, anchor.y)
   }
   function zoomOut() {
-    panzoom?.zoomOut?.()
+    if (!panzoom) return
+    const anchor = boardPointFromViewportCenter()
+    panzoom.zoomOut?.()
+    centerOn(anchor.x, anchor.y)
   }
   function resetZoom() {
     panzoom?.reset?.({ force: true } as any)

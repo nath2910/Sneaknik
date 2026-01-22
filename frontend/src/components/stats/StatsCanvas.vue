@@ -206,9 +206,18 @@ const BOARD_H = 6000
 const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n))
 const snap = (n: number) => Math.round(n / GRID) * GRID
 
+function minSizeFor(w: Widget) {
+  const def = getWidgetDef(w.type)
+  return {
+    w: def?.minSize?.w ?? MIN_W,
+    h: def?.minSize?.h ?? MIN_H,
+  }
+}
+
 function clampWidget(w: Widget) {
-  w.w = clamp(w.w, MIN_W, BOARD_W)
-  w.h = clamp(w.h, MIN_H, BOARD_H)
+  const minSize = minSizeFor(w)
+  w.w = clamp(w.w, minSize.w, BOARD_W)
+  w.h = clamp(w.h, minSize.h, BOARD_H)
   w.x = clamp(w.x, 0, BOARD_W - w.w)
   w.y = clamp(w.y, 0, BOARD_H - w.h)
 }
@@ -224,16 +233,19 @@ function loadLayout(): Widget[] | null {
   }
 }
 
-const defaultLayout = (): Widget[] => [
-  //mettre un widget de texte
-]
+const defaultLayout = (): Widget[] => []
 
 function normalizeLayout(raw: unknown): Widget[] | null {
   if (!Array.isArray(raw)) return null
 
   const list: Widget[] = []
   for (const item of raw) {
-    const def = getWidgetDef((item as any)?.type)
+    let type = (item as any)?.type
+    let def = getWidgetDef(type)
+    if (!def && type === 'textSection') {
+      type = 'textBlock'
+      def = getWidgetDef(type)
+    }
     if (!def) continue
 
     const w: Widget = {
@@ -850,6 +862,13 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.7rem;
   color-scheme: dark;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+.date-input:hover {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .date-actions {
@@ -866,6 +885,15 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.85);
   font-size: 0.65rem;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 140ms ease;
+}
+.date-chip:hover {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 
 .snap-guide {
@@ -914,5 +942,3 @@ onBeforeUnmount(() => {
 
 /* ✅ en mode édition, on peut drag “partout” (même sur les charts) */
 </style>
-
-

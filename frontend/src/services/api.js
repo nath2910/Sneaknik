@@ -33,4 +33,28 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+let redirectingOnAuth = false
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status
+    const url = error?.config?.url || ''
+
+    if ((status === 401 || status === 403) && !url.startsWith('/auth')) {
+      localStorage.removeItem('snk_token')
+      localStorage.removeItem('snk_user')
+      sessionStorage.removeItem('snk_token')
+      sessionStorage.removeItem('snk_user')
+
+      if (!redirectingOnAuth && window.location.pathname !== '/auth') {
+        redirectingOnAuth = true
+        window.location.assign('/auth?mode=login')
+      }
+    }
+
+    return Promise.reject(error)
+  },
+)
+
 export default api

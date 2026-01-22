@@ -30,7 +30,8 @@ import CashFlowWidget from './widgets/CashFlowWidget.vue'
 
 import BrandsWidget from './widgets/BrandsWidget.vue'
 import TopSalesWidget from './widgets/TopSalesWidget.vue'
-import TextSectionWidget from './widgets/TextSectionWidget.vue'
+import TextTitleWidget from './widgets/TextTitleWidget.vue'
+import TextBlockWidget from './widgets/TextBlockWidget.vue'
 
 const BUCKET_OPTIONS = [
   { label: 'Jour', value: 'day' },
@@ -41,25 +42,38 @@ const BUCKET_OPTIONS = [
 export const WIDGET_DEFS = [
   // ?? Structure / notes
   {
-    type: 'textSection',
-    title: 'Texte / Section',
-    help: 'Bloc de texte pour structurer la page',
+    type: 'textTitle',
+    title: 'Titre',
+    help: 'Titre de section',
     icon: StickyNote,
-    component: TextSectionWidget,
-    defaultSize: { w: 520, h: 200 },
-    defaultProps: { content: 'Section title', variant: 'title', align: 'left' },
+    component: TextTitleWidget,
+    defaultSize: { w: 520, h: 120 },
+    minSize: { w: 320, h: 120 },
+    defaultProps: { content: 'Titre', align: 'left', tight: true },
     settings: [
-      { key: 'content', label: 'Texte', type: 'textarea' },
+      { key: 'content', label: 'Texte', type: 'text' },
       {
-        key: 'variant',
-        label: 'Style',
+        key: 'align',
+        label: 'Alignement',
         type: 'select',
         options: [
-          { label: 'Titre', value: 'title' },
-          { label: 'Note', value: 'note' },
-          { label: 'Discret', value: 'muted' },
+          { label: 'Gauche', value: 'left' },
+          { label: 'Centre', value: 'center' },
+          { label: 'Droite', value: 'right' },
         ],
       },
+    ],
+  },
+  {
+    type: 'textBlock',
+    title: 'Texte',
+    help: 'Bloc de texte type document',
+    icon: StickyNote,
+    component: TextBlockWidget,
+    defaultSize: { w: 520, h: 220 },
+    defaultProps: { content: 'Ton texte ici...', align: 'left' },
+    settings: [
+      { key: 'content', label: 'Texte', type: 'textarea' },
       {
         key: 'align',
         label: 'Alignement',
@@ -241,4 +255,3 @@ export function newWidget(type, x, y) {
     props: { ...def.defaultProps },
   }
 }
-

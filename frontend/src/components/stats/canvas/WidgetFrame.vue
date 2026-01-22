@@ -4,7 +4,7 @@
     class="widget panzoom-exclude"
     :data-id="widget.id"
     :data-edit="editMode ? 'true' : 'false'"
-    :class="{ 'drag-armed': dragArmed }"
+    :class="{ 'drag-armed': dragArmed, 'widget--tight': widget.props?.tight }"
     :style="style"
     @pointerdown="onPointerDown"
   >
@@ -173,5 +173,8 @@ defineExpose({ root })
 .widget__body {
   height: calc(100% - 44px);
   padding: 12px;
+}
+.widget--tight .widget__body {
+  padding: 6px;
 }
 </style>

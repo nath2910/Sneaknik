@@ -14,6 +14,10 @@
 
     <Transition name="dock">
       <div v-if="dockOpen" class="dock-panel" @click.stop @pointerdown.stop>
+        <div class="dock-panel__header">
+          <div class="dock-panel__title">Outils</div>
+          <div class="dock-panel__hint">Canvas</div>
+        </div>
         <button
           type="button"
           class="dock-btn"
@@ -28,7 +32,7 @@
 
         <button
           type="button"
-          class="dock-btn"
+          class="dock-btn dock-btn--accent"
           :disabled="!editMode"
           :class="{ disabled: !editMode }"
           @click="$emit('openPalette')"
@@ -149,16 +153,34 @@ onBeforeUnmount(() => {
 }
 
 .fab {
-  width: 46px;
-  height: 46px;
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(2, 6, 23, 0.4);
-  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: radial-gradient(
+      90% 120% at 20% 0%,
+      rgba(99, 102, 241, 0.15) 0%,
+      rgba(15, 23, 42, 0.4) 55%,
+      rgba(2, 6, 23, 0.55) 100%
+    );
+  backdrop-filter: blur(14px);
   color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition:
+    transform 140ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
+}
+.fab:hover {
+  transform: translateY(-1px);
+  border-color: rgba(129, 140, 248, 0.45);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 .fab-icon,
 .fab-icon * {
@@ -166,29 +188,59 @@ onBeforeUnmount(() => {
 }
 
 .dock-panel {
-  width: 320px;
+  width: 316px;
   padding: 12px;
   border-radius: 18px;
-  background: rgba(2, 6, 23, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  background:
+    linear-gradient(180deg, rgba(8, 13, 24, 0.72) 0%, rgba(5, 9, 18, 0.68) 100%),
+    radial-gradient(120% 120% at 15% 0%, rgba(129, 140, 248, 0.12), transparent 60%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+.dock-panel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 2px 2px 0;
+}
+.dock-panel__title {
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.8);
+}
+.dock-panel__hint {
+  font-size: 0.7rem;
+  color: rgba(148, 163, 184, 0.7);
 }
 .dock-btn {
   width: 100%;
-  height: 42px;
+  height: 40px;
   padding: 0 12px;
-  border-radius: 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.92);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 140ms ease;
+}
+.dock-btn:hover {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 .dock-btn span {
-  font-weight: 650;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.92rem;
 }
 .dock-btn.disabled,
 .dock-btn:disabled {
@@ -196,22 +248,36 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
   pointer-events: none;
 }
+.dock-btn--accent {
+  border-color: rgba(129, 140, 248, 0.35);
+  background: rgba(99, 102, 241, 0.14);
+}
+.dock-btn--accent:hover {
+  border-color: rgba(129, 140, 248, 0.6);
+  background: rgba(99, 102, 241, 0.22);
+}
 
 .dock-sep {
   height: 1px;
   margin: 12px 0;
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.02)
+  );
 }
 .dock-section {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-top: 10px;
 }
 .dock-title {
   font-size: 0.78rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(148, 163, 184, 0.8);
 }
 .dock-row {
   display: flex;
@@ -221,14 +287,23 @@ onBeforeUnmount(() => {
 .btn {
   height: 38px;
   padding: 0 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.92);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 140ms ease;
+}
+.btn:hover {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 .btn-icon {
   width: 40px;

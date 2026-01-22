@@ -39,13 +39,12 @@
                   Pas de réglages pour ce widget.
                 </div>
 
-                <div
-                  v-for="f in fields"
-                  :key="f.key"
-                  v-if="!(f.type === 'date' && draft.useGlobalRange !== false)"
-                  class="space-y-1"
-                >
-                  <div class="text-sm text-white/80 font-semibold">{{ f.label }}</div>
+                <template v-for="f in fields" :key="f.key">
+                  <div
+                    v-if="!(f.type === 'date' && draft.useGlobalRange !== false)"
+                    class="space-y-1"
+                  >
+                    <div class="text-sm text-white/80 font-semibold">{{ f.label }}</div>
 
                   <select
                     v-if="f.type === 'select'"
@@ -93,8 +92,9 @@
                     <span class="text-sm">{{ f.hint ?? '' }}</span>
                   </label>
 
-                  <div v-if="f.help" class="text-xs text-white/50">{{ f.help }}</div>
-                </div>
+                    <div v-if="f.help" class="text-xs text-white/50">{{ f.help }}</div>
+                  </div>
+                </template>
               </div>
 
               <div class="px-5 py-4 border-t border-white/10 flex justify-end gap-2">

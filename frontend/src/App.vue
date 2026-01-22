@@ -7,14 +7,22 @@
         :name="route.meta.transition || 'page'"
         :mode="route.meta.transitionMode || 'out-in'"
       >
-        <component :is="Component" :key="route.fullPath" class="page-view" />
+        <component :is="Component" :key="routeKey(route)" class="page-view" />
       </Transition>
     </RouterView>
   </LayoutPages>
 </template>
 
 <script setup>
+import { useRoute } from 'vue-router'
 import LayoutPages from '@/layout/layoutPages.vue'
+
+const route = useRoute()
+
+const routeKey = (r) => {
+  if (r?.name === 'auth') return 'auth'
+  return r?.fullPath || route.fullPath
+}
 </script>
 <style>
 .page-view {

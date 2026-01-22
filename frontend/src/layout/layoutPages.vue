@@ -2,6 +2,7 @@
   <div class="h-screen flex flex-col font-poppins text-slate-100 bg-slate-950">
     <!-- Header -->
     <header
+      v-if="!isAuthRoute"
       class="z-50 transition-all duration-300 ease-out"
       :class="
         compactNav
@@ -61,7 +62,7 @@
             v-show="!mobileMenuOpen"
             :class="
               compactNav
-                ? 'pointer-events-auto px-2 py-1 rounded-full bg-slate-950/40 border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-md'
+                ? 'pointer-events-auto px-2 py-1 gap-2 rounded-full bg-slate-950/40 border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-md'
                 : 'w-full gap-8'
             "
           >
@@ -203,7 +204,7 @@
     </main>
 
     <!-- Footer -->
-    <footer v-if="!route.meta.fullBleed" class="border-t bg-gray-800 text-white">
+    <footer v-if="!route.meta.fullBleed && !isAuthRoute" class="border-t bg-gray-800 text-white">
       <div
         class="max-w-screen-2xl mx-auto h-14 px-4 sm:px-6 lg:px-8 flex items-center justify-between text-sm"
       >
@@ -226,6 +227,9 @@ const route = useRoute()
 const router = useRouter()
 
 const compactNav = computed(() => !!route.meta.fullBleed)
+const isAuthRoute = computed(() =>
+  ['auth', 'forgot-password', 'reset-password', 'authCallback'].includes(route.name),
+)
 
 // Spring “iOS-like”
 const navSpring = {

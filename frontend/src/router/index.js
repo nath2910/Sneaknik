@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/store/authStore.js'
+import AuthService from '@/services/AuthService.js'
 
 const HomePage = () => import('@/pages/homePage.vue')
 const StatsPage = () => import('@/pages/statsPage.vue')
@@ -45,8 +46,18 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
+  const hasToken = !!auth.token.value
+
+  if (hasToken && !auth.user.value) {
+    try {
+      const me = await AuthService.me()
+      auth.setUser(me)
+    } catch {
+      auth.logout()
+    }
+  }
 
   if (to.meta.requiresAuth && !auth.token.value) {
     return { name: 'auth', query: { mode: 'login' } }

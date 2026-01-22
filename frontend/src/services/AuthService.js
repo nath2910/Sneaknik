@@ -53,6 +53,11 @@ class AuthService {
     const res = await api.post('/auth/reset-password', payload)
     return res.data
   }
+
+  async me() {
+    const res = await api.get('/auth/me')
+    return res.data
+  }
 }
 
 export default new AuthService()
