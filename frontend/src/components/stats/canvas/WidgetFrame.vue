@@ -6,7 +6,7 @@
     :data-edit="editMode ? 'true' : 'false'"
     :class="{ 'drag-armed': dragArmed, 'widget--tight': widget.props?.tight }"
     :style="style"
-    @pointerdown="onPointerDown"
+    @pointerdown.capture="onPointerDown"
   >
     <div class="widget__header drag-handle">
       <div class="widget__title">

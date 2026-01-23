@@ -303,6 +303,13 @@ function normalizeLayout(raw: unknown): Widget[] | null {
     list.push(w)
   }
 
+  if (list.length === 1 && list[0].id === 'textBlock_welcome') {
+    const w = list[0]
+    w.x = (BOARD_W - w.w) / 2
+    w.y = (BOARD_H - w.h) / 2
+    clampWidget(w)
+  }
+
   return list
 }
 
