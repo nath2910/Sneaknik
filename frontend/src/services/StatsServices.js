@@ -84,6 +84,7 @@ function rank(metric, a, b, limit = 10) {
   return api.get(`/stats/rank/${metric}`, { params: { ...dateParams(from, to), limit } })
 }
 
+// Persistance du layout cote backend (prive / multi-appareil).
 function getLayout() {
   return api.get('/stats/layout')
 }

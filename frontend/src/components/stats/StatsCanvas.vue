@@ -137,9 +137,11 @@ const emit = defineEmits(['update:from', 'update:to'])
 const { from, to } = toRefs(props)
 
 const { user } = useAuthStore()
+// Chaque utilisateur a une cle de layout isolee; guest reste en stockage local.
 const userId = computed(() => user.value?.id ?? 'guest')
 
 /* ===== Mode édition/figé ===== */
+// Le mode edition est stocke par utilisateur pour eviter les fuites d'etat UI.
 const EDIT_KEY_PREFIX = 'snk_stats_canvas_edit_v1'
 const editKey = computed(() => `${EDIT_KEY_PREFIX}_${userId.value}`)
 const editMode = ref(true)
@@ -232,6 +234,7 @@ function clampWidget(w: Widget) {
   w.y = clamp(w.y, 0, BOARD_H - w.h)
 }
 
+// Layout persiste par utilisateur; fallback sur l'ancienne cle globale si presente.
 const STORAGE_KEY_PREFIX = 'snk_stats_canvas_layout_v4'
 const layoutKey = computed(() => `${STORAGE_KEY_PREFIX}_${userId.value}`)
 
@@ -244,6 +247,7 @@ function loadLayout(key: string): unknown | null {
   }
 }
 
+// Widget d'accueil par defaut quand aucun layout n'existe.
 const defaultLayout = (): Widget[] => {
   const def = getWidgetDef('textBlock')
   if (!def) return []
@@ -323,6 +327,7 @@ function showSavedToast() {
   }, 1600)
 }
 
+// Chargement du layout serveur pour plus de robustesse (prive / multi-appareil).
 async function loadLayoutFromServer() {
   try {
     const res = await StatsServices.getLayout()
@@ -363,6 +368,7 @@ function scheduleSave() {
   }, 250)
 }
 
+// Sauvegarde distante debounce pour eviter de spammer l'API.
 function scheduleRemoteSave(minimal: Array<Record<string, unknown>>) {
   if (userId.value === 'guest') return
   if (remoteSaveTimer) window.clearTimeout(remoteSaveTimer)
@@ -748,6 +754,11 @@ function setCanvasPanEnabled(enabled: boolean) {
   pz?.setOptions?.({ disablePan: !enabled })
 }
 
+function syncPanzoomExclude(enabled: boolean) {
+  const pz = camera.getPanzoom()
+  pz?.setOptions?.({ excludeClass: enabled ? 'panzoom-exclude' : null })
+}
+
 function detachAllInteract() {
   window.removeEventListener('pointermove', onGlobalPointerMove)
   widgetEls.forEach((el) => el.classList.remove('is-dragging'))
@@ -756,13 +767,18 @@ function detachAllInteract() {
   setCanvasPanEnabled(true)
 }
 
-watch(editMode, async (enabled) => {
+watch(
+  editMode,
+  async (enabled) => {
+    syncPanzoomExclude(enabled)
   if (!enabled) {
     dragArmedId.value = null
     detachAllInteract()
     return
   }
-})
+  },
+  { immediate: true },
+)
 
 watch(
   userId,
@@ -837,6 +853,7 @@ onMounted(async () => {
   // init camera + centre quand la vue est prête
   camera.init(() => {
     centerView()
+    syncPanzoomExclude(editMode.value)
   })
 
   await nextTick()

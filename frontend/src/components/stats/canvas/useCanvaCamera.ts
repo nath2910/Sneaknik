@@ -1,4 +1,4 @@
-import Panzoom from '@panzoom/panzoom'
+﻿import Panzoom from '@panzoom/panzoom'
 import type { Ref } from 'vue'
 import { ref } from 'vue'
 
@@ -20,10 +20,14 @@ export function useCanvasCamera(
   let panzoom: any = null
   let ro: ResizeObserver | null = null
   let didReady = false
+  let wheelHandler: ((e: WheelEvent) => void) | null = null
+  let touchStartHandler: ((e: TouchEvent) => void) | null = null
+  let touchEndHandler: ((e: TouchEvent) => void) | null = null
+  let touchZoomOverride = false
 
   const BOARD_W = opts.boardWidth
   const BOARD_H = opts.boardHeight
-
+  const EXCLUDE_CLASS = opts.excludeClass ?? 'panzoom-exclude'
   function getRects() {
     const vp = viewportEl.value
     const board = boardEl.value
@@ -66,6 +70,21 @@ export function useCanvasCamera(
     return boardPointFromViewport(r.vpRect.width / 2, r.vpRect.height / 2)
   }
 
+  function findScrollableAncestor(target: HTMLElement | null, stopAt: HTMLElement | null) {
+    let el = target
+    while (el && el !== stopAt && el !== document.body) {
+      const style = window.getComputedStyle(el)
+      const overflowY = style.overflowY
+      const overflowX = style.overflowX
+      const canScrollY =
+        (overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight
+      const canScrollX =
+        (overflowX === 'auto' || overflowX === 'scroll') && el.scrollWidth > el.clientWidth
+      if (canScrollY || canScrollX) return el
+      el = el.parentElement
+    }
+    return null
+  }
   /** centre un point board au centre du viewport (pan RELATIF => zéro drift) */
   function centerOn(boardX: number, boardY: number) {
     if (!panzoom) return
@@ -106,7 +125,7 @@ export function useCanvasCamera(
       maxScale: opts.maxScale ?? 3,
       minScale: opts.minScale ?? 0.15,
       contain: opts.contain ?? 'outside',
-      excludeClass: opts.excludeClass ?? 'panzoom-exclude',
+      excludeClass: EXCLUDE_CLASS,
       canvas: true, // ✅ Lucidchart feel (drag la “feuille”)
       cursor: 'grab',
 
@@ -116,8 +135,52 @@ export function useCanvasCamera(
       },
     })
 
-    vp.addEventListener('wheel', panzoom.zoomWithWheel, { passive: false })
+    wheelHandler = (e: WheelEvent) => {
+      if (!panzoom) return
+
+      const isZoomGesture = e.ctrlKey || e.metaKey
+      const isMouseWheel =
+        e.deltaMode !== 0 || (Number.isInteger(e.deltaY) && Math.abs(e.deltaY) >= 50)
+      if (isZoomGesture || isMouseWheel) {
+        e.preventDefault()
+        panzoom.zoomWithWheel?.(e)
+        return
+      }
+
+      const activeExclude = panzoom?.getOptions?.().excludeClass ?? EXCLUDE_CLASS
+      const target = e.target as HTMLElement | null
+      if (target && activeExclude && target.closest(`.${activeExclude}`)) return
+      if (target && target.closest('input, textarea, select, option, [contenteditable="true"]')) {
+        return
+      }
+      if (findScrollableAncestor(target, vp)) return
+
+      e.preventDefault()
+      panzoom.pan(e.deltaX, e.deltaY, { relative: true, force: true } as any)
+    }
+
+    vp.addEventListener('wheel', wheelHandler, { passive: false })
     board.addEventListener('panzoomchange', onPanzoomChange as any)
+
+    touchStartHandler = (e: TouchEvent) => {
+      if (!panzoom) return
+      if (e.touches && e.touches.length >= 2 && !touchZoomOverride) {
+        panzoom.setOptions?.({ excludeClass: null })
+        touchZoomOverride = true
+      }
+    }
+
+    touchEndHandler = (e: TouchEvent) => {
+      if (!panzoom) return
+      if (touchZoomOverride && (!e.touches || e.touches.length < 2)) {
+        panzoom.setOptions?.({ excludeClass: EXCLUDE_CLASS })
+        touchZoomOverride = false
+      }
+    }
+
+    vp.addEventListener('touchstart', touchStartHandler, { passive: true })
+    vp.addEventListener('touchend', touchEndHandler, { passive: true })
+    vp.addEventListener('touchcancel', touchEndHandler, { passive: true })
 
     // reset propre (évite les anciens transforms)
     panzoom.reset?.({ force: true } as any)
@@ -149,10 +212,19 @@ export function useCanvasCamera(
       ro.disconnect()
       ro = null
     }
-    if (vp && panzoom) vp.removeEventListener('wheel', panzoom.zoomWithWheel)
+    if (vp && wheelHandler) vp.removeEventListener('wheel', wheelHandler)
+    if (vp && touchStartHandler) vp.removeEventListener('touchstart', touchStartHandler)
+    if (vp && touchEndHandler) {
+      vp.removeEventListener('touchend', touchEndHandler)
+      vp.removeEventListener('touchcancel', touchEndHandler)
+    }
     if (board) board.removeEventListener('panzoomchange', onPanzoomChange as any)
 
     panzoom = null
+    wheelHandler = null
+    touchStartHandler = null
+    touchEndHandler = null
+    touchZoomOverride = false
   }
 
   return {

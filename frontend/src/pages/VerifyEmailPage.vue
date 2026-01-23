@@ -86,6 +86,7 @@ const resendLoading = ref(false)
 const resendMessage = ref('')
 
 const token = computed(() => (route.query.token || '').toString())
+// L'email est optionnel ici; il sert seulement au bouton de renvoi.
 const email = computed(() => (route.query.email || '').toString())
 
 const emailLabel = computed(() => (email.value ? email.value : 'ton adresse'))

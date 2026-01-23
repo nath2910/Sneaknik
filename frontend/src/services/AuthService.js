@@ -59,6 +59,7 @@ class AuthService {
     return res.data
   }
 
+  // Renvoie l'email de verification sans exposer l'existence du compte.
   async resendVerification(payload) {
     const res = await api.post('/auth/resend-verification', payload)
     return res.data
