@@ -178,7 +178,7 @@ export function useCanvasCamera(
       }
     }
 
-    vp.addEventListener('touchstart', touchStartHandler, { passive: true })
+    vp.addEventListener('touchstart', touchStartHandler, { passive: true, capture: true })
     vp.addEventListener('touchend', touchEndHandler, { passive: true })
     vp.addEventListener('touchcancel', touchEndHandler, { passive: true })
 
@@ -213,7 +213,8 @@ export function useCanvasCamera(
       ro = null
     }
     if (vp && wheelHandler) vp.removeEventListener('wheel', wheelHandler)
-    if (vp && touchStartHandler) vp.removeEventListener('touchstart', touchStartHandler)
+    if (vp && touchStartHandler)
+      vp.removeEventListener('touchstart', touchStartHandler, { capture: true })
     if (vp && touchEndHandler) {
       vp.removeEventListener('touchend', touchEndHandler)
       vp.removeEventListener('touchcancel', touchEndHandler)

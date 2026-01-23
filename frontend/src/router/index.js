@@ -53,9 +53,22 @@ const router = createRouter({
   },
 })
 
+const publicRoutes = new Set([
+  'auth',
+  'authCallback',
+  'forgot-password',
+  'reset-password',
+  'verify-email',
+])
+
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   const hasToken = !!auth.token.value
+  const isPublic = publicRoutes.has(to.name)
+
+  if (!hasToken && !isPublic) {
+    return { name: 'auth', query: { mode: 'login' } }
+  }
 
   if (hasToken && !auth.user.value) {
     try {
@@ -63,11 +76,10 @@ router.beforeEach(async (to) => {
       auth.setUser(me)
     } catch {
       auth.logout()
+      if (!isPublic) {
+        return { name: 'auth', query: { mode: 'login' } }
+      }
     }
-  }
-
-  if (to.meta.requiresAuth && !auth.token.value) {
-    return { name: 'auth', query: { mode: 'login' } }
   }
 
   if (to.name === 'auth' && auth.token.value) {

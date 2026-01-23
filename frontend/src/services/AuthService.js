@@ -1,5 +1,7 @@
 import api from './api'
 
+//permet d'envoyer des requetes concernant les comptes et l'authetification vers le back
+
 class AuthService {
   async register(payload) {
     // payload = { email, password, firstName, lastName, ... } selon ton RegisterRequest

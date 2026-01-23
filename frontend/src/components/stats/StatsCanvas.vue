@@ -931,6 +931,7 @@ onBeforeUnmount(() => {
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  touch-action: manipulation;
 }
 
 .date-title {
@@ -972,6 +973,7 @@ onBeforeUnmount(() => {
   transition:
     border-color 160ms ease,
     background 160ms ease;
+  touch-action: manipulation;
 }
 .date-input:hover {
   border-color: rgba(148, 163, 184, 0.35);
@@ -996,11 +998,35 @@ onBeforeUnmount(() => {
     border-color 160ms ease,
     background 160ms ease,
     transform 140ms ease;
+  touch-action: manipulation;
 }
 .date-chip:hover {
   border-color: rgba(148, 163, 184, 0.35);
   background: rgba(255, 255, 255, 0.08);
   transform: translateY(-1px);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .date-panel {
+    padding: 10px 12px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+  .date-title {
+    font-size: 0.68rem;
+  }
+  .date-field {
+    font-size: 0.78rem;
+  }
+  .date-input {
+    height: 34px;
+    font-size: 0.78rem;
+  }
+  .date-chip {
+    height: 30px;
+    padding: 0 12px;
+    font-size: 0.78rem;
+  }
 }
 
 .snap-guide {
