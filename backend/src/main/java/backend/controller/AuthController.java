@@ -73,9 +73,10 @@ public String resetPassword(@RequestBody ResetPasswordRequest request) {
 }
 
 @GetMapping("/verify-email")
-public String verifyEmail(@RequestParam("token") String token) {
-    emailVerificationService.verifyToken(token);
-    return "Email verifie";
+public LoginResponse verifyEmail(@RequestParam("token") String token) {
+    User user = emailVerificationService.verifyToken(token);
+    String tokenJwt = jwtService.generateToken(user.getId());
+    return new LoginResponse(UserMapper.toMe(user), tokenJwt);
 }
 
 @PostMapping("/resend-verification")

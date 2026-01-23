@@ -256,8 +256,8 @@ const defaultLayout = (): Widget[] => {
     id: 'textBlock_welcome',
     type: def.type,
     title: def.title,
-    x: 0,
-    y: 0,
+    x: (BOARD_W - def.defaultSize.w) / 2,
+    y: (BOARD_H - def.defaultSize.h) / 2,
     w: def.defaultSize.w,
     h: def.defaultSize.h,
     props: {

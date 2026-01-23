@@ -26,9 +26,6 @@ export function useCanvasCamera(
   let touchStartHandler: ((e: TouchEvent) => void) | null = null
   let touchEndHandler: ((e: TouchEvent) => void) | null = null
   let touchBase: { excludeClass: any; disablePan: boolean; disableZoom: boolean } | null = null
-  let pinchActive = false
-  let pinchLock: { x: number; y: number } | null = null
-  let recentring = false
 
   const BOARD_W = opts.boardWidth
   const BOARD_H = opts.boardHeight
@@ -53,15 +50,6 @@ export function useCanvasCamera(
   function onPanzoomChange() {
     if (!panzoom) return
     scale.value = Number(panzoom.getScale?.() ?? 1)
-    if (pinchLock && pinchActive && !recentring) {
-      recentring = true
-      requestAnimationFrame(() => {
-        if (pinchLock && pinchActive) {
-          centerOn(pinchLock.x, pinchLock.y)
-        }
-        recentring = false
-      })
-    }
   }
 
   function boardPointFromViewport(vx: number, vy: number) {
@@ -126,21 +114,12 @@ export function useCanvasCamera(
     if (!touchBase) return
 
     if (touchCount >= 2) {
-      pinchActive = true
-      panzoom.setOptions?.({ excludeClass: null, disablePan: true, disableZoom: false })
-      if (!pinchLock) pinchLock = boardPointFromViewportCenter()
+      panzoom.setOptions?.({ excludeClass: null, disablePan: false, disableZoom: false })
       return
     }
 
-    pinchActive = false
-    pinchLock = null
-
     if (touchCount === 1) {
-      panzoom.setOptions?.({
-        excludeClass: touchBase.excludeClass,
-        disablePan: touchBase.disablePan,
-        disableZoom: true,
-      })
+      panzoom.setOptions?.({ excludeClass: null, disablePan: false, disableZoom: true })
       return
     }
 
@@ -281,8 +260,7 @@ export function useCanvasCamera(
     touchStartHandler = null
     touchEndHandler = null
     touchBase = null
-    pinchActive = false
-    pinchLock = null
+    touchBase = null
   }
 
   return {

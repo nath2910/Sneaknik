@@ -57,8 +57,18 @@ class AuthService {
   }
 
   async verifyEmail(payload) {
-    const res = await api.get('/auth/verify-email', { params: { token: payload.token } })
-    return res.data
+    const res = await api.get('/auth/verify-email', { params: { token: payload.token } }) // attente du back 
+    const token = res.data?.token || res.data?.accessToken || null // decoupage en token et user
+    const user = res.data?.user ?? res.data?.utilisateur ?? null
+
+    if (token) {
+      localStorage.setItem('snk_token', token) //stockage du token 
+    }
+    if (user) {
+      localStorage.setItem('snk_user', JSON.stringify(user))
+    }
+
+    return { user, token, raw: res.data }
   }
 
   // Renvoie l'email de verification sans exposer l'existence du compte.

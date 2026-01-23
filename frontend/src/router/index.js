@@ -12,6 +12,26 @@ const ForgotPasswordPage = () => import('@/pages/ForgotPasswordPage.vue')
 const ResetPasswordPage = () => import('@/pages/ResetPasswordPage.vue')
 const VerifyEmailPage = () => import('@/pages/VerifyEmailPage.vue')
 
+function decodeJwtPayload(token) {
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return null
+    const base = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base + '==='.slice((base.length + 3) % 4)
+    return JSON.parse(atob(padded))
+  } catch {
+    return null
+  }
+}
+
+function isTokenExpired(token) {
+  const payload = decodeJwtPayload(token)
+  const exp = payload?.exp
+  if (!exp) return true
+  const now = Date.now()
+  return now >= exp * 1000 - 30_000
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -63,8 +83,16 @@ const publicRoutes = new Set([
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
-  const hasToken = !!auth.token.value
+  const token = auth.token.value
+  const hasToken = !!token
   const isPublic = publicRoutes.has(to.name)
+
+  if (hasToken && isTokenExpired(token)) {
+    auth.logout()
+    if (!isPublic) {
+      return { name: 'auth', query: { mode: 'login' } }
+    }
+  }
 
   if (!hasToken && !isPublic) {
     return { name: 'auth', query: { mode: 'login' } }

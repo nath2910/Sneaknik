@@ -1,11 +1,14 @@
 <template>
-  <div class="flex items-center justify-center min-h-[calc(100vh-3.5rem-3.5rem)]">
-    <div class="w-full max-w-md bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-6">
-      <h1 class="text-xl font-semibold text-gray-100 mb-4">Nouveau mot de passe</h1>
+  <div class="min-h-screen bg-slate-950 px-4 py-10 sm:py-14">
+    <div class="mx-auto w-full max-w-md">
+      <div
+        class="rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900/90 to-slate-900/60 p-6 shadow-2xl sm:rounded-3xl sm:p-8"
+      >
+        <h1 class="text-xl font-semibold text-slate-100 mb-4">Nouveau mot de passe</h1>
 
-      <p class="text-sm text-gray-300 mb-4">
-        Choisis un nouveau mot de passe pour ton compte.
-      </p>
+        <p class="text-sm text-slate-300 mb-6">
+          Choisis un nouveau mot de passe pour ton compte.
+        </p>
 
       <div
         v-if="error"
@@ -20,68 +23,69 @@
         {{ success }}
       </div>
 
-      <form class="space-y-5" @submit.prevent="submitReset">
-        <div>
-          <label for="newPassword" class="block text-sm font-medium text-gray-200"
-            >Nouveau mot de passe</label
-          >
-          <div class="relative mt-1">
-            <input
-              :type="showPassword ? 'text' : 'password'"
-              id="newPassword"
-              v-model="newPassword"
-              required
-              class="block w-full pr-10 px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            />
-            <button
-              type="button"
-              class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-200"
-              @click="showPassword = !showPassword"
+        <form class="space-y-5" @submit.prevent="submitReset">
+          <div>
+            <label for="newPassword" class="block text-sm font-medium text-slate-200"
+              >Nouveau mot de passe</label
             >
-              <span class="text-xs font-medium">
-                {{ showPassword ? 'Masquer' : 'Afficher' }}
-              </span>
-            </button>
+            <div class="relative mt-2">
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                id="newPassword"
+                v-model="newPassword"
+                required
+                class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2.5 pr-10 text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+              />
+              <button
+                type="button"
+                class="absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-200"
+                @click="showPassword = !showPassword"
+              >
+                <span class="text-xs font-medium">
+                  {{ showPassword ? 'Masquer' : 'Afficher' }}
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label for="confirmPassword" class="block text-sm font-medium text-gray-200"
-            >Confirmer le mot de passe</label
-          >
-          <div class="relative mt-1">
-            <input
-              :type="showConfirmPassword ? 'text' : 'password'"
-              id="confirmPassword"
-              v-model="confirmPassword"
-              required
-              class="block w-full pr-10 px-3 py-2 rounded-lg border border-gray-600 bg-gray-900 text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            />
-            <button
-              type="button"
-              class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-200"
-              @click="showConfirmPassword = !showConfirmPassword"
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-slate-200"
+              >Confirmer le mot de passe</label
             >
-              <span class="text-xs font-medium">
-                {{ showConfirmPassword ? 'Masquer' : 'Afficher' }}
-              </span>
-            </button>
+            <div class="relative mt-2">
+              <input
+                :type="showConfirmPassword ? 'text' : 'password'"
+                id="confirmPassword"
+                v-model="confirmPassword"
+                required
+                class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2.5 pr-10 text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+              />
+              <button
+                type="button"
+                class="absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-200"
+                @click="showConfirmPassword = !showConfirmPassword"
+              >
+                <span class="text-xs font-medium">
+                  {{ showConfirmPassword ? 'Masquer' : 'Afficher' }}
+                </span>
+              </button>
+            </div>
           </div>
+
+          <button
+            type="submit"
+            :disabled="loading"
+            class="w-full inline-flex justify-center items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {{ loading ? 'Modification...' : 'Modifier le mot de passe' }}
+          </button>
+        </form>
+
+        <div class="mt-5 text-center">
+          <router-link class="text-xs text-slate-400 hover:text-slate-200" :to="{ name: 'auth' }">
+            Retour a la connexion
+          </router-link>
         </div>
-
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full inline-flex justify-center items-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-gray-900 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {{ loading ? 'Modification...' : 'Modifier le mot de passe' }}
-        </button>
-      </form>
-
-      <div class="mt-4 text-center">
-        <router-link class="text-xs text-gray-400 hover:text-gray-200" :to="{ name: 'auth' }">
-          Retour a la connexion
-        </router-link>
       </div>
     </div>
   </div>

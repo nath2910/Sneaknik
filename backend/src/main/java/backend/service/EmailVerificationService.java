@@ -93,7 +93,7 @@ public class EmailVerificationService {
     sendVerification(userOpt.get());
   }
 
-  public void verifyToken(String token) {
+  public User verifyToken(String token) {
     if (token == null || token.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token manquant");
     }
@@ -123,6 +123,7 @@ public class EmailVerificationService {
     if (newlyVerified) {
       sendConfirmationEmail(user.getEmail());
     }
+    return user;
   }
 
   private void sendVerificationEmail(String to, String link) {
