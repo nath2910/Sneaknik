@@ -98,5 +98,10 @@ public UserMeResponse me(@AuthenticationPrincipal User currentUser) {
     );
 }
 
+@DeleteMapping("/me")
+public String deleteMe(@AuthenticationPrincipal User currentUser) {
+    userService.deleteAccount(currentUser.getId());
+    return "Compte supprim\u00e9";
+}
     
 }

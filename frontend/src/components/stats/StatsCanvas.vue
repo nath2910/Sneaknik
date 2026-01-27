@@ -314,7 +314,11 @@ function normalizeLayout(raw: unknown): Widget[] | null {
 }
 
 function loadLayoutForUser() {
-  const raw = loadLayout(layoutKey.value) ?? loadLayout(STORAGE_KEY_PREFIX)
+  if (userId.value === 'guest') {
+    const raw = loadLayout(STORAGE_KEY_PREFIX)
+    return normalizeLayout(raw) ?? defaultLayout()
+  }
+  const raw = loadLayout(layoutKey.value)
   return normalizeLayout(raw) ?? defaultLayout()
 }
 

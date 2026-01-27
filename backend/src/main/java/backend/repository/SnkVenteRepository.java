@@ -65,6 +65,9 @@ List<SnkVente> findByUser_IdOrderByCreatedAtDesc(Long userId, Pageable pageable)
   // Delete sécurisé : un user ne peut supprimer que ses ventes
     void deleteByIdAndUser_Id(Integer id, Long userId);
 
+  // Delete toutes les ventes d'un user (suppression compte)
+    void deleteByUser_Id(Long userId);
+
     
     // Total global par user
       @Query("""

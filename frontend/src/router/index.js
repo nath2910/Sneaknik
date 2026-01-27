@@ -39,9 +39,19 @@ const router = createRouter({
     { path: '/auth/callback', name: 'authCallback', component: AuthCallbackPage },
 
     // auth
-    { path: '/auth', name: 'auth', component: AuthPage },
-    { path: '/forgot-password', name: 'forgot-password', component: ForgotPasswordPage },
-    { path: '/reset-password', name: 'reset-password', component: ResetPasswordPage },
+    { path: '/auth', name: 'auth', component: AuthPage, meta: { fullBleed: true } },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: ForgotPasswordPage,
+      meta: { fullBleed: true },
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPasswordPage,
+      meta: { fullBleed: true },
+    },
     {
       path: '/verify-email',
       name: 'verify-email',
@@ -63,7 +73,12 @@ const router = createRouter({
       },
     },
     { path: '/gestion', name: 'gestion', component: GestionPage, meta: { requiresAuth: true } },
-    { path: '/compte', name: 'account', component: AccountPage, meta: { requiresAuth: true } },
+    {
+      path: '/compte',
+      name: 'account',
+      component: AccountPage,
+      meta: { requiresAuth: true, fullBleed: true },
+    },
 
     // ✅ toujours en dernier
     { path: '/:pathMatch(.*)*', name: 'not-found', redirect: '/' },

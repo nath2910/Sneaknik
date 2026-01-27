@@ -81,6 +81,11 @@ class AuthService {
     const res = await api.get('/auth/me')
     return res.data
   }
+
+  async deleteAccount() {
+    const res = await api.delete('/auth/me')
+    return res.data
+  }
 }
 
 export default new AuthService()

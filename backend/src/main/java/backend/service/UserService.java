@@ -11,6 +11,10 @@ import backend.dto.ChangePasswordRequest;
 
 import backend.entity.User;
 import backend.repository.UserRepository;
+import backend.repository.EmailVerificationTokenRepository;
+import backend.repository.PasswordResetTokenRepository;
+import backend.repository.UserStatsLayoutRepository;
+import backend.repository.SnkVenteRepository;
 
 @Service
 public class UserService {
@@ -18,13 +22,25 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final UserStatsLayoutRepository userStatsLayoutRepository;
+    private final SnkVenteRepository snkVenteRepository;
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       EmailVerificationService emailVerificationService) {
+                       EmailVerificationService emailVerificationService,
+                       EmailVerificationTokenRepository emailVerificationTokenRepository,
+                       PasswordResetTokenRepository passwordResetTokenRepository,
+                       UserStatsLayoutRepository userStatsLayoutRepository,
+                       SnkVenteRepository snkVenteRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailVerificationService = emailVerificationService;
+        this.emailVerificationTokenRepository = emailVerificationTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.userStatsLayoutRepository = userStatsLayoutRepository;
+        this.snkVenteRepository = snkVenteRepository;
     }
 
     public User register(RegisterRequest request) {
@@ -81,4 +97,16 @@ public class UserService {
     userRepository.save(user);
 }
 
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteAccount(Long userId) {
+        if (userId == null) {
+            throw new RuntimeException("Utilisateur introuvable");
+        }
+
+        passwordResetTokenRepository.deleteByUser_Id(userId);
+        emailVerificationTokenRepository.deleteByUserId(userId);
+        userStatsLayoutRepository.deleteByUserId(userId);
+        snkVenteRepository.deleteByUser_Id(userId);
+        userRepository.deleteById(userId);
+    }
 }

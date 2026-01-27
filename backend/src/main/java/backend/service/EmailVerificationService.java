@@ -137,7 +137,7 @@ public class EmailVerificationService {
 
     message.setSubject("Verification de votre adresse email");
     message.setText(
-        "Bonjour,\n\n" +
+        "Bonjour bienvenu sur Stash,\n\n" +
         "Merci de confirmer votre adresse email en cliquant sur le lien ci-dessous :\n" +
         link + "\n\n" +
         "Si vous n'etes pas a l'origine de cette creation de compte, ignorez cet email.\n"
@@ -165,7 +165,7 @@ public class EmailVerificationService {
 
     message.setSubject("Votre email a ete verifie");
     message.setText(
-        "Bonjour,\n\n" +
+        "Enfin !\n\n" +
         "Votre adresse email a bien ete confirmee. Vous pouvez maintenant vous connecter.\n\n" +
         "Merci,\n" +
         "L'equipe Sneaknik\n"
