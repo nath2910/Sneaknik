@@ -34,4 +34,45 @@
   body.no-scroll {
     overflow: hidden; /* ✅ uniquement quand on veut lock */
   }
+
+  /* Hover doux pour tous les boutons par défaut */
+  button {
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      transform 140ms ease;
+  }
+
+  button:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  /* Hover doux pour tous les liens (nav, footer...) */
+  a,
+  .nav-link {
+    transition:
+      color 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease,
+      transform 140ms ease;
+    border-radius: 9999px;
+  }
+
+  a:hover,
+  .nav-link:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.06);
+    transform: translateY(-1px);
+  }
+
+  a:active,
+  .nav-link:active {
+    transform: translateY(0);
+  }
 }

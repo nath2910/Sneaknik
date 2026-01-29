@@ -60,7 +60,12 @@ const router = createRouter({
     },
 
     // ✅ pages protégées, required auth permet de bloque des pages si pas connecte
-    { path: '/', name: 'home', component: HomePage, meta: { requiresAuth: true } },
+    {
+      path: '/',
+      name: 'home',
+      component: HomePage,
+      meta: { requiresAuth: true, wideContent: true },
+    },
     {
       path: '/stats',
       name: 'stats',
@@ -72,7 +77,12 @@ const router = createRouter({
         transitionMode: 'out-in',
       },
     },
-    { path: '/gestion', name: 'gestion', component: GestionPage, meta: { requiresAuth: true } },
+    {
+      path: '/gestion',
+      name: 'gestion',
+      component: GestionPage,
+      meta: { requiresAuth: true, wideContent: true },
+    },
     {
       path: '/compte',
       name: 'account',

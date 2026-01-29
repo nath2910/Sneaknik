@@ -1,45 +1,37 @@
-<template>
-  <aside class="w-full lg:w-[360px] space-y-4">
-    <!-- Résumé rapide -->
-    <div class="bg-gray-800 border border-gray-700 rounded-3xl shadow-lg p-5 space-y-3">
-      <h2 class="text-sm font-semibold text-gray-100">Résumé du mois</h2>
-      <p class="text-xs text-gray-400 mb-2">
-        Un aperçu rapide de tes performances calculé sur les ventes du mois en cours.
-      </p>
-
-      <div class="grid grid-cols-2 gap-3 text-center text-xs">
-        <StatBadge label="Bénéfice du mois" :tone="beneficeTone" :value="formattedBenefice" />
-        <StatBadge label="C.A. du mois" tone="default" :value="formattedCA" />
-        <StatBadge
-          label="Items vendues (mois)"
-          tone="accent"
-          :value="loading ? '...' : nbVendues"
-        />
-        <StatBadge label="Items en stock" tone="default" :value="loading ? '...' : nbEnStock" />
+﻿<template>
+  <aside class="w-full max-w-xl mx-auto lg:max-w-sm space-y-4">
+    <div class="rounded-3xl border border-slate-800/70 bg-slate-900/80 p-5 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur space-y-3">
+      <div>
+        <p class="text-xs uppercase tracking-[0.25em] text-amber-200/80">Resume du mois</p>
+        <p class="mt-2 text-xs text-slate-400">Apercu rapide des performances du mois.</p>
       </div>
 
-      <p class="mt-2 text-[0.7rem] text-gray-500"></p>
+      <div class="grid grid-cols-2 gap-3 text-center text-xs">
+        <StatBadge label="Benefice du mois" :tone="beneficeTone" :value="formattedBenefice" />
+        <StatBadge label="C.A. du mois" tone="default" :value="formattedCA" />
+        <StatBadge label="Items vendus (mois)" tone="accent" :value="loading ? '...' : nbVendues" />
+        <StatBadge label="Items en stock" tone="default" :value="loading ? '...' : nbEnStock" />
+      </div>
     </div>
 
-    <!-- Actions rapides -->
-    <div
-      class="bg-gray-800 border border-gray-700 rounded-3xl shadow-lg p-5 space-y-3 [&_button:hover]:bg-purple-800"
-    >
-      <h3 class="text-sm font-semibold text-gray-100">Actions rapides</h3>
-      <p class="text-xs text-gray-400">Accède directement aux principales sections de gestion.</p>
+    <div class="rounded-3xl border border-slate-800/70 bg-slate-900/80 p-5 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur space-y-3">
+      <div>
+        <p class="text-xs uppercase tracking-[0.25em] text-amber-200/80">Actions rapides</p>
+        <p class="mt-2 text-xs text-slate-400">Raccourcis vers les sections cles.</p>
+      </div>
 
       <div class="flex flex-col gap-2 pt-1">
         <button
-          class="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-900 text-white transition"
+          class="w-full rounded-xl border border-emerald-300/40 bg-emerald-300/10 px-4 py-3 text-sm font-medium text-emerald-100 transition hover:bg-emerald-300/20"
           @click="$emit('go-gestion')"
         >
-          ➕ Gérer les ventes
+          Gerer les ventes
         </button>
         <button
-          class="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-900 text-gray-100 border border-gray-700 transition"
+          class="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-sm font-medium text-slate-100 transition hover:bg-slate-800/80"
           @click="$emit('go-stats')"
         >
-          📊 Voir les stats détaillées
+          Voir les stats detaillees
         </button>
       </div>
     </div>

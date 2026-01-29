@@ -1,23 +1,51 @@
 <template>
-  <div class="min-h-screen">
-    <section
-      class="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8"
-    >
-      <!-- Header -->
-      <header class="flex flex-col gap-3 sm:gap-4">
-        <DashboardHeader
-          subtitle="Dashboard • Sneaknik"
-          title="Sneaknik V5.2"
-          description="Vue rapide de ton stock et de tes ventes du mois en cours."
-        />
+  <div class="min-h-screen text-slate-100">
+    <section class="relative w-full px-4 sm:px-6 lg:px-10 py-6 sm:py-10 space-y-8">
+
+      <!-- Hero -->
+      <header
+        class="relative overflow-hidden rounded-[28px] border border-slate-800/70 bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.85),_rgba(2,6,23,0.95))] px-6 py-7 shadow-[0_30px_90px_rgba(0,0,0,0.45)] backdrop-blur sm:px-8"
+      >
+        <div class="absolute right-0 top-0 h-40 w-40 -translate-y-10 translate-x-16 rounded-full bg-emerald-400/8 blur-3xl"></div>
+        <div class="flex flex-wrap items-start justify-between gap-6">
+          <div class="max-w-2xl space-y-4">
+            <p class="text-xs uppercase tracking-[0.35em] text-amber-200/80">
+              Tableau de bord
+            </p>
+            <h1 class="text-3xl font-semibold text-white sm:text-4xl">
+              Accueil
+            </h1>
+            <p class="text-base text-slate-400">
+              Vue synthetique du stock, des ventes et du mois en cours.
+            </p>
+            <div class="mt-2 flex flex-wrap gap-2 text-xs">
+              <span
+                class="inline-flex items-center rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-emerald-100"
+              >
+                Temps reel
+              </span>
+              <span
+                class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-slate-300"
+              >
+                Stock 
+              </span>
+              <span
+                class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-slate-300"
+              >
+                Focus mois en cours
+              </span>
+            </div>
+          </div>
+        </div>
       </header>
 
       <!-- Contenu principal -->
       <div class="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-12 lg:items-start">
         <!-- Colonne droite (Overview) : en haut sur mobile, à droite sur desktop -->
         <aside class="order-1 lg:order-2 lg:col-span-4 w-full">
-          <!-- option sticky sur desktop (si tu veux) -->
-          <div class="lg:sticky lg:top-6">
+          <div
+            class="lg:sticky lg:top-6 rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950/70 p-4 shadow-2xl backdrop-blur sm:p-5"
+          >
             <HomeOverview
               :total-benefice="monthlyTotalBenefice"
               :total-c-a="monthlyTotalCA"
@@ -31,11 +59,8 @@
         </aside>
 
         <!-- Colonne gauche : liste/dernier items -->
-        <main class="order-2 lg:order-1 lg:col-span-8 min-w-0">
-          <!-- petit wrapper responsive pour éviter l’effet “collé” -->
-          <div class="rounded-2xl bg-white/0">
-            <Affichage10 />
-          </div>
+        <main class="order-2 lg:order-1 lg:col-span-8 min-w-0 space-y-6">
+          <Affichage10 />
         </main>
       </div>
     </section>
@@ -47,17 +72,17 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Affichage10 from '@/components/AcceuilDernierItem.vue'
 import HomeOverview from '@/components/AcceuilWidgetLateral.vue'
-import DashboardHeader from '@/components/HeaderDePage.vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 import { useAuthStore } from '@/store/authStore'
 import { isVendue, prixRetailOf, prixResellOf } from '@/utils/snkVente'
+import { formatEUR, formatNumber } from '@/utils/formatters'
 
 const router = useRouter()
 
 const { user } = useAuthStore()
 const currentUser = user
 
-const snkVentes = ref<any[]>([])
+const snkVentes = ref<unknown[]>([])
 const loading = ref(false)
 
 const chargerVentes = async () => {
@@ -122,6 +147,20 @@ const monthlyTotalBenefice = computed(() =>
     return sum + (resell - retail)
   }, 0),
 )
+
+const monthlyAvgResell = computed(() => {
+  if (!monthlyNbVendues.value) return 0
+  return monthlyTotalCA.value / monthlyNbVendues.value
+})
+
+const formattedMonthlyCA = computed(() => formatEUR(monthlyTotalCA.value))
+const formattedMonthlyBenefice = computed(() => formatEUR(monthlyTotalBenefice.value))
+const formattedMonthlyAvgResell = computed(() => formatEUR(monthlyAvgResell.value))
+const formattedMonthlyNbVendues = computed(() =>
+  formatNumber(monthlyNbVendues.value, { compact: true }),
+)
+const formattedNbEnStock = computed(() => formatNumber(nbEnStock.value, { compact: true }))
+const beneficePositive = computed(() => monthlyTotalBenefice.value >= 0)
 
 const goToGestion = () => router.push('/gestion')
 const goToStats = () => router.push('/stats')

@@ -143,13 +143,13 @@ onBeforeUnmount(() => {
 <style scoped>
 .dock {
   position: fixed;
-  top: 86px;
+  top: 78px;
   right: 18px;
   z-index: 60;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
+  gap: 16px;
 }
 
 .fab {

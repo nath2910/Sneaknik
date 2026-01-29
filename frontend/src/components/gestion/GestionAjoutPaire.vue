@@ -1,13 +1,14 @@
 <!-- src/components/AjoutPaire.vue -->
 <template>
-  <div class="fixed inset-0 z-40">
+  <teleport to="body">
+  <div class="fixed inset-0 z-[9999]">
     <!-- overlay -->
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click.self="handleClose"></div>
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" @click.self="handleClose"></div>
 
     <!-- modal -->
     <div class="relative z-10 flex items-center justify-center min-h-full p-4">
       <div
-        class="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-gray-800 border border-gray-700 shadow-2xl"
+        class="modal-card w-full max-w-3xl max-h-[85vh] rounded-2xl bg-gray-800 border border-gray-700 shadow-2xl"
         @click.stop
       >
         <!-- Header -->
@@ -160,6 +161,7 @@
                 id="dateVente"
                 type="date"
                 v-model="form.dateVente"
+                :required="requiresDateVente"
                 class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
               />
               <p class="mt-1 text-xs text-gray-500">Laisse vide si pas encore vendue.</p>
@@ -211,10 +213,11 @@
       </div>
     </div>
   </div>
+  </teleport>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
 import { useAuthStore } from '@/store/authStore'
 
@@ -244,6 +247,9 @@ const emptyForm = (prefill = {}) => ({
 })
 
 const form = ref(emptyForm())
+const requiresDateVente = computed(
+  () => form.value.prixResell !== null && form.value.prixResell !== '',
+)
 
 const resetState = () => {
   success.value = false
@@ -270,10 +276,48 @@ const buildPayload = () => ({
   user: currentUserId.value ? { id: currentUserId.value } : null,
 })
 
+const validateResellAndDate = () => {
+  const hasResell = requiresDateVente.value
+  const hasDateVente = !!form.value.dateVente
+
+  if (hasResell && !hasDateVente) {
+    error.value = 'Ajoute une date de vente si tu saisis un prix de revente.'
+    return false
+  }
+
+  if (hasDateVente && !hasResell) {
+    form.value.prixResell = 0
+  }
+  return true
+}
+
+// si date saisie sans prix, forcer prixResell = 0
+watch(
+  () => form.value.dateVente,
+  (val) => {
+    if (val && (form.value.prixResell === null || form.value.prixResell === '')) {
+      form.value.prixResell = 0
+    }
+  },
+)
+
+// si on remplit prixResell et qu'une date existe déjà, nettoyer erreur éventuelle
+watch(
+  () => form.value.prixResell,
+  () => {
+    if (requiresDateVente.value && form.value.dateVente) error.value = null
+  },
+)
+
 const createSales = async () => {
   loading.value = true
   success.value = false
   error.value = null
+
+  if (!validateResellAndDate()) {
+    loading.value = false
+    return
+  }
 
   try {
     const n = Math.min(50, Math.max(1, Number(copies.value || 1)))
@@ -314,3 +358,12 @@ const createSales = async () => {
 </script>
 
 <style></style>
+<style scoped>
+.modal-card {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.modal-card::-webkit-scrollbar {
+  display: none;
+}
+</style>

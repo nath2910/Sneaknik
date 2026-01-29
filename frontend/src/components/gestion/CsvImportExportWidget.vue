@@ -297,6 +297,7 @@ function buildPayload(rows: CsvRow[], headers: string[]) {
 
   const colPrixRetail = findHeader(headers, [
     'prix retail',
+    'PrixRetail',
     'prix achat',
     'achat',
     'retail',
@@ -304,10 +305,11 @@ function buildPayload(rows: CsvRow[], headers: string[]) {
     'purchase',
     'cost',
   ])
-
+  //faire en sorte que tout a peut pres marche
   const colPrixResell = findHeader(headers, [
     'prix resell',
     'prix revente',
+    'prixResell',
     'revente',
     'resell',
     'sell',

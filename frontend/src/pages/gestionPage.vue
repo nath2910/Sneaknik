@@ -1,81 +1,123 @@
 <template>
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-    <DashboardHeader
-      subtitle="Backoffice • Stock Sneaknik"
-      title="Gestion des ventes"
-      description="Ajoute, modifie, recherche, sélectionne et supprime."
-    />
+  <div class="min-h-screen text-slate-100">
+    <div class="relative w-full px-4 sm:px-6 lg:px-10 py-8 space-y-8">
 
-    <section class="space-y-6">
-      <StockSummaryRow
-        :total-paires="totalPaires"
-        :nb-en-stock="nbEnStock"
-        :nb-vendues="nbVendues"
-        :valeur-stock="valeurStock"
-      />
-
-      <div class="flex justify-center">
-        <div class="w-full md:w-3/4 lg:w-2/3">
-          <SearchBarre v-model="searchTerm" />
-        </div>
-      </div>
-
-      <!-- Tableau -->
-      <div class="bg-gray-800 border border-gray-700 rounded-3xl shadow-lg overflow-hidden">
-        <!-- Header tableau -->
-        <div class="px-6 py-4 flex items-center justify-between border-b border-gray-700/80">
-          <!-- Gauche : titre -->
-          <div>
-            <h2 class="text-lg font-semibold text-gray-100 leading-tight">Liste des items</h2>
-            <p class="text-xs text-gray-400">
-              {{ filteredVentes.length }} item(s) trouvée(s)
-              <span v-if="selectedIds.length"> • {{ selectedIds.length }} sélectionnée(s) </span>
+      <header
+        class="rounded-[28px] border border-slate-800/80 bg-gradient-to-br from-slate-900/95 via-slate-900/85 to-slate-950/80 px-6 py-6 shadow-2xl backdrop-blur sm:px-8"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-6">
+          <div class="space-y-3">
+            <p class="text-xs uppercase tracking-[0.35em] text-violet-300/80">
+              Backoffice Sneaknik
+            </p>
+            <h1 class="text-3xl font-semibold text-white sm:text-4xl">Gestion des ventes</h1>
+            <p class="text-base text-slate-400">
+              Ajoute, modifie, recherche, sélectionne et supprime en un seul endroit.
             </p>
           </div>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <span
+              class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-slate-300"
+            >
+              Inventaire centralisé
+            </span>
+            <span
+              class="inline-flex items-center rounded-full border border-violet-400/30 bg-violet-400/10 px-3 py-1 text-violet-200"
+            >
+              Actions rapides
+            </span>
+          </div>
+        </div>
+      </header>
 
-          <!-- Droite : actions -->
-          <div class="flex items-center gap-2">
-            <GestionActionsPanel @vente-ajoutee="handleVenteAjoutee" />
-            <div class="[&_button:hover]:bg-red-900">
-              <button
-                type="button"
-                class="px-4 py-2 text-xs rounded bg-red-600 text-white disabled:opacity-60 transition whitespace-nowrap"
-                @click="openDeleteBulk"
-              >
-                Supprimer un item
-              </button>
+      <section class="space-y-6">
+        <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div
+            class="rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950/70 p-4 shadow-2xl backdrop-blur sm:p-5"
+          >
+            <StockSummaryRow
+              :total-paires="totalPaires"
+              :nb-en-stock="nbEnStock"
+              :nb-vendues="nbVendues"
+              :valeur-stock="valeurStock"
+            />
+          </div>
+          <div
+            class="rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950/70 p-4 shadow-2xl backdrop-blur sm:p-5"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-base font-semibold text-white">Recherche rapide</h2>
+                <p class="text-xs text-slate-400">Nom, catégorie, description.</p>
+              </div>
+            </div>
+            <div class="mt-3">
+              <SearchBarre v-model="searchTerm" />
             </div>
           </div>
         </div>
 
-        <!-- Liste -->
-        <div class="p-4">
-          <div class="max-h-[480px] overflow-y-auto pr-2">
-            <afficherTout
-              :snkVentes="filteredVentes"
-              selectable
-              v-model="selectedIds"
-              @edit="openEditModal"
-            />
+        <!-- Tableau -->
+        <div
+          class="rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950/70 shadow-2xl backdrop-blur overflow-hidden"
+        >
+          <!-- Header tableau -->
+          <div class="px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80">
+            <!-- Gauche : titre -->
+            <div>
+              <h2 class="text-lg font-semibold text-slate-100 leading-tight">Liste des items</h2>
+              <p class="text-xs text-slate-400">
+                {{ filteredVentes.length }} item(s) trouvée(s)
+                <span v-if="selectedIds.length">
+                  • {{ selectedIds.length }} sélectionnée(s)
+                </span>
+              </p>
+            </div>
+
+            <!-- Droite : actions -->
+            <div class="flex items-center gap-2">
+              <GestionActionsPanel @vente-ajoutee="handleVenteAjoutee" />
+              <div class="[&_button:hover]:bg-red-900">
+                <button
+                  type="button"
+                  class="px-4 py-2 text-xs rounded bg-red-600 text-white disabled:opacity-60 transition whitespace-nowrap"
+                  @click="openDeleteBulk"
+                >
+                  Supprimer un item
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Liste -->
+          <div class="p-4">
+            <div class="max-h-[480px] overflow-y-auto pr-2">
+              <afficherTout
+                :snkVentes="filteredVentes"
+                selectable
+                v-model="selectedIds"
+                @edit="openEditModal"
+              />
+            </div>
           </div>
         </div>
+      </section>
+
+      <!-- Edition -->
+      <EditVenteModal v-model="showEditModal" :vente="venteToEdit" @saved="handleVenteUpdated" />
+
+      <!-- Delete modal (unique) -->
+      <SupprimerModal
+        v-if="showDeleteModal"
+        :snkVentes="snkVentes"
+        :selectedIds="selectedIds"
+        :defaultMode="deleteMode"
+        @close="showDeleteModal = false"
+        @deleted="handleDeleted"
+      />
+      <div class="[&_button:hover]:bg-gray-800">
+        <CsvImportExportWidget :filteredRows="filteredVentes" @imported="reloadVentes" />
       </div>
-    </section>
-
-    <!-- Edition -->
-    <EditVenteModal v-model="showEditModal" :vente="venteToEdit" @saved="handleVenteUpdated" />
-
-    <!-- Delete modal (unique) -->
-    <SupprimerModal
-      v-if="showDeleteModal"
-      :snkVentes="snkVentes"
-      :selectedIds="selectedIds"
-      :defaultMode="deleteMode"
-      @close="showDeleteModal = false"
-      @deleted="handleDeleted"
-    />
-    <div class="[&_button:hover]:bg-gray-800">
-      <CsvImportExportWidget :filteredRows="filteredVentes" @imported="reloadVentes" />
     </div>
   </div>
 </template>

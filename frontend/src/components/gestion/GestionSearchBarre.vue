@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="w-full">
     <div
-      class="group flex items-center gap-3 bg-gray-800/80 border border-gray-700 rounded-full px-5 py-3 shadow-md transition focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-500/40"
+      class="group flex items-center gap-3 rounded-full border border-slate-800 bg-slate-900/70 px-5 py-3 shadow-md transition focus-within:border-violet-400/60 focus-within:ring-2 focus-within:ring-violet-500/30"
     >
       <svg
-        class="w-5 h-5 text-gray-400 group-focus-within:text-purple-300 transition"
+        class="h-5 w-5 text-slate-400 transition group-focus-within:text-violet-300"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -21,8 +21,8 @@
         :value="modelValue"
         @input="$emit('update:modelValue', $event.target.value)"
         type="text"
-        placeholder="Rechercher par modèle, catégorie, description..."
-        class="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-sm text-gray-100 placeholder:text-gray-500"
+        placeholder="Rechercher par modele, categorie, description..."
+        class="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-sm text-slate-100 placeholder:text-slate-500"
       />
     </div>
   </div>
