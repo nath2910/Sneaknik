@@ -100,7 +100,6 @@
     <Transition name="save-toast">
       <div v-if="showSaveToast" class="save-toast" role="status">Layout enregistre</div>
     </Transition>
-
   </div>
 </template>
 
@@ -192,19 +191,92 @@ function setTo(v: string) {
 }
 
 function preset(kind: 'month' | 'ytd' | 'year') {
-  const now = new Date()
+  /**
+   * 1) On se met sur "aujourd'hui" à 00:00 (heure locale)
+   *    -> évite les décalages quand on formate en YYYY-MM-DD
+   */
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  /**
+   * 2) Helpers de formatage en "YYYY-MM-DD"
+   */
   const pad = (n: number) => String(n).padStart(2, '0')
   const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
+  /**
+   * 3) Helper: "soustraire N mois" en gardant le jour si possible,
+   *    sinon on "clamp" au dernier jour du mois cible.
+   *
+   *    Exemple:
+   *    - 2026-03-31 - 1 mois => 2026-02-28 (ou 29 si bissextile)
+   */
+  const subMonthsClamp = (date: Date, months: number) => {
+    const day = date.getDate()
+
+    // On construit le 1er jour du mois cible.
+    // new Date(year, monthIndex, 1) gère automatiquement les passages d'année.
+    const firstOfTargetMonth = new Date(date.getFullYear(), date.getMonth() - months, 1)
+
+    // Dernier jour du mois cible: jour 0 du mois suivant
+    const lastDayOfTargetMonth = new Date(
+      firstOfTargetMonth.getFullYear(),
+      firstOfTargetMonth.getMonth() + 1,
+      0,
+    ).getDate()
+
+    // Clamp du jour pour éviter que JS "déborde" sur le mois suivant
+    const clampedDay = Math.min(day, lastDayOfTargetMonth)
+
+    // Date finale (à 00:00)
+    return new Date(firstOfTargetMonth.getFullYear(), firstOfTargetMonth.getMonth(), clampedDay)
+  }
+
+  /**
+   * 4) Helper: "soustraire N années" en gardant mois+jour si possible,
+   *    sinon clamp (cas typique: 29/02).
+   *
+   *    Exemple:
+   *    - 2024-02-29 - 1 an => 2023-02-28
+   */
+  const subYearsClamp = (date: Date, years: number) => {
+    const targetYear = date.getFullYear() - years
+    const month = date.getMonth()
+    const day = date.getDate()
+
+    // Dernier jour du mois dans l'année cible
+    const lastDayOfTargetMonth = new Date(targetYear, month + 1, 0).getDate()
+    const clampedDay = Math.min(day, lastDayOfTargetMonth)
+
+    return new Date(targetYear, month, clampedDay)
+  }
+
+  /**
+   * 5) Applique la plage au composant + émet les events
+   */
+  const applyRange = (fromDate: Date, toDate: Date) => {
+    const fromStr = ymd(fromDate)
+    const toStr = ymd(toDate)
+
+    localFrom.value = fromStr
+    localTo.value = toStr
+
+    emit('update:from', fromStr)
+    emit('update:to', toStr)
+  }
+
+  /**
+   * 6) Presets
+   * - month : 1 mois glissant en arrière depuis aujourd'hui
+   * - ytd   : du 1er janvier (année courante) à aujourd'hui
+   * - year  : 1 an glissant en arrière depuis aujourd'hui
+   */
   if (kind === 'month') {
-    setFrom(ymd(new Date(now.getFullYear(), now.getMonth(), 1)))
-    setTo(ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0)))
+    applyRange(subMonthsClamp(today, 1), today)
   } else if (kind === 'ytd') {
-    setFrom(ymd(new Date(now.getFullYear(), 0, 1)))
-    setTo(ymd(now))
+    applyRange(new Date(today.getFullYear(), 0, 1), today)
   } else {
-    setFrom(ymd(new Date(now.getFullYear(), 0, 1)))
-    setTo(ymd(new Date(now.getFullYear(), 11, 31)))
+    applyRange(subYearsClamp(today, 1), today)
   }
 }
 
@@ -263,7 +335,7 @@ const defaultLayout = (): Widget[] => {
     props: {
       ...def.defaultProps,
       content:
-        "Bienvenue sur ton espace stats. Ajoute des widgets depuis la palette pour composer ton dashboard.",
+        'Bienvenue sur ton espace stats. Ajoute des widgets depuis la palette pour composer ton dashboard.',
       align: 'center',
     },
   }
@@ -782,11 +854,11 @@ watch(
   editMode,
   async (enabled) => {
     syncPanzoomExclude(enabled)
-  if (!enabled) {
-    dragArmedId.value = null
-    detachAllInteract()
-    return
-  }
+    if (!enabled) {
+      dragArmedId.value = null
+      detachAllInteract()
+      return
+    }
   },
   { immediate: true },
 )
@@ -1076,7 +1148,9 @@ onBeforeUnmount(() => {
 
 .save-toast-enter-active,
 .save-toast-leave-active {
-  transition: opacity 160ms ease, transform 160ms ease;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
 }
 .save-toast-enter-from,
 .save-toast-leave-to {

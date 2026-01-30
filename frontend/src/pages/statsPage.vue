@@ -13,6 +13,9 @@ function ymd(d: Date) {
 }
 
 const now = new Date()
-const from = ref(ymd(new Date(now.getFullYear(), now.getMonth(), 1)))
-const to = ref(ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0)))
+const oneMonthAgo = new Date(now)
+oneMonthAgo.setMonth(now.getMonth() - 1)
+
+const from = ref(ymd(oneMonthAgo))
+const to = ref(ymd(now))
 </script>
