@@ -22,12 +22,19 @@ public class StatsService {
   }
 
   public StatsSummaryResponse summary(Long userId, LocalDate from, LocalDate to) {
+    return summary(userId, from, to, null);
+  }
+
+  public StatsSummaryResponse summary(Long userId, LocalDate from, LocalDate to, LocalDate asOf) {
     LocalDateRange range = normalizeRange(from, to);
+    LocalDate asOfDate = asOf != null ? asOf : range.to();
+
     BigDecimal ca = repo.caBetween(userId, range.from(), range.to());
     BigDecimal profit = repo.profitBetween(userId, range.from(), range.to());
     long sold = repo.countSoldBetween(userId, range.from(), range.to());
-    long stock = repo.countInStock(userId);
-    BigDecimal stockValue = repo.stockValue(userId);
+
+    long stock = asOf != null ? repo.countInStockAt(userId, asOfDate) : repo.countInStock(userId);
+    BigDecimal stockValue = asOf != null ? repo.stockValueAt(userId, asOfDate) : repo.stockValue(userId);
 
     BigDecimal margin = BigDecimal.ZERO;
     if (ca != null && ca.compareTo(BigDecimal.ZERO) > 0) {
@@ -159,6 +166,21 @@ public class StatsService {
     }
 
     return List.of();
+  }
+
+  public StatsDateBoundsResponse dateBounds(Long userId) {
+    LocalDate minAchat = repo.minAchatDate(userId);
+    LocalDate minVente = repo.minVenteDate(userId);
+    LocalDate min = null;
+    if (minAchat != null && minVente != null) {
+      min = minAchat.isBefore(minVente) ? minAchat : minVente;
+    } else if (minAchat != null) {
+      min = minAchat;
+    } else if (minVente != null) {
+      min = minVente;
+    }
+    LocalDate max = LocalDate.now();
+    return new StatsDateBoundsResponse(min, max);
   }
 
   private record LocalDateRange(LocalDate from, LocalDate to) {}

@@ -49,6 +49,8 @@ const option = computed(() => {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'item',
+      confine: true,
+      transitionDuration: 0,
       formatter: ({ name, value, percent }) => `${name}<br/>${formatEUR(value)} • ${percent}%`,
     },
     legend: { bottom: 0, textStyle: { color: '#9CA3AF', fontSize: 11 } },
@@ -59,6 +61,8 @@ const option = computed(() => {
         center: ['50%', '48%'],
         itemStyle: { borderColor: '#0B1220', borderWidth: 2, borderRadius: 8 },
         label: { show: false },
+        animationDurationUpdate: 0,
+        emphasis: { scale: false },
         data,
       },
     ],

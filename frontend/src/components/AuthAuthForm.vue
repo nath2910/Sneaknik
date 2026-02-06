@@ -10,7 +10,7 @@
           <p class="mt-2 text-sm text-slate-400">
             {{
               mode === 'login'
-                ? 'Accede a ton espace Sneaknik.'
+                ? 'Accede a ton espace Stash.'
                 : 'Cree ton compte en quelques secondes.'
             }}
           </p>

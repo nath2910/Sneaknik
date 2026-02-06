@@ -1,32 +1,56 @@
-<template>
+﻿<template>
   <WidgetCard
     title="ROI moyen"
-    subtitle="(Bénéfice / Coût achat) x 100"
+    subtitle="Rentabilite globale sur la periode"
     :accent="accent"
     :loading="loading"
     :error="error"
   >
-    <div class="h-full flex items-center gap-4">
-      <div class="min-w-0">
-        <div class="text-3xl font-bold text-white leading-none">{{ roiText }}</div>
-        <div class="mt-2">
-          <span
-            v-if="kpi.deltaPct != null"
-            class="text-[11px] px-2 py-0.5 rounded-full border"
-            :class="
-              kpi.deltaPct >= 0
-                ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300'
-                : 'border-red-400/30 bg-red-500/10 text-red-300'
-            "
-          >
-            {{ deltaText }}
-          </span>
+    <div class="flex flex-col gap-3">
+      <div class="flex items-start justify-between gap-6">
+        <div class="min-w-0">
+          <div class="text-3xl font-bold text-white leading-none tracking-tight">{{ roiText }}</div>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <span
+              v-if="deltaPts != null"
+              class="text-[11px] px-2 py-0.5 rounded-full border"
+              :class="deltaBadgeClass"
+            >
+              {{ deltaPtsText }}
+            </span>
+            <span v-if="deltaPts != null" class="text-[11px] text-white/40">
+              vs periode precedente
+            </span>
+            <div class="objective-chip">
+              <span class="objective-label">Objectif</span>
+              <span class="objective-value"><span class="ge">&ge;</span> 40%</span>
+            </div>
+          </div>
         </div>
-        <p class="mt-2 text-[11px] text-white/45">Objectif: rester au-dessus de 25–30%</p>
+
+        <div class="period-chip roi-period">
+          <span class="period-label">Periode</span>
+          <span class="period-value">{{ fromLabel }} -> {{ toLabel }}</span>
+        </div>
       </div>
 
-      <div class="flex-1 min-w-0 h-full">
-        <VChart class="w-full h-full" :option="option" autoresize />
+      <div class="pt-2 border-t border-white/5">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-white/40">
+          Meilleures categories (benefice)
+        </div>
+        <ul class="mt-2 space-y-1">
+          <li
+            v-for="item in topCategories"
+            :key="item.label"
+            class="flex items-center justify-between gap-3 text-[12px]"
+          >
+            <span class="truncate text-white/80">{{ item.label }}</span>
+            <span class="text-white/70 tabular-nums">{{ formatEUR(item.value, { compact: true }) }}</span>
+          </li>
+          <li v-if="!topCategories.length" class="text-[11px] text-white/40">
+            Pas assez de data sur la periode.
+          </li>
+        </ul>
       </div>
     </div>
   </WidgetCard>
@@ -35,8 +59,8 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import StatsServices from '@/services/StatsServices'
-import { normalizeKpi } from '@/services/statsAdapters'
-import { formatPct, signFmt } from '@/utils/formatters'
+import { normalizeKpi, normalizeRank, prevPeriod } from '@/services/statsAdapters'
+import { formatDateFR, formatEUR, formatPct, signFmt } from '@/utils/formatters'
 import WidgetCard from './_parts/WidgetCard.vue'
 
 const props = defineProps({ from: String, to: String })
@@ -44,6 +68,8 @@ const accent = '#8B5CF6'
 const loading = ref(false)
 const error = ref('')
 const kpi = ref({ value: 0, deltaPct: null })
+const prevKpi = ref({ value: null })
+const topCategories = ref([])
 let req = 0
 
 async function load() {
@@ -51,9 +77,16 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const { data } = await StatsServices.kpi('roi', props.from, props.to)
+    const { from: prevFrom, to: prevTo } = prevPeriod(props.from, props.to)
+    const [k, kPrev, c] = await Promise.all([
+      StatsServices.kpi('roi', props.from, props.to),
+      StatsServices.kpi('roi', prevFrom, prevTo),
+      StatsServices.rank('topCategoriesProfit', props.from, props.to, 4),
+    ])
     if (id !== req) return
-    kpi.value = normalizeKpi(data) // value = ROI en %
+    kpi.value = normalizeKpi(k.data)
+    prevKpi.value = normalizeKpi(kPrev.data)
+    topCategories.value = normalizeRank(c.data)
   } catch (e) {
     if (id !== req) return
     error.value = e?.response?.data?.message ?? e?.message ?? 'Impossible de charger'
@@ -66,39 +99,99 @@ onMounted(load)
 watch(() => [props.from, props.to], load)
 
 const roiText = computed(() => formatPct(kpi.value.value, { digits: 1 }))
-const deltaText = computed(() => (kpi.value.deltaPct == null ? '' : signFmt(kpi.value.deltaPct)))
-
-const option = computed(() => {
-  const v = Math.max(-50, Math.min(200, Number(kpi.value.value ?? 0)))
-  return {
-    backgroundColor: 'transparent',
-    series: [
-      {
-        type: 'gauge',
-        startAngle: 210,
-        endAngle: -30,
-        min: -50,
-        max: 200,
-        splitNumber: 5,
-        axisLine: {
-          lineStyle: {
-            width: 12,
-            color: [
-              [0.35, '#EF4444'], // -50 -> 37.5
-              [0.55, '#F59E0B'],
-              [0.75, '#22C55E'],
-              [1, '#8B5CF6'],
-            ],
-          },
-        },
-        pointer: { itemStyle: { color: '#E5E7EB' } },
-        axisTick: { lineStyle: { color: '#475569' } },
-        splitLine: { lineStyle: { color: '#334155' } },
-        axisLabel: { color: '#9CA3AF' },
-        detail: { valueAnimation: true, formatter: (x) => `${x.toFixed(0)}%`, color: '#E5E7EB' },
-        data: [{ value: v }],
-      },
-    ],
-  }
+const deltaPts = computed(() => {
+  const curr = Number(kpi.value.value ?? 0)
+  const prev = Number(prevKpi.value.value ?? 0)
+  if (!Number.isFinite(curr) || !Number.isFinite(prev)) return null
+  return curr - prev
 })
+const deltaPtsText = computed(() => {
+  if (deltaPts.value == null) return ''
+  const sign = deltaPts.value >= 0 ? '+' : ''
+  return `${sign}${deltaPts.value.toFixed(1)} pts`
+})
+const roiTarget = 40
+const deltaBadgeClass = computed(() => {
+  if (kpi.value.value == null) return ''
+  const ok = Number(kpi.value.value) >= roiTarget
+  return ok
+    ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300'
+    : 'border-red-400/30 bg-red-500/10 text-red-300'
+})
+const fromLabel = computed(() =>
+  formatDateFR(props.from, { day: '2-digit', month: 'short', year: 'numeric' }),
+)
+const toLabel = computed(() =>
+  formatDateFR(props.to, { day: '2-digit', month: 'short', year: 'numeric' }),
+)
 </script>
+
+<style scoped>
+.period-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.6);
+  white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 6px 16px rgba(0, 0, 0, 0.25);
+}
+.period-label {
+  opacity: 0.7;
+}
+.period-value {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: rgba(226, 232, 240, 0.9);
+}
+.roi-period {
+  margin-top: 66px;
+}
+.objective-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.6);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 6px 14px rgba(0, 0, 0, 0.25);
+}
+.objective-label {
+  opacity: 0.7;
+}
+.objective-value {
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: rgba(226, 232, 240, 0.92);
+}
+.objective-value .ge {
+  display: inline-block;
+  padding: 0 6px;
+  margin-right: 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.16);
+  color: rgba(134, 239, 172, 0.95);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.18);
+}
+</style>

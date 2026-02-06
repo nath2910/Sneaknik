@@ -19,27 +19,23 @@
 
     <!-- Canvas -->
     <div ref="viewportEl" class="viewport">
-      <div class="date-panel">
+      <div class="date-panel" v-show="!paletteOpen">
         <div class="date-title">Periode</div>
         <div class="date-row">
-          <label class="date-field">
-            <span>Du</span>
-            <input
-              class="date-input"
-              type="date"
-              :value="localFrom"
-              @input="setFrom($event.target.value)"
-            />
-          </label>
-          <label class="date-field">
-            <span>Au</span>
-            <input
-              class="date-input"
-              type="date"
-              :value="localTo"
-              @input="setTo($event.target.value)"
-            />
-          </label>
+          <CompactDateInput
+            label="Du"
+            :model-value="localFrom"
+            :min-date="minDate"
+            :max-date="maxDate"
+            @update:modelValue="setFrom"
+          />
+          <CompactDateInput
+            label="Au"
+            :model-value="localTo"
+            :min-date="minDate"
+            :max-date="maxDate"
+            @update:modelValue="setTo"
+          />
         </div>
         <div class="date-actions">
           <button type="button" class="date-chip" @click="preset('month')">Mois</button>
@@ -73,6 +69,7 @@
           :style="widgetStyle(w)"
           :ref="(c: any) => setWidgetRef(w.id, c)"
           @dragStart="startDrag(w.id, $event)"
+          @autoResize="autoResize(w.id, $event)"
           @settings="openSettings(w)"
           @remove="removeWidget(w.id)"
         />
@@ -82,7 +79,7 @@
     <!-- Palette -->
     <WidgetPalette
       :open="paletteOpen"
-      :widgets="palette"
+      :groups="paletteGroups"
       @close="paletteOpen = false"
       @add="addWidget"
     />
@@ -93,6 +90,8 @@
       :title="settingsTitle"
       :fields="settingsFields"
       :model="settingsModel"
+      :min-date="minDate"
+      :max-date="maxDate"
       @close="closeSettings"
       @save="applySettings"
     />
@@ -100,6 +99,99 @@
     <Transition name="save-toast">
       <div v-if="showSaveToast" class="save-toast" role="status">Layout enregistre</div>
     </Transition>
+
+    <div v-show="!paletteOpen" class="profile-switcher" role="group" aria-label="Profils">
+      <button
+        v-for="p in PROFILES"
+        :key="p.id"
+        type="button"
+        class="profile-pill"
+        :class="{ 'is-active': activeProfile === p.id }"
+        @click="switchProfile(p.id)"
+      >
+        <span class="profile-dot" :style="{ background: profileColors[p.id] ?? p.color }"></span>
+        <span class="profile-label">{{ profileNames[p.id] ?? p.label }}</span>
+      </button>
+      <button type="button" class="profile-edit" @click="openProfileEditor">
+        <Paintbrush class="w-4 h-4" />
+      </button>
+    </div>
+
+    <teleport to="body">
+      <div v-if="profileEditorOpen" class="profile-modal" role="dialog" aria-modal="true">
+        <div class="profile-backdrop" @click="closeProfileEditor"></div>
+        <div class="profile-panel glass-panel rounded-[22px]" @click.stop>
+          <div class="glass-header h-11 px-4 flex items-center">
+            <div class="text-white/90 font-semibold text-[15px]">Renommer les profils</div>
+            <button
+              class="glass-iconbtn ml-auto h-8 w-8 grid place-items-center rounded-xl"
+              @click="closeProfileEditor"
+            >
+              <span class="close-x" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="p-4 profile-grid">
+            <div class="profile-help">
+              Renomme tes profils et choisis une couleur visible dans le sélecteur.
+            </div>
+
+            <section class="profile-card">
+              <div class="profile-head">
+                <div class="profile-title">Profil 1</div>
+                <div class="profile-preview">
+                  <span class="profile-dot" :style="{ background: profileDraft.p1Color }"></span>
+                  <span class="profile-preview-name">{{ profileDraft.p1 || 'Profil 1' }}</span>
+                </div>
+              </div>
+              <div class="profile-row">
+                <input v-model="profileDraft.p1" class="glass-field h-11 rounded-xl px-3" />
+                <input v-model="profileDraft.p1Color" type="color" class="color-swatch is-round" />
+              </div>
+            </section>
+
+            <section class="profile-card">
+              <div class="profile-head">
+                <div class="profile-title">Profil 2</div>
+                <div class="profile-preview">
+                  <span class="profile-dot" :style="{ background: profileDraft.p2Color }"></span>
+                  <span class="profile-preview-name">{{ profileDraft.p2 || 'Profil 2' }}</span>
+                </div>
+              </div>
+              <div class="profile-row">
+                <input v-model="profileDraft.p2" class="glass-field h-11 rounded-xl px-3" />
+                <input v-model="profileDraft.p2Color" type="color" class="color-swatch is-round" />
+              </div>
+            </section>
+
+            <section class="profile-card">
+              <div class="profile-head">
+                <div class="profile-title">Profil 3</div>
+                <div class="profile-preview">
+                  <span class="profile-dot" :style="{ background: profileDraft.p3Color }"></span>
+                  <span class="profile-preview-name">{{ profileDraft.p3 || 'Profil 3' }}</span>
+                </div>
+              </div>
+              <div class="profile-row">
+                <input v-model="profileDraft.p3" class="glass-field h-11 rounded-xl px-3" />
+                <input v-model="profileDraft.p3Color" type="color" class="color-swatch is-round" />
+              </div>
+            </section>
+          </div>
+          <div class="glass-footer px-4 py-3 flex justify-end gap-2">
+            <button type="button" class="glass-btn px-4 h-10 rounded-xl" @click.stop="closeProfileEditor">
+              Annuler
+            </button>
+            <button
+              type="button"
+              class="glass-btn glass-btn-primary px-4 h-10 rounded-xl"
+              @click.stop="saveProfileEditor"
+            >
+              Sauver
+            </button>
+          </div>
+        </div>
+      </div>
+    </teleport>
   </div>
 </template>
 
@@ -108,10 +200,12 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRefs, watch } fr
 import CanvasDock from './canvas/CanvasDock.vue'
 import WidgetFrame from './canvas/WidgetFrame.vue'
 import { useCanvasCamera } from './canvas/useCanvaCamera'
+import { Paintbrush } from 'lucide-vue-next'
 
+import CompactDateInput from '@/components/ui/CompactDateInput.vue'
 import WidgetPalette from './WidgetPalette.vue'
 import WidgetSettingsModal from './WidgetSettingsModal.vue'
-import { WIDGET_DEFS, getWidgetDef, newWidget } from './widgetRegistry'
+import { WIDGET_DEFS, getCategoryColor, getWidgetDef, newWidget } from './widgetRegistry'
 import { useAuthStore } from '@/store/authStore'
 import StatsServices from '@/services/StatsServices'
 
@@ -127,6 +221,14 @@ type Widget = {
   z?: number
 }
 
+type LayoutBundle = {
+  version: number
+  activeProfile?: string
+  profiles: Record<string, Array<Record<string, unknown>>>
+  profileNames?: Record<string, string>
+  profileColors?: Record<string, string>
+}
+
 /* props/emit */
 const props = defineProps({
   from: { type: String, required: true },
@@ -138,6 +240,23 @@ const { from, to } = toRefs(props)
 const { user } = useAuthStore()
 // Chaque utilisateur a une cle de layout isolee; guest reste en stockage local.
 const userId = computed(() => user.value?.id ?? 'guest')
+
+const PROFILE_COLORS = { p1: '#22C55E', p2: '#3B82F6', p3: '#F59E0B' }
+const DEFAULT_PROFILE_NAMES = { p1: 'Profil 1', p2: 'Profil 2', p3: 'Profil 3' }
+const PROFILES = [
+  { id: 'p1', label: DEFAULT_PROFILE_NAMES.p1, color: PROFILE_COLORS.p1 },
+  { id: 'p2', label: DEFAULT_PROFILE_NAMES.p2, color: PROFILE_COLORS.p2 },
+  { id: 'p3', label: DEFAULT_PROFILE_NAMES.p3, color: PROFILE_COLORS.p3 },
+]
+const activeProfile = ref('p1')
+const layoutBundle = ref<LayoutBundle>({ version: 1, activeProfile: 'p1', profiles: {} })
+const profileNames = ref({ ...DEFAULT_PROFILE_NAMES })
+const profileColors = ref({ ...PROFILE_COLORS })
+const profileEditorOpen = ref(false)
+const profileDraft = ref({ ...DEFAULT_PROFILE_NAMES, p1Color: PROFILE_COLORS.p1, p2Color: PROFILE_COLORS.p2, p3Color: PROFILE_COLORS.p3 })
+
+const minDate = ref('')
+const maxDate = ref('')
 
 /* ===== Mode édition/figé ===== */
 // Le mode edition est stocke par utilisateur pour eviter les fuites d'etat UI.
@@ -172,22 +291,32 @@ watch(
 )
 
 function setFrom(v: string) {
-  if (!v) return
-  localFrom.value = v
-  emit('update:from', v)
-  if (v > localTo.value) {
-    localTo.value = v
-    emit('update:to', v)
+  const next = clampDate(v)
+  if (!next) return
+  localFrom.value = next
+  emit('update:from', next)
+  if (next > localTo.value) {
+    localTo.value = next
+    emit('update:to', next)
   }
 }
 function setTo(v: string) {
-  if (!v) return
-  localTo.value = v
-  emit('update:to', v)
-  if (v < localFrom.value) {
-    localFrom.value = v
-    emit('update:from', v)
+  const next = clampDate(v)
+  if (!next) return
+  localTo.value = next
+  emit('update:to', next)
+  if (next < localFrom.value) {
+    localFrom.value = next
+    emit('update:from', next)
   }
+}
+
+function clampDate(v: string) {
+  if (!v) return ''
+  let out = v
+  if (minDate.value && out < minDate.value) out = minDate.value
+  if (maxDate.value && out > maxDate.value) out = maxDate.value
+  return out
 }
 
 function preset(kind: 'month' | 'ytd' | 'year') {
@@ -310,6 +439,8 @@ function clampWidget(w: Widget) {
 const STORAGE_KEY_PREFIX = 'snk_stats_canvas_layout_v4'
 const layoutKey = computed(() => `${STORAGE_KEY_PREFIX}_${userId.value}`)
 
+const widgets = ref<Widget[]>([])
+
 function loadLayout(key: string): unknown | null {
   try {
     const raw = localStorage.getItem(key)
@@ -357,18 +488,41 @@ function normalizeLayout(raw: unknown): Widget[] | null {
     }
     if (!def) continue
 
+    const legacyTitles: Record<string, string> = {
+      sellThrough: 'Sell-through',
+      deathPile: 'Death pile',
+      topProfitDrivers: 'Top profit (marques/cat)',
+    }
+    const nextTitle =
+      typeof (item as any)?.title === 'string' ? (item as any).title : def.title
+    const normalizedTitle =
+      legacyTitles[def.type] && nextTitle === legacyTitles[def.type] ? def.title : nextTitle
+
     const w: Widget = {
       id:
         typeof (item as any)?.id === 'string'
           ? (item as any).id
           : `${def.type}_${Date.now()}_${Math.random().toString(16).slice(2)}`,
       type: def.type,
-      title: typeof (item as any)?.title === 'string' ? (item as any).title : def.title,
+      title: normalizedTitle,
       x: Number.isFinite((item as any)?.x) ? Number((item as any).x) : 0,
       y: Number.isFinite((item as any)?.y) ? Number((item as any).y) : 0,
       w: Number.isFinite((item as any)?.w) ? Number((item as any).w) : def.defaultSize.w,
       h: Number.isFinite((item as any)?.h) ? Number((item as any).h) : def.defaultSize.h,
       props: { ...def.defaultProps, ...((item as any)?.props ?? {}) },
+    }
+
+    if (
+      def.type === 'roi' ||
+      def.type === 'textTitle' ||
+      def.type === 'textBlock' ||
+      def.type === 'grossRevenue' ||
+      def.type === 'avgMargin' ||
+      def.type === 'sellThrough' ||
+      def.type === 'topProfitDrivers' ||
+      def.type === 'topSales'
+    ) {
+      w.props = { ...(w.props ?? {}), autoHeight: true }
     }
 
     clampWidget(w)
@@ -385,16 +539,62 @@ function normalizeLayout(raw: unknown): Widget[] | null {
   return list
 }
 
+function normalizeBundle(raw: unknown): LayoutBundle {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw) && (raw as any).profiles) {
+    const obj = raw as LayoutBundle
+    return {
+      version: Number(obj.version || 1),
+      activeProfile: typeof obj.activeProfile === 'string' ? obj.activeProfile : 'p1',
+      profiles: obj.profiles ?? {},
+      profileNames: obj.profileNames ?? {},
+      profileColors: obj.profileColors ?? {},
+    }
+  }
+
+  if (Array.isArray(raw)) {
+    return {
+      version: 1,
+      activeProfile: 'p1',
+      profiles: { p1: raw },
+      profileNames: {},
+      profileColors: {},
+    }
+  }
+
+  return { version: 1, activeProfile: 'p1', profiles: {}, profileNames: {}, profileColors: {} }
+}
+
+function pickProfileId(id?: string) {
+  return PROFILES.some((p) => p.id === id) ? (id as string) : 'p1'
+}
+
+function applyProfileLayout(bundle: LayoutBundle, profileId: string) {
+  const picked = pickProfileId(profileId)
+  activeProfile.value = picked
+  bundle.activeProfile = picked
+  const raw = bundle.profiles?.[picked]
+  profileNames.value = { ...DEFAULT_PROFILE_NAMES, ...(bundle.profileNames ?? {}) }
+  profileColors.value = { ...PROFILE_COLORS, ...(bundle.profileColors ?? {}) }
+  const normalized = normalizeLayout(raw)
+  widgets.value = normalized ?? defaultLayout()
+}
+
 function loadLayoutForUser() {
   if (userId.value === 'guest') {
     const raw = loadLayout(STORAGE_KEY_PREFIX)
-    return normalizeLayout(raw) ?? defaultLayout()
+    const bundle = normalizeBundle(raw)
+    layoutBundle.value = bundle
+    applyProfileLayout(bundle, bundle.activeProfile)
+    return
   }
   const raw = loadLayout(layoutKey.value)
-  return normalizeLayout(raw) ?? defaultLayout()
+  const bundle = normalizeBundle(raw)
+  layoutBundle.value = bundle
+  applyProfileLayout(bundle, bundle.activeProfile)
+  return
 }
 
-const widgets = ref<Widget[]>(loadLayoutForUser())
+loadLayoutForUser()
 
 let saveTimer: number | null = null
 let toastTimer: number | null = null
@@ -418,18 +618,17 @@ async function loadLayoutFromServer() {
     if (payload === null || typeof payload === 'undefined') {
       return
     }
-    const normalized = normalizeLayout(payload)
-    if (normalized) {
-      widgets.value = normalized
-      localStorage.setItem(layoutKey.value, JSON.stringify(payload))
-    }
+    const bundle = normalizeBundle(payload)
+    layoutBundle.value = bundle
+    applyProfileLayout(bundle, bundle.activeProfile)
+    localStorage.setItem(layoutKey.value, JSON.stringify(bundle))
   } catch (err) {
     console.warn('[stats] remote load failed', err)
   }
 }
 
-function saveLayoutNow() {
-  const minimal = widgets.value.map(({ id, type, title, x, y, w, h, props }) => ({
+function serializeWidgets() {
+  return widgets.value.map(({ id, type, title, x, y, w, h, props }) => ({
     id,
     type,
     title,
@@ -439,9 +638,24 @@ function saveLayoutNow() {
     h,
     props,
   }))
-  localStorage.setItem(layoutKey.value, JSON.stringify(minimal))
-  showSavedToast()
-  scheduleRemoteSave(minimal)
+}
+
+function saveBundleNow(showToast = true) {
+  const bundle = layoutBundle.value
+  bundle.activeProfile = activeProfile.value
+  bundle.profiles = bundle.profiles ?? {}
+  bundle.profiles[activeProfile.value] = serializeWidgets()
+  bundle.profileNames = { ...profileNames.value }
+  bundle.profileColors = { ...profileColors.value }
+
+  const storageKey = userId.value === 'guest' ? STORAGE_KEY_PREFIX : layoutKey.value
+  localStorage.setItem(storageKey, JSON.stringify(bundle))
+  if (showToast) showSavedToast()
+  scheduleRemoteSave(bundle)
+}
+
+function saveLayoutNow() {
+  saveBundleNow(true)
 }
 function scheduleSave() {
   if (saveTimer) window.clearTimeout(saveTimer)
@@ -452,12 +666,12 @@ function scheduleSave() {
 }
 
 // Sauvegarde distante debounce pour eviter de spammer l'API.
-function scheduleRemoteSave(minimal: Array<Record<string, unknown>>) {
+function scheduleRemoteSave(payload: unknown) {
   if (userId.value === 'guest') return
   if (remoteSaveTimer) window.clearTimeout(remoteSaveTimer)
   remoteSaveTimer = window.setTimeout(async () => {
     try {
-      await StatsServices.saveLayout(minimal)
+      await StatsServices.saveLayout(payload)
     } catch (err) {
       console.warn('[stats] remote save failed', err)
     } finally {
@@ -477,13 +691,47 @@ function widgetStyle(w: Widget) {
 
 /* ===== Widget registry ===== */
 const paletteOpen = ref(false)
-const palette = WIDGET_DEFS.map((w) => ({
-  type: w.type,
-  title: w.title,
-  icon: w.icon,
-  help: w.help ?? 'Ajoute ce widget au canvas',
-}))
+const PALETTE_ORDER = ['Texte', 'Finance', 'Stock', 'Performance', 'Bonus']
+const paletteGroups = computed(() => {
+  const grouped = new Map<string, Array<Record<string, unknown>>>()
+  for (const w of WIDGET_DEFS) {
+    const key = w.category ?? 'Autres'
+    const list = grouped.get(key) ?? []
+    list.push({
+      type: w.type,
+      title: w.title,
+      icon: w.icon,
+      help: w.help ?? 'Ajoute ce widget au canvas',
+      forms: w.forms ?? [],
+      formPicker: w.formPicker !== false,
+    })
+    grouped.set(key, list)
+  }
+
+  const ordered = PALETTE_ORDER.filter((k) => grouped.has(k)).map((k) => {
+    const tone = getCategoryColor(k)
+    return {
+      title: k,
+      color: tone.color,
+      glow: tone.glow,
+      items: grouped.get(k) ?? [],
+    }
+  })
+
+  const leftovers = Array.from(grouped.entries())
+    .filter(([k]) => !PALETTE_ORDER.includes(k))
+    .map(([k, items]) => {
+      const tone = getCategoryColor(k)
+      return { title: k, color: tone.color, glow: tone.glow, items }
+    })
+
+  return [...ordered, ...leftovers]
+})
 const dragArmedId = ref<string | null>(null)
+
+function disarmWidget() {
+  dragArmedId.value = null
+}
 
 function getComp(type: string) {
   return getWidgetDef(type)?.component
@@ -512,7 +760,27 @@ const settingsDef = computed(() =>
 
 const settingsTitle = computed(() => settingsWidget.value?.title ?? 'Réglages')
 const settingsFields = computed(() => {
-  const base = settingsDef.value?.settings ?? []
+  const def = settingsDef.value
+  const base = def?.settings ?? []
+  const hideRange = def?.hideGlobalRange === true
+  if (hideRange) return [...base]
+
+  const dateMode = def?.dateMode ?? 'range'
+  const rangeFields =
+    dateMode === 'range'
+      ? [
+          { key: 'from', label: 'Du', type: 'date', hideWhenGlobalRange: true },
+          { key: 'to', label: 'Au', type: 'date', hideWhenGlobalRange: true },
+        ]
+      : []
+
+  const mappedBase = base.map((f) => {
+    if (f?.type === 'date' && dateMode === 'asOf') {
+      return { ...f, hideWhenGlobalRange: true }
+    }
+    return f
+  })
+
   return [
     {
       key: 'useGlobalRange',
@@ -520,9 +788,8 @@ const settingsFields = computed(() => {
       type: 'toggle',
       hint: 'Active par defaut',
     },
-    { key: 'from', label: 'Du', type: 'date' },
-    { key: 'to', label: 'Au', type: 'date' },
-    ...base,
+    ...rangeFields,
+    ...mappedBase,
   ]
 })
 const settingsModel = computed(() => {
@@ -531,6 +798,7 @@ const settingsModel = computed(() => {
     useGlobalRange: base.useGlobalRange ?? true,
     from: base.from ?? localFrom.value,
     to: base.to ?? localTo.value,
+    asOf: base.asOf ?? localTo.value,
     ...base,
   }
 })
@@ -553,7 +821,20 @@ function onCanvasPointerDown(e: PointerEvent) {
 function applySettings(newModel: Record<string, unknown>) {
   const w = settingsWidget.value
   if (!w) return
-  w.props = { ...(w.props ?? {}), ...newModel }
+  const next = { ...(w.props ?? {}), ...newModel }
+  const fromVal = typeof next.from === 'string' ? next.from : ''
+  const toVal = typeof next.to === 'string' ? next.to : ''
+  if (fromVal) next.from = clampDate(fromVal)
+  if (toVal) next.to = clampDate(toVal)
+  if (typeof next.from === 'string' && typeof next.to === 'string' && next.from > next.to) {
+    const tmp = next.from
+    next.from = next.to
+    next.to = tmp
+  }
+  if (typeof next.asOf === 'string' && next.asOf) {
+    next.asOf = clampDate(next.asOf)
+  }
+  w.props = next
   scheduleSave()
   closeSettings()
 }
@@ -868,16 +1149,28 @@ watch(
   async () => {
     loadEditMode()
     detachAllInteract()
-    widgets.value = loadLayoutForUser()
+    loadLayoutForUser()
     await nextTick()
     widgets.value.forEach((w) => clampWidget(w))
     centerView()
     if (userId.value !== 'guest') {
       await loadLayoutFromServer()
     }
+    await loadDateBounds()
   },
   { immediate: false },
 )
+
+async function loadDateBounds() {
+  try {
+    const res = await StatsServices.dateBounds()
+    minDate.value = res?.data?.minDate ?? ''
+    maxDate.value = res?.data?.maxDate ?? ''
+  } catch {
+    minDate.value = ''
+    maxDate.value = ''
+  }
+}
 
 /* ===== Actions ===== */
 function removeWidget(id: string) {
@@ -885,6 +1178,7 @@ function removeWidget(id: string) {
   widgets.value = widgets.value.filter((w) => w.id !== id)
   scheduleSave()
 }
+
 
 function resetLayout() {
   if (!editMode.value) return
@@ -905,9 +1199,12 @@ function resetLayout() {
   })
 }
 
-function addWidget(type: string) {
+function addWidget(payload: string | { type: string; view?: string }) {
   if (!editMode.value) return
   paletteOpen.value = false
+
+  const type = typeof payload === 'string' ? payload : payload?.type
+  const view = typeof payload === 'string' ? undefined : payload?.view
 
   let w: Widget
   try {
@@ -924,11 +1221,27 @@ function addWidget(type: string) {
   w.z = ++zTop
   clampWidget(w)
 
+  if (view) {
+    w.props = { ...(w.props ?? {}), view }
+  }
+
   widgets.value.push(w)
 
   nextTick(() => {
     scheduleSave()
   })
+}
+
+function autoResize(id: string, height: number) {
+  const w = widgets.value.find((x) => x.id === id)
+  if (!w) return
+  if (!Number.isFinite(height)) return
+  const minSize = minSizeFor(w)
+  const nextH = clamp(height, minSize.h, BOARD_H)
+  if (Math.abs(nextH - w.h) < 2) return
+  w.h = nextH
+  clampWidget(w)
+  scheduleSave()
 }
 
 /* ===== Lifecycle ===== */
@@ -947,12 +1260,55 @@ onMounted(async () => {
   if (userId.value !== 'guest') {
     await loadLayoutFromServer()
   }
+  await loadDateBounds()
 })
 
 onBeforeUnmount(() => {
   detachAllInteract()
   camera.destroy()
 })
+
+function switchProfile(profileId: string) {
+  const next = pickProfileId(profileId)
+  if (next === activeProfile.value) return
+  saveBundleNow(false)
+  applyProfileLayout(layoutBundle.value, next)
+  saveBundleNow(false)
+  nextTick(() => {
+    widgets.value.forEach((w) => clampWidget(w))
+    centerView()
+  })
+}
+
+function openProfileEditor() {
+  profileDraft.value = {
+    ...profileNames.value,
+    p1Color: profileColors.value.p1 ?? PROFILE_COLORS.p1,
+    p2Color: profileColors.value.p2 ?? PROFILE_COLORS.p2,
+    p3Color: profileColors.value.p3 ?? PROFILE_COLORS.p3,
+  }
+  profileEditorOpen.value = true
+}
+function closeProfileEditor() {
+  profileEditorOpen.value = false
+}
+function saveProfileEditor() {
+  profileNames.value = {
+    p1: (profileDraft.value.p1 || DEFAULT_PROFILE_NAMES.p1).trim(),
+    p2: (profileDraft.value.p2 || DEFAULT_PROFILE_NAMES.p2).trim(),
+    p3: (profileDraft.value.p3 || DEFAULT_PROFILE_NAMES.p3).trim(),
+  }
+  profileColors.value = {
+    p1: profileDraft.value.p1Color || PROFILE_COLORS.p1,
+    p2: profileDraft.value.p2Color || PROFILE_COLORS.p2,
+    p3: profileDraft.value.p3Color || PROFILE_COLORS.p3,
+  }
+  layoutBundle.value.profileNames = { ...profileNames.value }
+  layoutBundle.value.profileColors = { ...profileColors.value }
+  saveBundleNow(false)
+  profileEditorOpen.value = false
+}
+
 </script>
 
 <style scoped>
@@ -1035,34 +1391,6 @@ onBeforeUnmount(() => {
   }
 }
 
-.date-field {
-  display: grid;
-  grid-template-columns: 22px 1fr;
-  align-items: center;
-  gap: 6px;
-  color: rgba(226, 232, 240, 0.85);
-  font-size: 0.7rem;
-}
-
-.date-input {
-  height: 26px;
-  padding: 0 6px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.7rem;
-  color-scheme: dark;
-  transition:
-    border-color 160ms ease,
-    background 160ms ease;
-  touch-action: manipulation;
-}
-.date-input:hover {
-  border-color: rgba(148, 163, 184, 0.35);
-  background: rgba(255, 255, 255, 0.08);
-}
-
 .date-actions {
   display: flex;
   gap: 6px;
@@ -1097,13 +1425,6 @@ onBeforeUnmount(() => {
   }
   .date-title {
     font-size: 0.68rem;
-  }
-  .date-field {
-    font-size: 0.78rem;
-  }
-  .date-input {
-    height: 34px;
-    font-size: 0.78rem;
   }
   .date-chip {
     height: 30px;
@@ -1156,6 +1477,198 @@ onBeforeUnmount(() => {
 .save-toast-leave-to {
   opacity: 0;
   transform: translateY(6px);
+}
+
+/* Profil selector */
+.profile-switcher {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 70;
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(10, 12, 18, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+.profile-pill {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(226, 232, 240, 0.9);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 140ms ease;
+}
+.profile-edit {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(226, 232, 240, 0.9);
+  display: grid;
+  place-items: center;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 140ms ease;
+}
+.profile-edit:hover {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+.profile-pill:hover {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+.profile-pill.is-active {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+}
+.profile-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+.profile-label {
+  letter-spacing: 0.02em;
+}
+
+.profile-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+}
+.profile-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+}
+.profile-panel {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 92vw);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.glass-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 12, 18, 0.6);
+  backdrop-filter: blur(12px);
+}
+.glass-btn {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 18px rgba(0, 0, 0, 0.25);
+}
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.glass-btn-primary {
+  background: rgba(99, 102, 241, 0.4);
+  border-color: rgba(99, 102, 241, 0.55);
+}
+.glass-btn-primary:hover {
+  background: rgba(99, 102, 241, 0.55);
+}
+.profile-grid {
+  display: grid;
+  gap: 10px;
+}
+.profile-help {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.6);
+}
+.profile-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(12, 16, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 14px 30px rgba(0, 0, 0, 0.35);
+}
+.profile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.profile-title {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+.profile-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.8);
+}
+.profile-preview-name {
+  font-weight: 600;
+}
+.profile-row {
+  display: grid;
+  grid-template-columns: 1fr 42px;
+  gap: 6px;
+  align-items: center;
+}
+.color-swatch {
+  width: 42px;
+  height: 40px;
+  border-radius: 12px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+}
+.color-swatch.is-round {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  background-color: transparent;
+  box-shadow:
+    0 0 0 3px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+  padding: 0;
+  overflow: hidden;
+}
+.color-swatch.is-round::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.color-swatch.is-round::-webkit-color-swatch {
+  border: none;
+  border-radius: 999px;
+}
+.color-swatch.is-round::-moz-color-swatch {
+  border: none;
+  border-radius: 999px;
 }
 
 /* ✅ en mode édition, on peut drag “partout” (même sur les charts) */

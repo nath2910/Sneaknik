@@ -8,7 +8,7 @@
         <div class="flex flex-wrap items-start justify-between gap-6">
           <div class="space-y-3">
             <p class="text-xs uppercase tracking-[0.35em] text-violet-300/80">
-              Backoffice Sneaknik
+              Backoffice Stash
             </p>
             <h1 class="text-3xl font-semibold text-white sm:text-4xl">Gestion des ventes</h1>
             <p class="text-base text-slate-400">

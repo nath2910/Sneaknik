@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div
     ref="root"
     class="widget panzoom-exclude"
@@ -10,13 +10,13 @@
   >
     <div class="widget__header drag-handle">
       <div class="widget__title">
-        <span class="dot" />
+        <span class="dot" :style="dotStyle" />
         <span class="title">{{ widget.title }}</span>
         <span v-if="editMode" class="drag-grip" aria-hidden="true" />
       </div>
 
       <div class="widget__actions" v-if="editMode">
-        <button type="button" class="iconbtn" title="Réglages" @click="$emit('settings')">
+        <button type="button" class="iconbtn" title="Reglages" @click="$emit('settings')">
           <Settings class="w-4 h-4" />
         </button>
         <button type="button" class="iconbtn" title="Supprimer" @click="$emit('remove')">
@@ -25,15 +25,20 @@
       </div>
     </div>
 
-    <div class="widget__body">
-      <component :is="comp" :from="from" :to="to" v-bind="widget.props" />
+    <div
+      ref="bodyEl"
+      class="widget__body"
+      :class="{ 'widget__body--auto': widget.props?.autoHeight === true }"
+    >
+      <component :is="comp" :from="from" :to="to" v-bind="mergedProps" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Settings, Trash2 } from 'lucide-vue-next'
+import { getCategoryColor, getWidgetDef } from '../widgetRegistry'
 
 type Widget = {
   id: string
@@ -61,7 +66,24 @@ const emit = defineEmits<{
   (e: 'settings'): void
   (e: 'remove'): void
   (e: 'dragStart', ev: PointerEvent): void
+  (e: 'autoResize', height: number): void
 }>()
+
+const mergedProps = computed(() => {
+  const p = { ...(props.widget?.props ?? {}) } as Record<string, unknown>
+  delete p.from
+  delete p.to
+  return p
+})
+
+const dotStyle = computed(() => {
+  const def = getWidgetDef(props.widget?.type)
+  const tone = getCategoryColor(def?.category)
+  return {
+    background: tone.color,
+    boxShadow: `0 0 0 4px ${tone.glow}`,
+  }
+})
 
 function onPointerDown(e: PointerEvent) {
   if (!props.editMode) return
@@ -71,7 +93,51 @@ function onPointerDown(e: PointerEvent) {
 }
 
 const root = ref<HTMLElement | null>(null)
+const bodyEl = ref<HTMLElement | null>(null)
+
 defineExpose({ root })
+
+let resizeRaf: number | null = null
+let mo: MutationObserver | null = null
+let ro: ResizeObserver | null = null
+
+function scheduleAutoResize() {
+  if (props.widget?.props?.autoHeight !== true) return
+  if (resizeRaf) return
+  resizeRaf = requestAnimationFrame(() => {
+    resizeRaf = null
+    const el = bodyEl.value
+    if (!el) return
+    const desired = Math.ceil(el.scrollHeight + 44)
+    if (!Number.isFinite(desired) || desired <= 0) return
+    if (Math.abs(desired - props.widget.h) >= 4) {
+      emit('autoResize', desired)
+    }
+  })
+}
+
+onMounted(() => {
+  nextTick(() => scheduleAutoResize())
+  if (!bodyEl.value) return
+  mo = new MutationObserver(() => scheduleAutoResize())
+  mo.observe(bodyEl.value, { childList: true, subtree: true, characterData: true })
+  if (globalThis.ResizeObserver) {
+    ro = new ResizeObserver(() => scheduleAutoResize())
+    ro.observe(bodyEl.value)
+  }
+})
+
+watch(
+  () => [props.widget?.props?.autoHeight, props.widget?.props?.content],
+  () => scheduleAutoResize(),
+  { deep: false },
+)
+
+onBeforeUnmount(() => {
+  if (resizeRaf) cancelAnimationFrame(resizeRaf)
+  if (mo) mo.disconnect()
+  if (ro) ro.disconnect()
+})
 </script>
 
 <style scoped>
@@ -122,8 +188,6 @@ defineExpose({ root })
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: #8b5cf6;
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
 }
 .title {
   color: rgba(255, 255, 255, 0.92);
@@ -162,7 +226,6 @@ defineExpose({ root })
   border-color: rgba(255, 255, 255, 0.16);
 }
 
-/* en édition : on peut drag en cliquant partout */
 .widget[data-edit='true'] .drag-handle {
   cursor: grab;
 }
@@ -173,6 +236,9 @@ defineExpose({ root })
 .widget__body {
   height: calc(100% - 44px);
   padding: 12px;
+}
+.widget__body--auto {
+  height: auto;
 }
 .widget--tight .widget__body {
   padding: 6px;

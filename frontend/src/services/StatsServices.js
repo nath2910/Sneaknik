@@ -5,12 +5,13 @@ import api from './api'
  * Controller accepts: start/end OR from/to.
  * We send both to be robust.
  */
-function dateParams(from, to) {
+function dateParams(from, to, asOf) {
   return {
     from,
     to,
     start: from,
     end: to,
+    asOf,
   }
 }
 
@@ -20,13 +21,15 @@ function dateParams(from, to) {
  *  - summary({ from, to })
  */
 function resolveRange(a, b) {
-  if (a && typeof a === 'object') return { from: a.from, to: a.to }
-  return { from: a, to: b }
+  if (a && typeof a === 'object') {
+    return { from: a.from, to: a.to, asOf: a.asOf }
+  }
+  return { from: a, to: b, asOf: undefined }
 }
 
 function summary(a, b) {
-  const { from, to } = resolveRange(a, b)
-  return api.get('/stats/summary', { params: dateParams(from, to) })
+  const { from, to, asOf } = resolveRange(a, b)
+  return api.get('/stats/summary', { params: dateParams(from, to, asOf) })
 }
 
 function timeseries(a, b, granularityOrOpts = 'day') {
@@ -84,6 +87,10 @@ function rank(metric, a, b, limit = 10) {
   return api.get(`/stats/rank/${metric}`, { params: { ...dateParams(from, to), limit } })
 }
 
+function dateBounds() {
+  return api.get('/stats/date-bounds')
+}
+
 // Persistance du layout cote backend (prive / multi-appareil).
 function getLayout() {
   return api.get('/stats/layout')
@@ -102,6 +109,7 @@ export default {
   series,
   breakdown,
   rank,
+  dateBounds,
   getLayout,
   saveLayout,
 }

@@ -3,10 +3,10 @@
     <!-- Header -->
     <template v-if="!isAuthRoute">
       <!-- Header for stats: simple bar -->
-      <header class="fixed top-4 left-0 right-0 z-50">
-        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <header class="fixed top-4 left-0 right-0 z-50 pointer-events-none">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between pointer-events-none">
           <!-- Left spacer / burger -->
-          <div class="flex items-center">
+          <div class="flex items-center pointer-events-auto">
             <button
               type="button"
               class="md:hidden text-gray-300 hover:text-white p-2 rounded-xl hover:bg-white/5 transition"
@@ -106,7 +106,7 @@
         </div>
 
         <!-- Mobile menu -->
-        <div v-if="mobileMenuOpen" class="md:hidden px-4 pb-3" @click.stop>
+        <div v-if="mobileMenuOpen" class="md:hidden px-4 pb-3 pointer-events-auto" @click.stop>
           <div class="mt-2 rounded-2xl bg-gray-900/70 border border-white/10 backdrop-blur p-2">
             <RouterLink
               to="/"
@@ -166,7 +166,7 @@
       :class="footerVisible ? 'opacity-100' : 'opacity-0'"
     >
       <div class="pointer-events-auto inline-flex items-center gap-6 px-7 py-3 rounded-full border border-white/10 bg-slate-900/85 backdrop-blur-md text-sm shadow-[0_14px_32px_rgba(0,0,0,0.38)]">
-        <span class="font-jetbrains-mono">&copy; {{ new Date().getFullYear() }} — Sneaknik</span>
+        <span class="font-jetbrains-mono">&copy; {{ new Date().getFullYear() }} — Stash</span>
         <a href="#" class="hover:underline">À propos</a>
         <a href="mailto:nathantalvasson@gmail.com" class="hover:underline">contact</a>
       </div>

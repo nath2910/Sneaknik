@@ -1,4 +1,4 @@
-# Sneaknik
+# Stash
 
 Application web destinée à l’assistance dans la gestion du **stock de sneakers** et de la **comptabilité** dans un contexte de projet entrepreneurial.
 

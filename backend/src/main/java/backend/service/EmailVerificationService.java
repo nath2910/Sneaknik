@@ -168,7 +168,7 @@ public class EmailVerificationService {
         "Enfin !\n\n" +
         "Votre adresse email a bien ete confirmee. Vous pouvez maintenant vous connecter.\n\n" +
         "Merci,\n" +
-        "L'equipe Sneaknik\n"
+        "L'equipe Stash\n"
     );
 
     try {

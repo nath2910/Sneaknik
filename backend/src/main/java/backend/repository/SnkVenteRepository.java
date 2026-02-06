@@ -266,6 +266,42 @@ long countInStock(@Param("userId") Long userId);
 BigDecimal stockValue(@Param("userId") Long userId);
 
 @Query(value = """
+  SELECT MIN(t.date_achat)
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_achat IS NOT NULL
+""", nativeQuery = true)
+LocalDate minAchatDate(@Param("userId") Long userId);
+
+@Query(value = """
+  SELECT MIN(t.date_vente)
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_vente IS NOT NULL
+""", nativeQuery = true)
+LocalDate minVenteDate(@Param("userId") Long userId);
+
+@Query(value = """
+  SELECT COUNT(*)
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_achat IS NOT NULL
+    AND t.date_achat <= :asOf
+    AND (t.date_vente IS NULL OR t.date_vente > :asOf)
+""", nativeQuery = true)
+long countInStockAt(@Param("userId") Long userId, @Param("asOf") LocalDate asOf);
+
+@Query(value = """
+  SELECT COALESCE(SUM(COALESCE(t.prix_retail, 0)), 0)
+  FROM public.tableauventes t
+  WHERE t.user_id = :userId
+    AND t.date_achat IS NOT NULL
+    AND t.date_achat <= :asOf
+    AND (t.date_vente IS NULL OR t.date_vente > :asOf)
+""", nativeQuery = true)
+BigDecimal stockValueAt(@Param("userId") Long userId, @Param("asOf") LocalDate asOf);
+
+@Query(value = """
   SELECT (date_trunc('day', t.date_vente))::date AS bucket,
          COALESCE(SUM(COALESCE(t.prix_resell,0)),0) AS ca,
          COALESCE(SUM(COALESCE(t.prix_resell,0) - COALESCE(t.prix_retail,0)),0) AS profit
@@ -446,20 +482,8 @@ List<LabelValueRow> deathPileAge(@Param("userId") Long userId);
 @Query("""
   SELECT
     CASE
-      WHEN lower(v.nomItem) LIKE '%nike%' THEN 'Nike'
-      WHEN lower(v.nomItem) LIKE '%adidas%' THEN 'Adidas'
-      WHEN lower(v.nomItem) LIKE '%puma%' THEN 'Puma'
-      WHEN lower(v.nomItem) LIKE '%new balance%' THEN 'New Balance'
-      WHEN lower(v.nomItem) LIKE '%asics%' THEN 'ASICS'
-      WHEN lower(v.nomItem) LIKE '%pokemon%' THEN 'Pokemon'
-      WHEN lower(v.nomItem) LIKE '%air%' THEN 'Nike'
-      WHEN lower(v.nomItem) LIKE '%jordan%' THEN 'Jordan'
-      WHEN lower(v.nomItem) LIKE '%dunk%' THEN 'Nike'
-      WHEN lower(v.nomItem) LIKE '%yeezy%' THEN 'Yeezy'
-      WHEN lower(v.nomItem) LIKE '%samba%' THEN 'Adidas'
-      WHEN lower(v.nomItem) LIKE '%spezial%' THEN 'Adidas'
-      WHEN lower(v.nomItem) LIKE '%gazelle%' THEN 'Adidas'
-      ELSE 'Autre'
+      WHEN v.categorie IS NULL OR trim(v.categorie) = '' THEN 'Autre'
+      ELSE v.categorie
     END AS label,
     SUM(COALESCE(v.prixResell,0) - COALESCE(v.prixRetail,0)) AS value
   FROM SnkVente v
@@ -469,20 +493,8 @@ List<LabelValueRow> deathPileAge(@Param("userId") Long userId);
     AND v.prixRetail IS NOT NULL
   GROUP BY
     CASE
-      WHEN lower(v.nomItem) LIKE '%nike%' THEN 'Nike'
-      WHEN lower(v.nomItem) LIKE '%adidas%' THEN 'Adidas'
-      WHEN lower(v.nomItem) LIKE '%puma%' THEN 'Puma'
-      WHEN lower(v.nomItem) LIKE '%new balance%' THEN 'New Balance'
-      WHEN lower(v.nomItem) LIKE '%asics%' THEN 'ASICS'
-      WHEN lower(v.nomItem) LIKE '%pokemon%' THEN 'Pokemon'
-      WHEN lower(v.nomItem) LIKE '%air%' THEN 'Nike'
-      WHEN lower(v.nomItem) LIKE '%jordan%' THEN 'Jordan'
-      WHEN lower(v.nomItem) LIKE '%dunk%' THEN 'Nike'
-      WHEN lower(v.nomItem) LIKE '%yeezy%' THEN 'Yeezy'
-      WHEN lower(v.nomItem) LIKE '%samba%' THEN 'Adidas'
-      WHEN lower(v.nomItem) LIKE '%spezial%' THEN 'Adidas'
-      WHEN lower(v.nomItem) LIKE '%gazelle%' THEN 'Adidas'
-      ELSE 'Autre'
+      WHEN v.categorie IS NULL OR trim(v.categorie) = '' THEN 'Autre'
+      ELSE v.categorie
     END
   ORDER BY value DESC
 """)
@@ -491,14 +503,22 @@ List<LabelValueRow> topBrandsProfit(@Param("userId") Long userId,
                                     @Param("end") LocalDate end);
 
 @Query("""
-  SELECT v.categorie AS label,
-         SUM(COALESCE(v.prixResell,0) - COALESCE(v.prixRetail,0)) AS value
+  SELECT
+    CASE
+      WHEN v.categorie IS NULL OR trim(v.categorie) = '' THEN 'Autre'
+      ELSE v.categorie
+    END AS label,
+    SUM(COALESCE(v.prixResell,0) - COALESCE(v.prixRetail,0)) AS value
   FROM SnkVente v
   WHERE v.user.id = :userId
     AND v.dateVente BETWEEN :start AND :end
     AND v.prixResell IS NOT NULL
     AND v.prixRetail IS NOT NULL
-  GROUP BY v.categorie
+  GROUP BY
+    CASE
+      WHEN v.categorie IS NULL OR trim(v.categorie) = '' THEN 'Autre'
+      ELSE v.categorie
+    END
   ORDER BY value DESC
 """)
 List<LabelValueRow> topCategoriesProfit(@Param("userId") Long userId,

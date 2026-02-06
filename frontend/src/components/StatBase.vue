@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <DashboardHeader
-      subtitle="Analytics • Sneaknik"
+      subtitle="Analytics • Stash"
       title="Statistiques"
       description="Dashboard modulable : zoom, déplacement, widgets."
     />

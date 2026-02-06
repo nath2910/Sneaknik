@@ -100,23 +100,13 @@
               <!-- Date achat -->
               <div>
                 <label class="block text-sm font-medium text-gray-200 mb-2">Date d'achat</label>
-                <input
-                  type="date"
-                  v-model="form.dateAchat"
-                  required
-                  class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
-                />
+                <CompactDateInput v-model="form.dateAchat" class="w-full" />
               </div>
 
               <!-- Date vente -->
               <div>
                 <label class="block text-sm font-medium text-gray-200 mb-2">Date de vente</label>
-                <input
-                  type="date"
-                  v-model="form.dateVente"
-                  :required="requireDateVente"
-                  class="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
-                />
+                <CompactDateInput v-model="form.dateVente" class="w-full" />
                 <p class="mt-1 text-xs text-gray-500">Laisse vide si pas vendue.</p>
               </div>
 
@@ -160,6 +150,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import SnkVenteServices from '@/services/SnkVenteServices.js'
+import CompactDateInput from '@/components/ui/CompactDateInput.vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false }, // v-model

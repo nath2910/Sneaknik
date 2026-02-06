@@ -37,11 +37,12 @@ public class StatsController {
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOf
   ) {
     LocalDate f = pickDate(start, from);
     LocalDate t = pickDate(end, to);
-    return statsService.summary(currentUser.getId(), f, t);
+    return statsService.summary(currentUser.getId(), f, t, asOf);
   }
 
   @GetMapping({"/timeseries"})
@@ -141,6 +142,11 @@ public class StatsController {
     LocalDate f = pickDate(start, from);
     LocalDate t = pickDate(end, to);
     return statsService.rank(currentUser.getId(), f, t, metric, limit);
+  }
+
+  @GetMapping({"/date-bounds"})
+  public StatsDateBoundsResponse dateBounds(@AuthenticationPrincipal User currentUser) {
+    return statsService.dateBounds(currentUser.getId());
   }
 
   @GetMapping({"/layout"})

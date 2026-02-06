@@ -6,7 +6,10 @@
     :loading="loading"
     :error="error"
   >
-    <VChart class="w-full h-full" :option="option" autoresize />
+    <div class="h-full flex flex-col gap-2">
+      <VChart class="w-full flex-1" :option="option" autoresize />
+      <slot />
+    </div>
   </WidgetCard>
 </template>
 

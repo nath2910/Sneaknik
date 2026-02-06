@@ -1,55 +1,53 @@
 <template>
   <KpiCard
     title="Valeur du stock"
-    subtitle="Capital immobilisé"
+    subtitle="Capital immobilise"
     :accent="accent"
     :loading="loading"
     :error="error"
     :valueText="valueText"
-    :deltaPct="deltaPct"
-    :deltaText="deltaText"
-    hint="au coût d’achat"
-  />
+    hint="au cout d'achat"
+  >
+    <div class="accent-strip" />
+    <div class="asof-row">
+      <span class="asof-label">Valeur au</span>
+      <span class="asof-value">{{ asOfLabel }}</span>
+    </div>
+  </KpiCard>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import StatsServices from '@/services/StatsServices'
-import { normalizeSummary, prevPeriod } from '@/services/statsAdapters'
+import { normalizeSummary, parseYmdLocal, prevPeriod } from '@/services/statsAdapters'
 import { formatEUR, signFmt } from '@/utils/formatters'
 import KpiCard from './_parts/KpiCard.vue'
 
-const props = defineProps({ from: String, to: String })
+const props = defineProps({
+  from: String,
+  to: String,
+  asOf: String,
+  useGlobalRange: { type: Boolean, default: true },
+})
 const accent = '#06B6D4'
 
 const loading = ref(false)
 const error = ref('')
 const summary = ref({ valeurStock: 0 })
-const deltaPct = ref(null)
 let req = 0
 
-function calcDeltaPct(curr, prev) {
-  const c = Number(curr ?? 0)
-  const p = Number(prev ?? 0)
-  if (!Number.isFinite(p) || p === 0) return null
-  return ((c - p) / Math.abs(p)) * 100
-}
-
 async function load() {
+  const useGlobal = props.useGlobalRange !== false
+  const baseDate = useGlobal ? (props.to || props.from) : (props.asOf || props.to || props.from)
+  if (!baseDate) return
   const id = ++req
   loading.value = true
   error.value = ''
   try {
-    const { from: prevFrom, to: prevTo } = prevPeriod(props.from, props.to)
-    const [currRes, prevRes] = await Promise.all([
-      StatsServices.summary(props.from, props.to),
-      StatsServices.summary(prevFrom, prevTo),
-    ])
+    const currRes = await StatsServices.summary({ from: baseDate, to: baseDate, asOf: baseDate })
     if (id !== req) return
     const curr = normalizeSummary(currRes.data)
-    const prev = normalizeSummary(prevRes.data)
     summary.value = curr
-    deltaPct.value = calcDeltaPct(curr.valeurStock, prev.valeurStock)
   } catch (e) {
     if (id !== req) return
     error.value = e?.response?.data?.message ?? e?.message ?? 'Impossible de charger'
@@ -59,8 +57,47 @@ async function load() {
 }
 
 onMounted(load)
-watch(() => [props.from, props.to], load)
+watch(() => [props.from, props.to, props.asOf, props.useGlobalRange], load)
 
 const valueText = computed(() => formatEUR(summary.value.valeurStock, { compact: true }))
-const deltaText = computed(() => (deltaPct.value == null ? '' : signFmt(deltaPct.value)))
+const asOfLabel = computed(() => {
+  const useGlobal = props.useGlobalRange !== false
+  const raw = useGlobal ? (props.to || props.from) : (props.asOf || props.to || props.from)
+  if (!raw) return '--'
+  const d = parseYmdLocal(raw)
+  return d.toLocaleDateString('fr-FR')
+})
 </script>
+
+<style scoped>
+.asof-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.accent-strip {
+  margin-top: 10px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.2), rgba(6, 182, 212, 0.9));
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.25);
+}
+.asof-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.6);
+}
+.asof-value {
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.9);
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  background: rgba(6, 182, 212, 0.08);
+}
+</style>

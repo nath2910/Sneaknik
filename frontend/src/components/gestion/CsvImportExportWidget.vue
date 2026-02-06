@@ -154,7 +154,7 @@ function exportCsv() {
 
   const a = document.createElement('a')
   a.href = url
-  a.download = `sneaknik_export_${new Date().toISOString().slice(0, 10)}.csv`
+  a.download = `stash_export_${new Date().toISOString().slice(0, 10)}.csv`
   document.body.appendChild(a)
   a.click()
   a.remove()
